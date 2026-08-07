@@ -1,0 +1,278 @@
+package com.example.notifications
+
+import android.app.Notification
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.net.Uri
+import android.os.Build
+import android.os.IBinder
+import android.os.PowerManager
+import android.util.Log
+import androidx.core.app.NotificationCompat
+import com.example.MainActivity
+import com.example.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+data class PendingCall(
+    val notificationId: Int,
+    val title: String,
+    val message: String
+)
+
+class RuleOfLifeCallService : Service() {
+
+    private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val action = intent?.action
+        val title = intent?.getStringExtra("EXTRA_CALL_TITLE") ?: "Rule of Life Call"
+        val message = intent?.getStringExtra("EXTRA_CALL_MESSAGE") ?: "Time for your scheduled spiritual duty."
+        val notificationId = intent?.getIntExtra("EXTRA_NOTIFICATION_ID", 1001) ?: 1001
+
+        Log.d("RuleOfLifeCallService", "onStartCommand action=$action notificationId=$notificationId title=$title")
+
+        if (action == ACTION_STOP_CALL) {
+            serviceScope.launch {
+                queueMutex.withLock {
+                    handleStopCallLocked(notificationId)
+                }
+            }
+            return START_NOT_STICKY
+        }
+
+        if (action == ACTION_START_CALL || action == null) {
+            val pendingCall = PendingCall(notificationId, title, message)
+            serviceScope.launch {
+                queueMutex.withLock {
+                    handleStartCallLocked(pendingCall)
+                }
+            }
+        }
+
+        return START_NOT_STICKY
+    }
+
+    private fun handleStartCallLocked(call: PendingCall) {
+        val exists = (currentCall?.notificationId == call.notificationId) ||
+                callQueue.any { it.notificationId == call.notificationId }
+        if (!exists) {
+            callQueue.addLast(call)
+            Log.d("RuleOfLifeCallService", "Enqueued call notificationId=${call.notificationId}. Queue size=${callQueue.size}")
+        }
+
+        if (currentCall == null) {
+            processNextCallLocked()
+        } else {
+            Log.d("RuleOfLifeCallService", "A call (id=${currentCall?.notificationId}) is currently active. Call ${call.notificationId} queued to ring next.")
+        }
+    }
+
+    private fun handleStopCallLocked(stoppedNotificationId: Int) {
+        Log.d("RuleOfLifeCallService", "handleStopCall for id=$stoppedNotificationId. Active id=${currentCall?.notificationId}")
+        
+        if (stoppedNotificationId != -1) {
+            callQueue.removeAll { it.notificationId == stoppedNotificationId }
+            if (currentCall?.notificationId == stoppedNotificationId) {
+                currentCall = null
+            }
+        } else {
+            if (currentCall != null) {
+                callQueue.removeAll { it.notificationId == currentCall?.notificationId }
+                currentCall = null
+            } else if (callQueue.isNotEmpty()) {
+                callQueue.removeFirst()
+            }
+        }
+
+        CallRingerManager.stopRinging()
+
+        if (callQueue.isNotEmpty()) {
+            Log.d("RuleOfLifeCallService", "${callQueue.size} call(s) remaining in queue. Ringing next call...")
+            processNextCallLocked()
+        } else {
+            Log.d("RuleOfLifeCallService", "No more calls in queue. Stopping Call Service.")
+            stopCallServiceInternalLocked()
+        }
+    }
+
+    private fun processNextCallLocked() {
+        val activeCall = callQueue.firstOrNull()
+        if (activeCall == null) {
+            stopCallServiceInternalLocked()
+            return
+        }
+        currentCall = activeCall
+
+        Log.d("RuleOfLifeCallService", "Processing active call with Mutex lock: id=${activeCall.notificationId} title=${activeCall.title}")
+
+        // Acquire WakeLock via WakeLockManager to keep CPU active
+        WakeLockManager.acquireWakeLock(this)
+
+        // Start playing ringtone and vibration
+        CallRingerManager.startRinging(this)
+
+        // Build Foreground Notification
+        val notification = buildForegroundNotification(activeCall.title, activeCall.message, activeCall.notificationId)
+
+        // Start Foreground
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(activeCall.notificationId, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL)
+        } else {
+            startForeground(activeCall.notificationId, notification)
+        }
+
+        // Launch full screen IncomingCallActivity
+        launchCallActivity(activeCall)
+    }
+
+    private fun launchCallActivity(call: PendingCall) {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as android.app.KeyguardManager
+        val isScreenInteractive = powerManager.isInteractive
+        val isKeyguardLocked = keyguardManager.isKeyguardLocked
+
+        val canDrawOverlays = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            android.provider.Settings.canDrawOverlays(this)
+        } else {
+            true
+        }
+
+        if (isScreenInteractive && !isKeyguardLocked && canDrawOverlays) {
+            val directCallIntent = Intent(this, IncomingCallActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("EXTRA_NOTIFICATION_ID", call.notificationId)
+                putExtra("EXTRA_CALL_TITLE", call.title)
+                putExtra("EXTRA_CALL_MESSAGE", call.message)
+            }
+            try {
+                startActivity(directCallIntent)
+            } catch (e: Exception) {
+                Log.e("RuleOfLifeCallService", "Failed to force startActivity", e)
+            }
+        }
+    }
+
+    private fun buildForegroundNotification(title: String, message: String, notificationId: Int): Notification {
+        NotificationHelper.createNotificationChannels(this)
+
+        val soundUri = Uri.parse("android.resource://" + packageName + "/" + R.raw.church_bell)
+
+        // PendingIntent for Answer Call
+        val answerIntent = Intent(this, CallActionReceiver::class.java).apply {
+            action = CallActionReceiver.ACTION_ANSWER_CALL
+            putExtra("EXTRA_NOTIFICATION_ID", notificationId)
+            putExtra("EXTRA_CALL_TITLE", title)
+            putExtra("EXTRA_CALL_MESSAGE", message)
+        }
+        val answerPendingIntent = PendingIntent.getBroadcast(
+            this,
+            notificationId * 10 + 1,
+            answerIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // PendingIntent for Decline Call
+        val declineIntent = Intent(this, CallActionReceiver::class.java).apply {
+            action = CallActionReceiver.ACTION_DECLINE_CALL
+            putExtra("EXTRA_NOTIFICATION_ID", notificationId)
+            putExtra("EXTRA_CALL_TITLE", title)
+            putExtra("EXTRA_CALL_MESSAGE", message)
+        }
+        val declinePendingIntent = PendingIntent.getBroadcast(
+            this,
+            notificationId * 10 + 2,
+            declineIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Main Tap Intent (Opens app and connects call)
+        val mainIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            action = CallActionReceiver.ACTION_ANSWER_CALL
+            putExtra("EXTRA_CALL_TITLE", title)
+            putExtra("EXTRA_CALL_MESSAGE", message)
+            putExtra("EXTRA_NOTIFICATION_ID", notificationId)
+        }
+        val contentPendingIntent = PendingIntent.getActivity(
+            this,
+            notificationId,
+            mainIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Full-Screen Intent launching IncomingCallActivity
+        val fullScreenIntent = Intent(this, IncomingCallActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("EXTRA_NOTIFICATION_ID", notificationId)
+            putExtra("EXTRA_CALL_TITLE", title)
+            putExtra("EXTRA_CALL_MESSAGE", message)
+        }
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this,
+            notificationId * 10 + 3,
+            fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(this, NotificationHelper.CHANNEL_CALLS)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Incoming Prayer Call: $title")
+            .setContentText("$message (Tap Answer to connect)")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$message\n\n📞 Tap Answer to connect and listen."))
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setSound(soundUri, android.media.AudioManager.STREAM_ALARM)
+            .setVibrate(longArrayOf(0, 500, 200, 500, 200, 1000))
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .setContentIntent(contentPendingIntent)
+            .setAutoCancel(true)
+            .setOngoing(true)
+            .addAction(android.R.drawable.ic_menu_call, "Answer Call", answerPendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Decline", declinePendingIntent)
+            .build()
+    }
+
+    private fun stopCallServiceInternalLocked() {
+        Log.d("RuleOfLifeCallService", "Stopping Foreground Service")
+        CallRingerManager.stopRinging()
+        WakeLockManager.releaseWakeLock()
+        callQueue.clear()
+        currentCall = null
+        stopForeground(true)
+        stopSelf()
+    }
+
+    override fun onDestroy() {
+        CallRingerManager.stopRinging()
+        WakeLockManager.releaseWakeLock()
+        callQueue.clear()
+        currentCall = null
+        serviceScope.cancel()
+        super.onDestroy()
+    }
+
+    companion object {
+        const val ACTION_START_CALL = "com.example.notifications.ACTION_START_CALL"
+        const val ACTION_STOP_CALL = "com.example.notifications.ACTION_STOP_CALL"
+
+        private val queueMutex = Mutex()
+        private val callQueue = ArrayDeque<PendingCall>()
+        @Volatile private var currentCall: PendingCall? = null
+    }
+}
+

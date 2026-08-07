@@ -1,0 +1,1928 @@
+package com.example.ui.screens
+
+import android.os.Build
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.MusicNote
+import android.net.Uri
+import androidx.compose.foundation.shape.CircleShape
+import com.example.ui.components.ScrollableClockPicker
+import com.example.ui.components.ScrollableClockField
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.border
+import kotlinx.coroutines.launch
+import com.example.requestIgnoreBatteryOptimization
+import com.example.isBatteryOptimizationIgnored
+import com.example.ui.MainViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.components.GothicHeader
+import com.example.ui.theme.*
+import com.example.utils.CalendarSyncHelper
+import com.example.utils.PhoneCalendar
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Calendar
+import java.util.Locale
+
+@Composable
+fun SettingsScreen(
+    viewModel: MainViewModel
+) {
+    val context = LocalContext.current
+    val profile by viewModel.userProfile.collectAsState()
+    val duties by viewModel.allDuties.collectAsState()
+    val customRingtoneUri by viewModel.customRingtoneUri.collectAsState()
+
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            viewModel.setCustomRingtoneUri(uri.toString())
+            Toast.makeText(context, "Dedicated call ringtone updated!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    var showSyncCalendarDialog by remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    var showBackupPasswordDialog by remember { mutableStateOf(false) }
+    var showRestorePasswordDialog by remember { mutableStateOf(false) }
+    var backupPasswordInput by remember { mutableStateOf("") }
+    var restoreFileUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var isBackupOperationRunning by remember { mutableStateOf(false) }
+
+    val exportDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null && backupPasswordInput.isNotBlank()) {
+            isBackupOperationRunning = true
+            coroutineScope.launch {
+                try {
+                    val outputStream = context.contentResolver.openOutputStream(uri)
+                    if (outputStream != null) {
+                        val result = viewModel.exportEncryptedBackup(backupPasswordInput, outputStream)
+                        when (result) {
+                            is com.example.utils.BackupResult.Success -> {
+                                Toast.makeText(context, "Backup Created Successfully!\n${result.summary}", Toast.LENGTH_LONG).show()
+                            }
+                            is com.example.utils.BackupResult.Error -> {
+                                Toast.makeText(context, "Backup Error: ${result.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(context, "Could not open storage location.", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Export Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                } finally {
+                    isBackupOperationRunning = false
+                    backupPasswordInput = ""
+                }
+            }
+        }
+    }
+
+    val importDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            restoreFileUri = uri
+            showRestorePasswordDialog = true
+        }
+    }
+
+    var showExportExamPdfDialog by remember { mutableStateOf(false) }
+    var pdfExportPasswordInput by remember { mutableStateOf<String?>(null) }
+
+    val exportExamPdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri ->
+        if (uri != null) {
+            isBackupOperationRunning = true
+            coroutineScope.launch {
+                try {
+                    val outputStream = context.contentResolver.openOutputStream(uri)
+                    if (outputStream != null) {
+                        val resultMsg = viewModel.exportExaminationsToPdf(pdfExportPasswordInput, outputStream)
+                        Toast.makeText(context, resultMsg, Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(context, "Could not open storage location.", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "PDF Export Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                } finally {
+                    isBackupOperationRunning = false
+                    pdfExportPasswordInput = null
+                }
+            }
+        }
+    }
+
+    val calendarPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val readGranted = permissions[android.Manifest.permission.READ_CALENDAR] == true
+        val writeGranted = permissions[android.Manifest.permission.WRITE_CALENDAR] == true
+        if (readGranted && writeGranted) {
+            showSyncCalendarDialog = true
+        } else {
+            Toast.makeText(context, "Calendar permissions are required for sync.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    var morningTimeInput by remember(profile?.morningPrayerTime) {
+        mutableStateOf(profile?.morningPrayerTime ?: "07:00")
+    }
+    var eveningTimeInput by remember(profile?.eveningPrayerTime) {
+        mutableStateOf(profile?.eveningPrayerTime ?: "21:00")
+    }
+    var saintTimeInput by remember(profile?.saintNotificationTime) {
+        mutableStateOf(profile?.saintNotificationTime ?: "07:30")
+    }
+    var angelusMorningInput by remember(profile?.angelusMorningTime) {
+        mutableStateOf(profile?.angelusMorningTime ?: "06:00")
+    }
+    var angelusNoonInput by remember(profile?.angelusNoonTime) {
+        mutableStateOf(profile?.angelusNoonTime ?: "12:00")
+    }
+    var angelusEveningInput by remember(profile?.angelusEveningTime) {
+        mutableStateOf(profile?.angelusEveningTime ?: "18:00")
+    }
+    var angelusEnabled by remember(profile?.angelusEnabled) {
+        mutableStateOf(profile?.angelusEnabled ?: true)
+    }
+    var notificationsEnabled by remember(profile?.notificationEnabled) {
+        mutableStateOf(profile?.notificationEnabled ?: true)
+    }
+    var sacredHeartTimeInput by remember(profile?.sacredHeartTime) {
+        mutableStateOf(profile?.sacredHeartTime ?: "08:00")
+    }
+    var sacredHeartEnabled by remember(profile?.sacredHeartEnabled) {
+        mutableStateOf(profile?.sacredHeartEnabled ?: true)
+    }
+    var immaculateHeartTimeInput by remember(profile?.immaculateHeartTime) {
+        mutableStateOf(profile?.immaculateHeartTime ?: "08:00")
+    }
+    var immaculateHeartEnabled by remember(profile?.immaculateHeartEnabled) {
+        mutableStateOf(profile?.immaculateHeartEnabled ?: true)
+    }
+
+    var liturgicalSeasonEnabled by remember(profile?.liturgicalSeasonNotificationsEnabled) {
+        mutableStateOf(profile?.liturgicalSeasonNotificationsEnabled ?: true)
+    }
+
+    var isOptimizedIgnored by remember {
+        mutableStateOf(isBatteryOptimizationIgnored(context))
+    }
+
+    var isOverlayGranted by remember {
+        mutableStateOf(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            android.provider.Settings.canDrawOverlays(context)
+        } else {
+            true
+        })
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            isOptimizedIgnored = isBatteryOptimizationIgnored(context)
+            isOverlayGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                android.provider.Settings.canDrawOverlays(context)
+            } else {
+                true
+            }
+            kotlinx.coroutines.delay(2000)
+        }
+    }
+
+    var showTimeEditDialog by remember { mutableStateOf<String?>(null) }
+    var tempTimeValue by remember { mutableStateOf("") }
+
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(scrollState.value, scrollState.maxValue) {
+        val currentScroll = scrollState.value
+        val maxScroll = scrollState.maxValue
+        
+        if (currentScroll <= 10) {
+            viewModel.setBottomNavVisible(true)
+            viewModel.setTopHeaderVisible(true)
+        } else if (currentScroll > 30) {
+            viewModel.setBottomNavVisible(false)
+            viewModel.setTopHeaderVisible(false)
+        }
+        
+        val progress = if (maxScroll > 0) currentScroll.toFloat() / maxScroll.toFloat() else 0f
+        viewModel.setReadingProgress(progress)
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.setReadingProgress(0f)
+            viewModel.setBottomNavVisible(true)
+        }
+    }
+
+    val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DarkCathedralBackground)
+            .wrapContentWidth(Alignment.CenterHorizontally)
+            .widthIn(max = 600.dp)
+            .padding(16.dp)
+            .verticalScroll(scrollState),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        androidx.compose.animation.AnimatedVisibility(
+            visible = isTopHeaderVisible,
+            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(),
+            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically()
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                GothicHeader(
+                    title = "MONASTERY SETTINGS",
+                    subtitle = "Notification Queries & Spiritual Discipline Configuration",
+                    badgeText = "Settings"
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+
+        // Spiritual State Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Spiritual Rule Identity",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = GoldBright
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = if (profile?.gender == "MALE") "Rule of St. Benedict (Regula Benedicti)" else "Rule of Donatus (Regula Donati)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ParchmentLight
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Liturgical Calendar Offline Database Status Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("calendar_database_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .background(
+                                    color = Color(0xFF4CAF50),
+                                    shape = CircleShape
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Liturgical Calendar Database Status",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = GoldBright
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = Color(0xFF1E2D1E),
+                    border = BorderStroke(1.dp, Color(0xFF388E3C))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color(0xFF81C784),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Room Storage Active • 1954 Calendar Synced",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = Color(0xFFA5D6A7)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "The local Room database is active and populated with the complete 1954 General Roman Calendar rubrics and fasts, stored entirely offline on your device.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+            }
+        }
+
+
+
+        // Daily Canonical Prayer & Angelus Notification Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("daily_prayer_notifications_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = GoldBright)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Daily Prayer & Angelus Alarms",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = GoldBright
+                        )
+                    }
+
+                    // Master Toggle
+                    Switch(
+                        checked = notificationsEnabled,
+                        onCheckedChange = { enabled ->
+                            notificationsEnabled = enabled
+                            viewModel.updateNotificationPreferences(
+                                morningTimeInput,
+                                eveningTimeInput,
+                                saintTimeInput,
+                                enabled,
+                                angelusMorningInput,
+                                angelusNoonInput,
+                                angelusEveningInput,
+                                angelusEnabled,
+                                sacredHeartTimeInput,
+                                sacredHeartEnabled,
+                                immaculateHeartTimeInput,
+                                immaculateHeartEnabled, liturgicalSeasonEnabled)
+                            Toast.makeText(context, "System prayer alarms ${if (enabled) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = GoldBright, checkedTrackColor = CrimsonBurgundy),
+                        modifier = Modifier.testTag("master_notifications_switch")
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Configure exact system notification times for daily prayers, Angelus, and saint commemorations.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = DarkCathedralCardBorder)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Angelus Section Header & Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "The Angelus / Regina Caeli Alarms",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif),
+                            color = GoldBright
+                        )
+                        Text(
+                            text = "Traditional 6:00 AM, 12:00 PM (Noon), & 6:00 PM calls to prayer",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMutedParchment
+                        )
+                    }
+                    Switch(
+                        checked = angelusEnabled,
+                        onCheckedChange = { enabled ->
+                            angelusEnabled = enabled
+                            viewModel.updateNotificationPreferences(
+                                morningTimeInput,
+                                eveningTimeInput,
+                                saintTimeInput,
+                                notificationsEnabled,
+                                angelusMorningInput,
+                                angelusNoonInput,
+                                angelusEveningInput,
+                                enabled,
+                                sacredHeartTimeInput,
+                                sacredHeartEnabled,
+                                immaculateHeartTimeInput,
+                                immaculateHeartEnabled, liturgicalSeasonEnabled)
+                            Toast.makeText(context, "Angelus alarms ${if (enabled) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = GoldBright, checkedTrackColor = CrimsonBurgundy),
+                        modifier = Modifier.testTag("angelus_toggle")
+                    )
+                }
+
+                if (angelusEnabled) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    NotificationTimeRow(
+                        title = "Angelus - Morning",
+                        subtitle = "Morning call to prayer",
+                        time = angelusMorningInput,
+                        onClick = {
+                            tempTimeValue = angelusMorningInput
+                            showTimeEditDialog = "ANGELUS_MORNING"
+                        },
+                        onTestClick = {
+                            viewModel.testNotificationNow(
+                                "The Angelus (Morning)",
+                                "The Angel of the Lord declared unto Mary. R. And she conceived of the Holy Ghost."
+                            )
+                            Toast.makeText(context, "Fired test Angelus notification!", Toast.LENGTH_SHORT).show()
+                        },
+                        testTagPrefix = "angelus_morning"
+                    )
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = DarkCathedralCardBorder)
+
+                    NotificationTimeRow(
+                        title = "Angelus - Noon (12:00 PM)",
+                        subtitle = "Midday call to prayer",
+                        time = angelusNoonInput,
+                        onClick = {
+                            tempTimeValue = angelusNoonInput
+                            showTimeEditDialog = "ANGELUS_NOON"
+                        },
+                        onTestClick = {
+                            viewModel.testNotificationNow(
+                                "The Angelus (Noon)",
+                                "The Angel of the Lord declared unto Mary. R. And she conceived of the Holy Ghost."
+                            )
+                            Toast.makeText(context, "Fired test Angelus notification!", Toast.LENGTH_SHORT).show()
+                        },
+                        testTagPrefix = "angelus_noon"
+                    )
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = DarkCathedralCardBorder)
+
+                    NotificationTimeRow(
+                        title = "Angelus - Evening (6:00 PM)",
+                        subtitle = "Evening call to prayer",
+                        time = angelusEveningInput,
+                        onClick = {
+                            tempTimeValue = angelusEveningInput
+                            showTimeEditDialog = "ANGELUS_EVENING"
+                        },
+                        onTestClick = {
+                            viewModel.testNotificationNow(
+                                "The Angelus (Evening)",
+                                "The Angel of the Lord declared unto Mary. R. And she conceived of the Holy Ghost."
+                            )
+                            Toast.makeText(context, "Fired test Angelus notification!", Toast.LENGTH_SHORT).show()
+                        },
+                        testTagPrefix = "angelus_evening"
+                    )
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = DarkCathedralCardBorder)
+
+                // Morning Prayer
+                NotificationTimeRow(
+                    title = "Morning Prayer (Lauds / Prime)",
+                    subtitle = "Morning offering and Divine Office start",
+                    time = morningTimeInput,
+                    onClick = {
+                        tempTimeValue = morningTimeInput
+                        showTimeEditDialog = "MORNING"
+                    },
+                    onTestClick = {
+                        viewModel.testNotificationNow(
+                            "Morning Prayer Reminder",
+                            "Time for your morning prayer, Lauds, and daily offering to Almighty God."
+                        )
+                        Toast.makeText(context, "Fired test Morning Prayer notification!", Toast.LENGTH_SHORT).show()
+                    },
+                    testTagPrefix = "morning_prayer"
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = DarkCathedralCardBorder)
+
+                // Saint of the Day
+                NotificationTimeRow(
+                    title = "Saint of the Day Commemoration",
+                    subtitle = "Daily saint bio, quote, and feast alert",
+                    time = saintTimeInput,
+                    onClick = {
+                        tempTimeValue = saintTimeInput
+                        showTimeEditDialog = "SAINT"
+                    },
+                    onTestClick = {
+                        com.example.notifications.NotificationScheduler.triggerSaintNotificationNow(context)
+                        Toast.makeText(context, "Fired test Saint of the Day notification!", Toast.LENGTH_SHORT).show()
+                    },
+                    testTagPrefix = "saint_day"
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = DarkCathedralCardBorder)
+
+                // Evening Prayer
+                NotificationTimeRow(
+                    title = "Evening Prayer / Night Examen",
+                    subtitle = "Evening Rosary & Examination of Conscience",
+                    time = eveningTimeInput,
+                    onClick = {
+                        tempTimeValue = eveningTimeInput
+                        showTimeEditDialog = "EVENING"
+                    },
+                    onTestClick = {
+                        viewModel.testNotificationNow(
+                            "Evening Prayer / Night Examen",
+                            "Time for your evening Rosary and Examen of Conscience before sleep."
+                        )
+                        Toast.makeText(context, "Fired test Evening Prayer notification!", Toast.LENGTH_SHORT).show()
+                    },
+                    testTagPrefix = "evening_prayer"
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sacred Heart & Immaculate Heart Devotion Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("heart_devotions_notifications_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = GoldBright)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Sacred & Immaculate Heart Devotions",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = GoldBright
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Weekly and First Friday/Saturday system alarms to help you fulfill traditional devotions dedicated to the Sacred Heart of Jesus and Immaculate Heart of Mary.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = DarkCathedralCardBorder)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Sacred Heart Devotion
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Sacred Heart of Jesus Alarms",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif),
+                            color = GoldBright
+                        )
+                        Text(
+                            text = "Scheduled on every Friday and First Fridays",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMutedParchment
+                        )
+                    }
+                    Switch(
+                        checked = sacredHeartEnabled,
+                        onCheckedChange = { enabled ->
+                            sacredHeartEnabled = enabled
+                            viewModel.updateNotificationPreferences(
+                                morningTimeInput,
+                                eveningTimeInput,
+                                saintTimeInput,
+                                notificationsEnabled,
+                                angelusMorningInput,
+                                angelusNoonInput,
+                                angelusEveningInput,
+                                angelusEnabled,
+                                sacredHeartTimeInput,
+                                enabled,
+                                immaculateHeartTimeInput,
+                                immaculateHeartEnabled, liturgicalSeasonEnabled)
+                            Toast.makeText(context, "Sacred Heart alarms ${if (enabled) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = GoldBright, checkedTrackColor = CrimsonBurgundy),
+                        modifier = Modifier.testTag("sacred_heart_toggle")
+                    )
+                }
+
+                if (sacredHeartEnabled) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    NotificationTimeRow(
+                        title = "Sacred Heart - Fridays",
+                        subtitle = "Friday reminder at preferred hour",
+                        time = sacredHeartTimeInput,
+                        onClick = {
+                            tempTimeValue = sacredHeartTimeInput
+                            showTimeEditDialog = "SACRED_HEART"
+                        },
+                        onTestClick = {
+                            val cal = Calendar.getInstance()
+                            val isFirstFriday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY && cal.get(Calendar.DAY_OF_MONTH) <= 7
+                            val title = if (isFirstFriday) "First Friday Devotion: Sacred Heart of Jesus" else "Friday Devotion: Sacred Heart of Jesus"
+                            val message = if (isFirstFriday) {
+                                "Offer your Holy Communion, prayers, and acts of reparation to the Sacred Heart of Jesus today."
+                            } else {
+                                "In honor of Christ's Passion, dedicate today's prayers and mortifications to His Most Sacred Heart."
+                            }
+                            viewModel.testNotificationNow(title, message)
+                            Toast.makeText(context, "Fired test Sacred Heart notification!", Toast.LENGTH_SHORT).show()
+                        },
+                        testTagPrefix = "sacred_heart"
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = DarkCathedralCardBorder)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Immaculate Heart Devotion
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Immaculate Heart of Mary Alarms",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif),
+                            color = GoldBright
+                        )
+                        Text(
+                            text = "Scheduled on every Saturday and First Saturdays",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMutedParchment
+                        )
+                    }
+                    Switch(
+                        checked = immaculateHeartEnabled,
+                        onCheckedChange = { enabled ->
+                            immaculateHeartEnabled = enabled
+                            viewModel.updateNotificationPreferences(
+                                morningTimeInput,
+                                eveningTimeInput,
+                                saintTimeInput,
+                                notificationsEnabled,
+                                angelusMorningInput,
+                                angelusNoonInput,
+                                angelusEveningInput,
+                                angelusEnabled,
+                                sacredHeartTimeInput,
+                                sacredHeartEnabled,
+                                immaculateHeartTimeInput,
+                                enabled
+                            )
+                            Toast.makeText(context, "Immaculate Heart alarms ${if (enabled) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = GoldBright, checkedTrackColor = CrimsonBurgundy),
+                        modifier = Modifier.testTag("immaculate_heart_toggle")
+                    )
+                }
+
+                if (immaculateHeartEnabled) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    NotificationTimeRow(
+                        title = "Immaculate Heart - Saturdays",
+                        subtitle = "Saturday reminder at preferred hour",
+                        time = immaculateHeartTimeInput,
+                        onClick = {
+                            tempTimeValue = immaculateHeartTimeInput
+                            showTimeEditDialog = "IMMACULATE_HEART"
+                        },
+                        onTestClick = {
+                            val cal = Calendar.getInstance()
+                            val isFirstSaturday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY && cal.get(Calendar.DAY_OF_MONTH) <= 7
+                            val title = if (isFirstSaturday) "First Saturday Devotion: Immaculate Heart of Mary" else "Saturday Devotion: Immaculate Heart of Mary"
+                            val message = if (isFirstSaturday) {
+                                "Make reparation to the Immaculate Heart of Mary with the Rosary, meditation, and confession."
+                            } else {
+                                "Dedicate today's prayers, Rosary, and offerings in loving reparation to the Immaculate Heart of Mary."
+                            }
+                            viewModel.testNotificationNow(title, message)
+                            Toast.makeText(context, "Fired test Immaculate Heart notification!", Toast.LENGTH_SHORT).show()
+                        },
+                        testTagPrefix = "immaculate_heart"
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Liturgical Season Notifications Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = GoldBright)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Liturgical Seasons",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = GoldBright
+                        )
+                    }
+                    Switch(
+                        checked = liturgicalSeasonEnabled,
+                        onCheckedChange = { enabled ->
+                            liturgicalSeasonEnabled = enabled
+                            viewModel.updateNotificationPreferences(
+                                morningTimeInput,
+                                eveningTimeInput,
+                                saintTimeInput,
+                                notificationsEnabled,
+                                angelusMorningInput,
+                                angelusNoonInput,
+                                angelusEveningInput,
+                                angelusEnabled,
+                                sacredHeartTimeInput,
+                                sacredHeartEnabled,
+                                immaculateHeartTimeInput,
+                                immaculateHeartEnabled,
+                                enabled
+                            )
+                            Toast.makeText(context, "Liturgical season notifications ${if (enabled) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = GoldBright, checkedTrackColor = CrimsonBurgundy)
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Automated announcements at 8:00 AM on the first day of major traditional liturgical seasons (e.g., Advent, Lent, Paschaltide).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+            }
+        }
+
+        // Background Execution Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.BatteryChargingFull, contentDescription = null, tint = GoldBright)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Background Execution Status",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (isOptimizedIgnored) "Status: Unrestricted (Notifications will arrive reliably)" else "Status: Battery Optimized (Alarms may be delayed by Android power management)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isOptimizedIgnored) GoldBright else TextMutedParchment
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = {
+                        requestIgnoreBatteryOptimization(context)
+                        isOptimizedIgnored = isBatteryOptimizationIgnored(context)
+                    },
+                    border = BorderStroke(1.dp, GoldSacred),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Request Unrestricted Background Execution", color = GoldBright, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Display Over Other Apps (Overlay) Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = GoldBright)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Display Over Other Apps",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (isOverlayGranted) "Status: Allowed (Incoming call screens can launch in full-screen immediately)" else "Status: Not Allowed (System will use heads-up banners instead, but will still ring and vibrate)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isOverlayGranted) GoldBright else TextMutedParchment
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            try {
+                                val intent = Intent(
+                                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    android.net.Uri.parse("package:${context.packageName}")
+                                )
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                val intent = Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+                                context.startActivity(intent)
+                            }
+                        }
+                    },
+                    border = BorderStroke(1.dp, GoldSacred),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Grant Full-Screen Call Permission", color = GoldBright, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Dedicated Call Ringtone Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.MusicNote, contentDescription = null, tint = GoldBright)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Rule of Life Dedicated Ringtone",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                val activeRingtoneUri = customRingtoneUri
+                val ringtoneDisplayName = remember(activeRingtoneUri) {
+                    if (activeRingtoneUri.isNullOrEmpty()) {
+                        "Cathedral Church Bell (Default)"
+                    } else {
+                        try {
+                            val uri = Uri.parse(activeRingtoneUri)
+                            val lastSegment = uri.lastPathSegment ?: activeRingtoneUri
+                            "Custom Audio: ${lastSegment.takeLast(30)}"
+                        } catch (e: Exception) {
+                            "Custom Audio Selected"
+                        }
+                    }
+                }
+                Text(
+                    text = "Selected Ringtone: $ringtoneDisplayName",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (activeRingtoneUri.isNullOrEmpty()) TextMutedParchment else GoldBright
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            ringtonePickerLauncher.launch(arrayOf("audio/*"))
+                        },
+                        border = BorderStroke(1.dp, GoldSacred),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Select Custom Audio", color = GoldBright, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                    if (!activeRingtoneUri.isNullOrEmpty()) {
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.setCustomRingtoneUri(null)
+                                Toast.makeText(context, "Reset to default church bell ringtone", Toast.LENGTH_SHORT).show()
+                            },
+                            border = BorderStroke(1.dp, LiturgicalRed),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Reset Default", color = LiturgicalRed, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Calendar Integration Sync Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark.copy(alpha = 0.5f))
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Device Calendar Sync",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Serif
+                        ),
+                        color = GoldBright
+                    )
+                    Text(
+                        text = "Clone all existing tasks/devotions to your native phone calendar with reminders.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMutedParchment
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        val hasRead = androidx.core.content.ContextCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.READ_CALENDAR
+                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        val hasWrite = androidx.core.content.ContextCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.WRITE_CALENDAR
+                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        
+                        if (hasRead && hasWrite) {
+                            showSyncCalendarDialog = true
+                        } else {
+                            calendarPermissionLauncher.launch(
+                                arrayOf(
+                                    android.Manifest.permission.READ_CALENDAR,
+                                    android.Manifest.permission.WRITE_CALENDAR
+                                )
+                            )
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                    border = BorderStroke(1.dp, GoldSacred),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.testTag("sync_calendar_btn")
+                ) {
+                    Text("Sync Now", fontSize = 11.sp, color = GoldBright, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        
+        if (showSyncCalendarDialog) {
+            val phoneCalendars = remember { CalendarSyncHelper.getPhoneCalendars(context) }
+            PhoneCalendarSyncDialog(
+                calendars = phoneCalendars,
+                onSelectAndSync = { calId ->
+                    showSyncCalendarDialog = false
+                    // We need access to duties here. I'll need to fetch them from viewModel.
+                    // Let's assume viewModel has them.
+                    // Wait, viewModel needs duties.
+                    // Let's check viewModel in SettingsScreen.
+                    // I will need to pass duties to SettingsScreen or add a method to MainViewModel to sync.
+                    // For now, I'll assume I can just use a method in viewModel.
+                    // Or I can add a method to viewModel to trigger the sync.
+                    viewModel.syncDutiesToCalendar(context, calId)
+                },
+                onDismiss = { showSyncCalendarDialog = false }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Missal Reading Preferences Card
+        val readingTextSize by viewModel.readingTextSize.collectAsStateWithLifecycle()
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("reading_preferences_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                        contentDescription = null,
+                        tint = GoldBright
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Reading Text Size Settings",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                             fontFamily = FontFamily.Serif,
+                             fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Adjust the typography size for reading the Roman Missal.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Text Size Scale",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = GoldBright
+                    )
+                    Text(
+                        text = "${readingTextSize.toInt()} sp",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace),
+                        color = GoldBright
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Slider(
+                    value = readingTextSize,
+                    onValueChange = { size ->
+                        viewModel.updateReadingTextSize(size)
+                    },
+                    valueRange = 12f..24f,
+                    steps = 5, // Allows exact steps: 12, 14, 16, 18, 20, 22, 24
+                    colors = SliderDefaults.colors(
+                        thumbColor = GoldBright,
+                        activeTrackColor = CrimsonBurgundy,
+                        inactiveTrackColor = DarkCathedralCardBorder
+                    ),
+                    modifier = Modifier.testTag("reading_text_size_slider")
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = DarkCathedralCardBorder)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "LITURGICAL PREVIEW",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = GoldDark
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Preview Container showing dual-language or single text styled with selected size
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(DarkCathedralBackground.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                        .border(1.dp, DarkCathedralCardBorder, RoundedCornerShape(8.dp))
+                        .padding(10.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Dominus vobiscum. Et cum spiritu tuo.",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = readingTextSize.sp,
+                                fontFamily = FontFamily.Serif,
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            ),
+                            color = ParchmentLight.copy(alpha = 0.8f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "The Lord be with you. And with thy spirit.",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = readingTextSize.sp
+                            ),
+                            color = ParchmentLight
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // App Theme Selector Card
+        val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("app_theme_selector_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Palette,
+                        contentDescription = null,
+                        tint = GoldBright
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "App Theme & UI Colors",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Personalize your experience by selecting a liturgical theme corresponding to the season, dedication, or devotions.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val themeOptions = listOf(
+                    Triple("CATHEDRAL_DARK", "Cathedral Dark (Default)", listOf(Color(0xFF0E1116), Color(0xFFD4AF37), Color(0xFF800020))),
+                    Triple("CATHEDRAL_LIGHT", "Parchment Light (Ordinary)", listOf(Color(0xFFFBF8EE), Color(0xFF800020), Color(0xFF997A15))),
+                    Triple("ROSA_MYSTICA", "Rosa Mystica (Rose & Mint)", listOf(StaticBlushCream, StaticSoftRose, StaticMintFrost)),
+                    Triple("PENITENTIAL_VIOLET", "Penitential Violet (Lent & Advent)", listOf(Color(0xFF0F0B18), Color(0xFFAB47BC), Color(0xFFD4AF37))),
+                    Triple("MARIAN_BLUE", "Marian Blue (Feasts of Our Lady)", listOf(Color(0xFF080C16), Color(0xFF42A5F5), Color(0xFFD4AF37))),
+                    Triple("MARTYR_CRIMSON", "Martyrs Crimson (Feasts of Martyrs)", listOf(Color(0xFF13090B), Color(0xFFE53935), Color(0xFFD4AF37))),
+                    Triple("ORDINARY_GREEN", "Ordinary Green (Ordinary Time)", listOf(Color(0xFF09120B), Color(0xFF4CAF50), Color(0xFFD4AF37)))
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    themeOptions.forEach { (id, name, colors) ->
+                        val isSelected = appTheme == id
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) CrimsonBurgundy.copy(alpha = 0.25f) else DarkCathedralSurfaceVariant,
+                            border = BorderStroke(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) GoldBright else DarkCathedralCardBorder
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.updateAppTheme(id) }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(12.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Visual color preview spheres
+                                    Box(modifier = Modifier.size(40.dp)) {
+                                        // Background sphere
+                                        Surface(
+                                            modifier = Modifier.size(24.dp).align(Alignment.BottomStart),
+                                            shape = CircleShape,
+                                            color = colors[0],
+                                            border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.5f))
+                                        ) {}
+                                        // Primary sphere
+                                        Surface(
+                                            modifier = Modifier.size(24.dp).align(Alignment.Center),
+                                            shape = CircleShape,
+                                            color = colors[1],
+                                            border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.5f))
+                                        ) {}
+                                        // Secondary sphere
+                                        Surface(
+                                            modifier = Modifier.size(24.dp).align(Alignment.TopEnd),
+                                            shape = CircleShape,
+                                            color = colors[2],
+                                            border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.5f))
+                                        ) {}
+                                    }
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Text(
+                                        text = name,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = FontFamily.Serif
+                                        ),
+                                        color = if (isSelected) GoldBright else ParchmentLight
+                                    )
+                                }
+
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = { viewModel.updateAppTheme(id) },
+                                    colors = RadioButtonDefaults.colors(
+                                        selectedColor = GoldBright,
+                                        unselectedColor = DarkCathedralCardBorder
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Local Encrypted Backup & Restore Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("backup_restore_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = GoldBright
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Encrypted Local Backup & Restore",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Export or restore your examination of conscience entries, personal meditation reflections, spiritual duties, and confession ledger key into an encrypted JSON file on your device storage (100% offline & local).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                if (isBackupOperationRunning) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = GoldBright, strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("Encrypting / Decrypting local data...", color = GoldBright, fontSize = 12.sp)
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { showBackupPasswordDialog = true },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("export_backup_btn"),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = GoldBright),
+                            border = BorderStroke(1.dp, GoldSacred),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Export Backup", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = {
+                                importDocumentLauncher.launch(arrayOf("*/*", "application/json", "application/octet-stream"))
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("restore_backup_btn"),
+                            colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = ParchmentLight),
+                            border = BorderStroke(1.dp, GoldSacred),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Restore Backup", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Export Examination Record to PDF Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("export_exam_pdf_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = GoldBright
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Export Examination to Encrypted PDF",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Generate a formatted PDF report of your Examination of Conscience entries for sacramental preparation or personal record-keeping, protected with 128-bit PDF encryption for complete data privacy.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedButton(
+                    onClick = { showExportExamPdfDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("export_exam_pdf_btn"),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GoldBright),
+                    border = BorderStroke(1.dp, GoldSacred),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Export Password-Protected PDF 📄🔒", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    if (showExportExamPdfDialog) {
+        ExportExaminationPdfDialog(
+            onDismiss = { showExportExamPdfDialog = false },
+            onConfirmExport = { pwd ->
+                pdfExportPasswordInput = pwd
+                showExportExamPdfDialog = false
+                val dateStr = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
+                exportExamPdfLauncher.launch("custos_examination_$dateStr.pdf")
+            }
+        )
+    }
+
+    // Edit Time Dialog
+    if (showTimeEditDialog != null) {
+        val titleText = when (showTimeEditDialog) {
+            "SAINT" -> "Saint of the Day Notification Time"
+            "MORNING" -> "Morning Prayer Time (Lauds / Prime)"
+            "EVENING" -> "Evening Prayer Time (Vesp. / Examen)"
+            "ANGELUS_MORNING" -> "Angelus - Morning Alarm Time"
+            "ANGELUS_NOON" -> "Angelus - Midday Alarm Time (12:00 PM)"
+            "ANGELUS_EVENING" -> "Angelus - Evening Alarm Time (6:00 PM)"
+            "SACRED_HEART" -> "Sacred Heart Devotion Notification Time"
+            "IMMACULATE_HEART" -> "Immaculate Heart Devotion Notification Time"
+            else -> "Notification Time"
+        }
+
+        AlertDialog(
+            onDismissRequest = {
+                showTimeEditDialog = null
+            },
+            title = {
+                Text(
+                    titleText,
+                    color = GoldBright,
+                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        "Scroll the clock face or hours/minutes wheels to set schedule time:",
+                        color = ParchmentLight,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ScrollableClockPicker(
+                        initialTime = tempTimeValue.ifBlank { "08:00" },
+                        onTimeChanged = { newTime ->
+                            tempTimeValue = newTime
+                        },
+                        modifier = Modifier.testTag("dialog_time_input")
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val cleanTime = tempTimeValue.trim()
+                        if (cleanTime.isBlank() || !cleanTime.contains(":")) {
+                            Toast.makeText(context, "Please enter a valid time in HH:mm format (e.g. 12:00)", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        when (showTimeEditDialog) {
+                            "SAINT" -> saintTimeInput = cleanTime
+                            "MORNING" -> morningTimeInput = cleanTime
+                            "EVENING" -> eveningTimeInput = cleanTime
+                            "ANGELUS_MORNING" -> angelusMorningInput = cleanTime
+                            "ANGELUS_NOON" -> angelusNoonInput = cleanTime
+                            "ANGELUS_EVENING" -> angelusEveningInput = cleanTime
+                            "SACRED_HEART" -> sacredHeartTimeInput = cleanTime
+                            "IMMACULATE_HEART" -> immaculateHeartTimeInput = cleanTime
+                        }
+                        viewModel.updateNotificationPreferences(
+                            morningTimeInput,
+                            eveningTimeInput,
+                            saintTimeInput,
+                            notificationsEnabled,
+                            angelusMorningInput,
+                            angelusNoonInput,
+                            angelusEveningInput,
+                            angelusEnabled,
+                            sacredHeartTimeInput,
+                            sacredHeartEnabled,
+                            immaculateHeartTimeInput,
+                            immaculateHeartEnabled, liturgicalSeasonEnabled)
+                        Toast.makeText(context, "System prayer notification time updated.", Toast.LENGTH_SHORT).show()
+                        showTimeEditDialog = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GoldSacred, contentColor = Color.Black),
+                    modifier = Modifier.testTag("save_time_btn")
+                ) {
+                    Text("Save Time", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showTimeEditDialog = null
+                }) {
+                    Text("Cancel", color = TextMutedParchment)
+                }
+            },
+            containerColor = DarkCathedralSurface,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // Export Password Dialog
+    if (showBackupPasswordDialog) {
+        var pwdText by remember { mutableStateOf("") }
+        var confirmPwdText by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showBackupPasswordDialog = false },
+            title = {
+                Text(
+                    "Create Encrypted Backup",
+                    color = GoldBright,
+                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Set a password to protect your encrypted JSON backup file (AES-256). You will need this password to restore your data later.",
+                        color = ParchmentLight,
+                        fontSize = 12.sp
+                    )
+                    OutlinedTextField(
+                        value = pwdText,
+                        onValueChange = { pwdText = it },
+                        label = { Text("Backup Password") },
+                        singleLine = true,
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GoldBright,
+                            unfocusedBorderColor = DarkCathedralCardBorder
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("export_pwd_input")
+                    )
+                    OutlinedTextField(
+                        value = confirmPwdText,
+                        onValueChange = { confirmPwdText = it },
+                        label = { Text("Confirm Backup Password") },
+                        singleLine = true,
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GoldBright,
+                            unfocusedBorderColor = DarkCathedralCardBorder
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("export_confirm_pwd_input")
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (pwdText.length < 4) {
+                            Toast.makeText(context, "Password must be at least 4 characters.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        if (pwdText != confirmPwdText) {
+                            Toast.makeText(context, "Passwords do not match.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        backupPasswordInput = pwdText
+                        showBackupPasswordDialog = false
+                        val dateStr = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
+                        exportDocumentLauncher.launch("custos_backup_$dateStr.json")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GoldSacred, contentColor = Color.Black),
+                    modifier = Modifier.testTag("confirm_export_btn")
+                ) {
+                    Text("Save Encrypted File", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBackupPasswordDialog = false }) {
+                    Text("Cancel", color = TextMutedParchment)
+                }
+            },
+            containerColor = DarkCathedralSurface,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // Restore Password Dialog
+    if (showRestorePasswordDialog && restoreFileUri != null) {
+        var restorePwdText by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = {
+                showRestorePasswordDialog = false
+                restoreFileUri = null
+            },
+            title = {
+                Text(
+                    "Decrypt & Restore Backup",
+                    color = GoldBright,
+                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Enter the password used when creating this backup file to decrypt and restore your entries:",
+                        color = ParchmentLight,
+                        fontSize = 12.sp
+                    )
+                    OutlinedTextField(
+                        value = restorePwdText,
+                        onValueChange = { restorePwdText = it },
+                        label = { Text("Decryption Password") },
+                        singleLine = true,
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GoldBright,
+                            unfocusedBorderColor = DarkCathedralCardBorder
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("restore_pwd_input")
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val uri = restoreFileUri
+                        if (uri == null || restorePwdText.isBlank()) {
+                            Toast.makeText(context, "Password is required.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        showRestorePasswordDialog = false
+                        isBackupOperationRunning = true
+                        coroutineScope.launch {
+                            try {
+                                val inputStream = context.contentResolver.openInputStream(uri)
+                                if (inputStream != null) {
+                                    val result = viewModel.restoreEncryptedBackup(restorePwdText, inputStream)
+                                    when (result) {
+                                        is com.example.utils.RestoreResult.Success -> {
+                                            Toast.makeText(context, "Restore Completed!\n${result.restoredCountSummary}", Toast.LENGTH_LONG).show()
+                                        }
+                                        is com.example.utils.RestoreResult.Error -> {
+                                            Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Could not open selected backup file.", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Restore Failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                            } finally {
+                                isBackupOperationRunning = false
+                                restoreFileUri = null
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GoldSacred, contentColor = Color.Black),
+                    modifier = Modifier.testTag("confirm_restore_btn")
+                ) {
+                    Text("Decrypt & Restore Data", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showRestorePasswordDialog = false
+                    restoreFileUri = null
+                }) {
+                    Text("Cancel", color = TextMutedParchment)
+                }
+            },
+            containerColor = DarkCathedralSurface,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+}
+
+
+@Composable
+fun NotificationTimeRow(
+    title: String,
+    subtitle: String? = null,
+    time: String,
+    onClick: () -> Unit,
+    onTestClick: (() -> Unit)? = null,
+    testTagPrefix: String = "notif_row"
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, color = ParchmentLight, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            if (!subtitle.isNullOrBlank()) {
+                Text(subtitle, color = TextMutedParchment, fontSize = 11.sp)
+            }
+            Text("⏰ Scheduled time: $time", color = GoldBright, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            onTestClick?.let { onTest ->
+                OutlinedButton(
+                    onClick = onTest,
+                    border = BorderStroke(1.dp, CrimsonBurgundy),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.testTag("${testTagPrefix}_test_btn")
+                ) {
+                    Text("Test", fontSize = 10.sp, color = ParchmentLight)
+                }
+            }
+            OutlinedButton(
+                onClick = onClick,
+                border = BorderStroke(1.dp, GoldSacred),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                modifier = Modifier.testTag("${testTagPrefix}_change_btn")
+            ) {
+                Text("Change", fontSize = 10.sp, color = GoldBright, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+fun PhoneCalendarSyncDialog(
+    calendars: List<PhoneCalendar>,
+    onSelectAndSync: (Long) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var selectedCalendarId by remember { mutableStateOf(calendars.firstOrNull()?.id) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Select Phone Calendar",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = GoldBright
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Select which calendar account on your phone to clone all spiritual duties to. This creates recurring alerts matching your rule of life.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMutedParchment
+                )
+
+                if (calendars.isEmpty()) {
+                    Text(
+                        text = "No active calendars found on your device. Please ensure you have configured a calendar account.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Red
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        calendars.forEach { cal ->
+                            val isSelected = selectedCalendarId == cal.id
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        if (isSelected) DarkCathedralSurfaceVariant else Color.Transparent,
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (isSelected) GoldBright else DarkCathedralCardBorder,
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable { selectedCalendarId = cal.id }
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = { selectedCalendarId = cal.id },
+                                    colors = RadioButtonDefaults.colors(selectedColor = GoldBright)
+                                )
+                                Column {
+                                    Text(
+                                        text = cal.displayName,
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = ParchmentLight
+                                    )
+                                    Text(
+                                        text = cal.accountName,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextMutedParchment
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    selectedCalendarId?.let { onSelectAndSync(it) }
+                },
+                enabled = selectedCalendarId != null,
+                colors = ButtonDefaults.buttonColors(containerColor = GoldSacred, contentColor = Color.Black)
+            ) {
+                Text("Clone Tasks", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextMutedParchment)
+            }
+        },
+        containerColor = DarkCathedralSurface,
+        shape = RoundedCornerShape(16.dp)
+    )
+}

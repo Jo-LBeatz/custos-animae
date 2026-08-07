@@ -1,0 +1,6 @@
+{
+  "name": "Custos Animae",
+  "description": "Traditional Catholic spiritual discipline assistant produced by REGULA — Rule of Life, General Roman Calendar of Pope Pius XII, offline prayer library, and daily examination of conscience.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
