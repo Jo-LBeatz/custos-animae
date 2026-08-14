@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.material.icons.filled.ArrowBack
 import android.os.Build
 import android.content.Intent
 import android.widget.Toast
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Check
@@ -29,6 +31,11 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Visibility
+import com.example.ui.PageViewMode
+import com.example.util.AppLanguage
+import com.example.util.AppTranslationHelper
 import android.net.Uri
 import androidx.compose.foundation.shape.CircleShape
 import com.example.ui.components.ScrollableClockPicker
@@ -59,14 +66,19 @@ import java.util.Date
 import java.util.Calendar
 import java.util.Locale
 
+import com.example.ui.components.TrackScrollState
+import com.example.ui.components.fullScreenToggleOnTap
+import com.example.ui.components.rememberDirectionalScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+
 @Composable
 fun SettingsScreen(
     viewModel: MainViewModel
 ) {
     val context = LocalContext.current
-    val profile by viewModel.userProfile.collectAsState()
-    val duties by viewModel.allDuties.collectAsState()
-    val customRingtoneUri by viewModel.customRingtoneUri.collectAsState()
+    val profile by viewModel.userProfile.collectAsStateWithLifecycle()
+    val duties by viewModel.allDuties.collectAsStateWithLifecycle()
+    val customRingtoneUri by viewModel.customRingtoneUri.collectAsStateWithLifecycle()
 
     val ringtonePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -241,31 +253,18 @@ fun SettingsScreen(
     var tempTimeValue by remember { mutableStateOf("") }
 
     val scrollState = rememberScrollState()
-
-    LaunchedEffect(scrollState.value, scrollState.maxValue) {
-        val currentScroll = scrollState.value
-        val maxScroll = scrollState.maxValue
-        
-        if (currentScroll <= 10) {
-            viewModel.setBottomNavVisible(true)
-            viewModel.setTopHeaderVisible(true)
-        } else if (currentScroll > 30) {
-            viewModel.setBottomNavVisible(false)
-            viewModel.setTopHeaderVisible(false)
-        }
-        
-        val progress = if (maxScroll > 0) currentScroll.toFloat() / maxScroll.toFloat() else 0f
-        viewModel.setReadingProgress(progress)
-    }
+    TrackScrollState(scrollState = scrollState, viewModel = viewModel)
 
     DisposableEffect(Unit) {
         onDispose {
             viewModel.setReadingProgress(0f)
             viewModel.setBottomNavVisible(true)
+            viewModel.setTopHeaderVisible(true)
         }
     }
 
     val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
+    val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
 
     Column(
         modifier = Modifier
@@ -274,6 +273,8 @@ fun SettingsScreen(
             .wrapContentWidth(Alignment.CenterHorizontally)
             .widthIn(max = 600.dp)
             .padding(16.dp)
+            .fullScreenToggleOnTap(viewModel)
+            .nestedScroll(directionalScrollConnection)
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -565,8 +566,8 @@ fun SettingsScreen(
 
                 // Morning Prayer
                 NotificationTimeRow(
-                    title = "Morning Prayer (Lauds / Prime)",
-                    subtitle = "Morning offering and Divine Office start",
+                    title = "Morning Prayer",
+                    subtitle = "Morning offering and daily prayers",
                     time = morningTimeInput,
                     onClick = {
                         tempTimeValue = morningTimeInput
@@ -575,7 +576,7 @@ fun SettingsScreen(
                     onTestClick = {
                         viewModel.testNotificationNow(
                             "Morning Prayer Reminder",
-                            "Time for your morning prayer, Lauds, and daily offering to Almighty God."
+                            "Time for your morning prayer and daily offering to Almighty God."
                         )
                         Toast.makeText(context, "Fired test Morning Prayer notification!", Toast.LENGTH_SHORT).show()
                     },
@@ -810,9 +811,6 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         // Liturgical Season Notifications Card
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -907,6 +905,75 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Request Unrestricted Background Execution", color = GoldBright, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Page Visibility Preference Card
+        val pageViewMode by viewModel.pageViewMode.collectAsStateWithLifecycle()
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.Visibility, contentDescription = null, tint = GoldBright)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Page Viewing Preference",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Configure whether top headers and bottom navigation elements are displayed or hidden for pure content visibility across ALL PAGES:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMutedParchment
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val pageViewOptions = listOf(
+                    Triple(PageViewMode.PURE_CONTENT, "Pure Visibility (Without Top & Bottom Elements)", "Hides top header and bottom navigation bar completely for 100% pure, uninterrupted content space on all pages."),
+                    Triple(PageViewMode.STANDARD_WITH_BARS, "Standard View (With Top & Bottom Elements)", "Keeps top header title and bottom navigation bar visible at all times on all pages."),
+                    Triple(PageViewMode.DYNAMIC_AUTO_HIDE, "Dynamic Auto-Hide", "Fades out top & bottom bars on scroll down, restores them on scroll up or tap.")
+                )
+
+                pageViewOptions.forEach { (mode, title, desc) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.setPageViewMode(mode) }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (pageViewMode == mode),
+                            onClick = { viewModel.setPageViewMode(mode) },
+                            colors = RadioButtonDefaults.colors(selectedColor = GoldBright)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(text = title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = GoldBright)
+                            Text(text = desc, style = MaterialTheme.typography.bodySmall, color = TextMutedParchment)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { viewModel.openPageVisibilityPrompt() },
+                    border = BorderStroke(1.dp, GoldSacred),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Open Page Viewing Preference Prompt", color = GoldBright)
                 }
             }
         }
@@ -1120,7 +1187,7 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Missal Reading Preferences Card
+        // Reading Preferences Card
         val readingTextSize by viewModel.readingTextSize.collectAsStateWithLifecycle()
         Card(
             modifier = Modifier
@@ -1149,7 +1216,7 @@ fun SettingsScreen(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Adjust the typography size for reading the Roman Missal.",
+                    text = "Adjust the typography size for reading prayers and spiritual texts.",
                     style = MaterialTheme.typography.bodySmall,
                     color = ParchmentLight
                 )
@@ -1237,7 +1304,6 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
         // App Theme Selector Card
         val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
         Card(
@@ -1495,7 +1561,147 @@ fun SettingsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // RegulaVitae Developer & Social Links Card in Settings
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("regulavitae_settings_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(
+                1.5.dp,
+                androidx.compose.ui.graphics.Brush.linearGradient(
+                    listOf(GoldBright, CrimsonBurgundy, GoldSacred)
+                )
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = null,
+                            tint = CrimsonBurgundy,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = "Powered & Developed by RegulaVitae",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = GoldBright
+                            )
+                            Text(
+                                text = "My Personal Creator Work & Socials",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMutedParchment
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Follow and support my work across my official social channels for daily traditional Catholic content, feast reminders, and spiritual discipline updates:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Social buttons grid/column
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Website
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://regulavitae.vercel.app/"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("settings_social_website"),
+                        border = BorderStroke(1.dp, GoldSacred),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = GoldBright, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Official Website (regulavitae.vercel.app)", color = ParchmentLight, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    }
+
+                    // WhatsApp
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://whatsapp.com/channel/0029VbCj8TYKGGGDxtDcrc0h"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("settings_social_whatsapp"),
+                        border = BorderStroke(1.dp, Color(0xFF25D366)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF25D366), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Join WhatsApp Channel", color = ParchmentLight, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    }
+
+                    // Instagram
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.instagram.com/regulavitae/#"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("settings_social_instagram"),
+                        border = BorderStroke(1.dp, Color(0xFFE1306C)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color(0xFFE1306C), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Follow on Instagram (@regulavitae)", color = ParchmentLight, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    }
+
+                    // YouTube
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/@regulavitae"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("settings_social_youtube"),
+                        border = BorderStroke(1.dp, Color(0xFFFF0000)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(Icons.Default.MusicNote, contentDescription = null, tint = Color(0xFFFF0000), modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Subscribe on YouTube (@regulavitae)", color = ParchmentLight, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Button(
+                    onClick = { viewModel.setTab(9) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("settings_view_regulavitae_page_btn"),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = CrimsonBurgundy,
+                        contentColor = ParchmentLight
+                    ),
+                    border = BorderStroke(1.dp, GoldSacred),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Open Dedicated RegulaVitae Page ☩", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(120.dp))
     }
 
     if (showExportExamPdfDialog) {
@@ -1514,8 +1720,8 @@ fun SettingsScreen(
     if (showTimeEditDialog != null) {
         val titleText = when (showTimeEditDialog) {
             "SAINT" -> "Saint of the Day Notification Time"
-            "MORNING" -> "Morning Prayer Time (Lauds / Prime)"
-            "EVENING" -> "Evening Prayer Time (Vesp. / Examen)"
+            "MORNING" -> "Morning Prayer Time"
+            "EVENING" -> "Evening Prayer / Examen Time"
             "ANGELUS_MORNING" -> "Angelus - Morning Alarm Time"
             "ANGELUS_NOON" -> "Angelus - Midday Alarm Time (12:00 PM)"
             "ANGELUS_EVENING" -> "Angelus - Evening Alarm Time (6:00 PM)"
@@ -1773,8 +1979,7 @@ fun SettingsScreen(
             shape = RoundedCornerShape(16.dp)
         )
     }
-}
-
+    }
 
 @Composable
 fun NotificationTimeRow(
@@ -1926,3 +2131,5 @@ fun PhoneCalendarSyncDialog(
         shape = RoundedCornerShape(16.dp)
     )
 }
+
+

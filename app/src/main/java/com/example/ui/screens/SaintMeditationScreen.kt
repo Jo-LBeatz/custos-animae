@@ -37,6 +37,13 @@ import com.example.ui.MainViewModel
 import com.example.ui.components.GothicHeader
 import com.example.ui.components.IlluminatedDivider
 import com.example.ui.theme.*
+import com.example.util.AppLanguage
+import com.example.util.AppTranslationHelper
+
+import com.example.ui.components.TrackScrollState
+import com.example.ui.components.fullScreenToggleOnTap
+import com.example.ui.components.rememberDirectionalScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 @Composable
 fun SaintMeditationScreen(
@@ -47,13 +54,14 @@ fun SaintMeditationScreen(
     val todaySaint = viewModel.getTodaySaint()
     var selectedSaint by remember { mutableStateOf(todaySaint) }
 
-    val searchQuery by viewModel.saintSearchQuery.collectAsState()
+    val searchQuery by viewModel.saintSearchQuery.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val searchResults = remember(searchQuery) { SaintData.searchSaints(searchQuery) }
 
     val existingReflectionFlow = remember(selectedSaint.saintId) {
         viewModel.getSaintReflection(selectedSaint.saintId)
     }
-    val existingReflection by existingReflectionFlow.collectAsState(initial = null)
+    val existingReflection by existingReflectionFlow.collectAsStateWithLifecycle(initialValue = null)
 
     var userReflectionText by remember(selectedSaint.saintId) { mutableStateOf("") }
     var personalResolutionText by remember(selectedSaint.saintId) { mutableStateOf(selectedSaint.resolution) }
@@ -74,31 +82,18 @@ fun SaintMeditationScreen(
     }
 
     val scrollState = rememberScrollState()
-
-    LaunchedEffect(scrollState.value, scrollState.maxValue) {
-        val currentScroll = scrollState.value
-        val maxScroll = scrollState.maxValue
-        
-        if (currentScroll <= 10) {
-            viewModel.setBottomNavVisible(true)
-            viewModel.setTopHeaderVisible(true)
-        } else if (currentScroll > 30) {
-            viewModel.setBottomNavVisible(false)
-            viewModel.setTopHeaderVisible(false)
-        }
-        
-        val progress = if (maxScroll > 0) currentScroll.toFloat() / maxScroll.toFloat() else 0f
-        viewModel.setReadingProgress(progress)
-    }
+    TrackScrollState(scrollState = scrollState, viewModel = viewModel)
 
     DisposableEffect(Unit) {
         onDispose {
             viewModel.setReadingProgress(0f)
             viewModel.setBottomNavVisible(true)
+            viewModel.setTopHeaderVisible(true)
         }
     }
 
     val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
+    val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
 
     Column(
         modifier = Modifier
@@ -107,6 +102,8 @@ fun SaintMeditationScreen(
             .wrapContentWidth(Alignment.CenterHorizontally)
             .widthIn(max = 600.dp)
             .padding(horizontal = 16.dp)
+            .fullScreenToggleOnTap(viewModel)
+            .nestedScroll(directionalScrollConnection)
             .verticalScroll(scrollState)
     ) {
         androidx.compose.animation.AnimatedVisibility(
@@ -116,15 +113,15 @@ fun SaintMeditationScreen(
         ) {
             Column {
                 GothicHeader(
-                    title = "SAINT MEDITATION",
-                    subtitle = "1954 Roman Calendar • Virtues, Quotes & Intercession"
+                    title = AppTranslationHelper.translate("SAINT MEDITATION", appLanguage),
+                    subtitle = AppTranslationHelper.translate("1954 Roman Calendar • Virtues, Quotes & Intercession", appLanguage)
                 )
 
                 // Search Bar for Saints
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.setSaintSearchQuery(it) },
-                    label = { Text("Search Saints across 1954 Calendar...") },
+                    label = { Text(AppTranslationHelper.translate("Search Saints across 1954 Calendar...", appLanguage)) },
                     leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = GoldBright) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -143,7 +140,7 @@ fun SaintMeditationScreen(
                         colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface)
                     ) {
                         Column(modifier = Modifier.padding(10.dp)) {
-                            Text("Search Results:", style = MaterialTheme.typography.labelSmall, color = TextMutedParchment)
+                            Text(AppTranslationHelper.translate("Search Results:", appLanguage), style = MaterialTheme.typography.labelSmall, color = TextMutedParchment)
                             searchResults.take(4).forEach { saint ->
                                 TextButton(
                                     onClick = {
@@ -152,8 +149,10 @@ fun SaintMeditationScreen(
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
+                                    val transName = AppTranslationHelper.translate(saint.saintName, appLanguage)
+                                    val transFeast = AppTranslationHelper.translate(saint.feastTitle, appLanguage)
                                     Text(
-                                        text = "☩ ${saint.saintName} (${saint.feastTitle})",
+                                        text = "☩ $transName ($transFeast)",
                                         color = GoldBright,
                                         modifier = Modifier.fillMaxWidth()
                                     )
@@ -182,7 +181,7 @@ fun SaintMeditationScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = selectedSaint.feastTitle.uppercase(),
+                            text = AppTranslationHelper.translate(selectedSaint.feastTitle, appLanguage).uppercase(),
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
@@ -190,7 +189,7 @@ fun SaintMeditationScreen(
                             color = GoldBright
                         )
                         Text(
-                            text = selectedSaint.feastRank,
+                            text = AppTranslationHelper.translate(selectedSaint.feastRank, appLanguage),
                             style = MaterialTheme.typography.bodySmall,
                             color = TextMutedParchment
                         )
@@ -219,7 +218,7 @@ fun SaintMeditationScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = selectedSaint.saintName,
+                    text = AppTranslationHelper.translate(selectedSaint.saintName, appLanguage),
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold
@@ -264,54 +263,6 @@ fun SaintMeditationScreen(
                 IlluminatedDivider()
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Historical Biography
-                Text(
-                    text = "Historical Biography",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = GoldBright
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = selectedSaint.biography,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = ParchmentLight
-                )
-
-                val historicityNoteText = selectedSaint.historicityNote.ifBlank { selectedSaint.historicity }
-                if (historicityNoteText.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = DarkCathedralSurfaceVariant),
-                        border = BorderStroke(1.dp, GoldSacred)
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "☩ Historicity & Primary Historical Sources",
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        fontFamily = FontFamily.Serif,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = GoldBright
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = historicityNoteText,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = ParchmentLight
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 // Traditional Quote Box
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -345,42 +296,6 @@ fun SaintMeditationScreen(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Meditation for Personal Reflection
-                Text(
-                    text = "Meditation for Personal Reflection",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = GoldBright
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = selectedSaint.meditation,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = ParchmentLight
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Practical Resolution
-                Text(
-                    text = "Practical Resolution to Imitate Saint",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = GoldBright
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "• ${selectedSaint.resolution}",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = GoldLight
-                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -617,8 +532,8 @@ fun SaintMeditationScreen(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                val allReflections by viewModel.allSaintReflections.collectAsState()
-                val calendarEntries by viewModel.allCalendarEntries.collectAsState()
+                val allReflections by viewModel.allSaintReflections.collectAsStateWithLifecycle()
+                val calendarEntries by viewModel.allCalendarEntries.collectAsStateWithLifecycle()
 
                 Button(
                     onClick = {
@@ -684,6 +599,6 @@ fun SaintMeditationScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(90.dp))
+        Spacer(modifier = Modifier.height(120.dp))
     }
 }

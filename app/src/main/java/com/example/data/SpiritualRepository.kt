@@ -10,8 +10,6 @@ import com.example.data.calendar.Roman1954DataSeeder
 import com.example.data.calendar.SaintData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -23,12 +21,6 @@ class SpiritualRepository(
     private val context: Context? = null
 ) {
 
-    private val httpClient by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(10, TimeUnit.SECONDS)
-            .build()
-    }
 
     val allDuties: Flow<List<SpiritualDuty>> = appDao.getAllDuties()
     val userProfile: Flow<UserProfile?> = appDao.getUserProfile()
@@ -53,6 +45,7 @@ class SpiritualRepository(
     /**
      * Checks if active internet connection is available on the device.
      */
+    @Suppress("DEPRECATION")
     fun isNetworkAvailable(): Boolean {
         val ctx = context ?: return false
         val connectivityManager = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
@@ -63,7 +56,6 @@ class SpiritualRepository(
             val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
         } else {
-            @Suppress("DEPRECATION")
             val activeNetworkInfo = connectivityManager.activeNetworkInfo
             activeNetworkInfo != null && activeNetworkInfo.isConnected
         }
@@ -89,29 +81,6 @@ class SpiritualRepository(
         }
     }
 
-    suspend fun ensureCatechismSeeded() {
-        ensureJsonPrepopulated()
-        val catechismArticles = CatechismDataSeeder.getInitialCatechismArticles()
-        if (appDao.getCatechismCount() < catechismArticles.size) {
-            appDao.insertCatechismArticles(catechismArticles)
-        }
-        if (appDao.getCatechismFtsCount() < catechismArticles.size) {
-            val ftsArticles = catechismArticles.mapIndexed { index, article ->
-                CatechismArticleFts(
-                    rowid = index + 1,
-                    articleId = article.id,
-                    title = article.title,
-                    question = article.question,
-                    answerText = article.answerText,
-                    keywords = article.keywords,
-                    section = article.section,
-                    citations = article.citations
-                )
-            }
-            appDao.insertCatechismArticlesFts(ftsArticles)
-        }
-    }
-
     suspend fun ensureMissalSeeded() {
         ensureJsonPrepopulated()
     }
@@ -134,63 +103,6 @@ class SpiritualRepository(
         } else {
             appDao.searchPrayers(query.trim())
         }
-    }
-
-    fun getAllCatechismArticles(): Flow<List<CatechismArticle>> = appDao.getAllCatechismArticles()
-
-    suspend fun getAllCatechismArticlesSync(): List<CatechismArticle> = appDao.getAllCatechismArticlesSync()
-
-    fun getCatechismArticlesBySection(section: String): Flow<List<CatechismArticle>> {
-        if (section.equals("ALL", ignoreCase = true) || section.isBlank()) {
-            return appDao.getAllCatechismArticles()
-        }
-        val targetSection = when {
-            section.contains("Creed", ignoreCase = true) || section.contains("Faith", ignoreCase = true) -> "Faith"
-            section.contains("Hope", ignoreCase = true) -> "Hope"
-            section.contains("Commandment", ignoreCase = true) || section.contains("Morality", ignoreCase = true) || section.contains("Charity", ignoreCase = true) -> "Commandment"
-            section.contains("Sacrament", ignoreCase = true) || section.contains("Mass", ignoreCase = true) -> "Sacrament"
-            section.contains("Church", ignoreCase = true) || section.contains("Salvation", ignoreCase = true) -> "Church"
-            section.contains("Grace", ignoreCase = true) || section.contains("Virtue", ignoreCase = true) || section.contains("Sin", ignoreCase = true) -> "Grace"
-            else -> section
-        }
-        return appDao.getCatechismArticlesBySection(targetSection)
-    }
-
-    private fun sanitizeFtsQuery(query: String): String {
-        val clean = query.replace(Regex("[^a-zA-Z0-9\\s]"), " ").trim()
-        if (clean.isBlank()) return ""
-        val tokens = clean.split(Regex("\\s+")).filter { it.isNotBlank() }
-        return tokens.joinToString(" ") { "$it*" }
-    }
-
-    fun searchCatechismArticles(query: String): Flow<List<CatechismArticle>> {
-        val trimmed = query.trim()
-        if (trimmed.isBlank()) {
-            return appDao.getAllCatechismArticles()
-        }
-        val ftsQuery = sanitizeFtsQuery(trimmed)
-        return if (ftsQuery.isNotBlank()) {
-            appDao.searchCatechismArticlesFts(ftsQuery)
-        } else {
-            appDao.searchCatechismArticles(trimmed)
-        }
-    }
-
-    suspend fun searchCatechismArticlesSync(query: String): List<CatechismArticle> {
-        val trimmed = query.trim()
-        if (trimmed.isBlank()) {
-            return appDao.getAllCatechismArticlesSync()
-        }
-        val ftsQuery = sanitizeFtsQuery(trimmed)
-        return if (ftsQuery.isNotBlank()) {
-            appDao.searchCatechismArticlesFtsSync(ftsQuery)
-        } else {
-            appDao.searchCatechismArticlesSync(trimmed)
-        }
-    }
-
-    suspend fun toggleCatechismBookmark(article: CatechismArticle) {
-        appDao.updateCatechismArticle(article.copy(isBookmarked = !article.isBookmarked))
     }
 
     fun getPrayersByCategory(category: String): Flow<List<PrayerEntity>> {
@@ -239,8 +151,8 @@ class SpiritualRepository(
             // Rule of St. Benedict (Regula Benedicti) for Men
             listOf(
                 SpiritualDuty(
-                    title = "Morning Vigils & Lauds (Regula Benedicti)",
-                    description = "Chant Lauds and offer the first fruits of the day in monastic silence, as prescribed by St. Benedict.",
+                    title = "Morning Offering & Prayer (Regula Benedicti)",
+                    description = "Offer morning prayers and the first fruits of the day in peaceful recollection, as taught by St. Benedict.",
                     frequency = "DAILY",
                     reminderTime = "06:30",
                     priority = "SACRED",
@@ -249,7 +161,7 @@ class SpiritualRepository(
                 ),
                 SpiritualDuty(
                     title = "Lectio Divina & Holy Scripture",
-                    description = "Engage in 15-20 minutes of contemplative reading of Sacred Scripture and the Holy Rule.",
+                    description = "Engage in 15-20 minutes of contemplative reading of Sacred Scripture and spiritual writings.",
                     frequency = "DAILY",
                     reminderTime = "08:00",
                     priority = "MEDIUM",
@@ -257,8 +169,8 @@ class SpiritualRepository(
                     isSuggestedRule = true
                 ),
                 SpiritualDuty(
-                    title = "Opus Dei & Noon Angelus",
-                    description = "Perform the midday canonical prayer and Angelus; prefer nothing whatever to the Work of God.",
+                    title = "Midday Prayer & Noon Angelus",
+                    description = "Perform the midday Angelus and prayer; prefer nothing whatever to the love of God.",
                     frequency = "DAILY",
                     reminderTime = "12:00",
                     priority = "SACRED",
@@ -275,8 +187,8 @@ class SpiritualRepository(
                     isSuggestedRule = true
                 ),
                 SpiritualDuty(
-                    title = "Compline & Night Examination",
-                    description = "Enter strict monastic silence and examine conscience thoroughly before retiring for rest.",
+                    title = "Night Prayer & Examination of Conscience",
+                    description = "Examine conscience thoroughly and pray in peaceful silence before retiring for rest.",
                     frequency = "DAILY",
                     reminderTime = "21:30",
                     priority = "SACRED",
@@ -304,8 +216,8 @@ class SpiritualRepository(
                     isSuggestedRule = true
                 ),
                 SpiritualDuty(
-                    title = "Annual Monastic Renewal & Retreat",
-                    description = "Dedicate an annual period of days to complete silence, retreat, and total consecration.",
+                    title = "Annual Spiritual Renewal & Retreat",
+                    description = "Dedicate an annual period of days to prayer, retreat, and total consecration.",
                     frequency = "YEARLY",
                     scheduledDaysOfYear = "08-15",
                     reminderTime = "09:00",
@@ -318,7 +230,7 @@ class SpiritualRepository(
             // Regula Donati (Rule of Donatus of Besançon for Nuns/Women)
             listOf(
                 SpiritualDuty(
-                    title = "Morning Consecration & Prime (Regula Donati)",
+                    title = "Morning Consecration & Prayer (Regula Donati)",
                     description = "Offer morning prayers, labor, and heart to Christ through the Blessed Virgin Mary.",
                     frequency = "DAILY",
                     reminderTime = "07:00",
@@ -327,8 +239,8 @@ class SpiritualRepository(
                     isSuggestedRule = true
                 ),
                 SpiritualDuty(
-                    title = "Psalter & Canonical Office",
-                    description = "Recite assigned psalms and daytime office in communal or personal monastic prayer.",
+                    title = "Midday Prayer & Angelus",
+                    description = "Recite the midday Angelus and pray devotions in peaceful recollection.",
                     frequency = "DAILY",
                     reminderTime = "11:30",
                     priority = "SACRED",

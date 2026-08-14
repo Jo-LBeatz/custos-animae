@@ -16,6 +16,12 @@ class LatinAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
 
     private var tts: TextToSpeech? = null
     private var isInitialized = false
+    private var activeLanguageLocale: Locale = Locale.ENGLISH
+
+    fun setLanguageLocale(locale: Locale) {
+        activeLanguageLocale = locale
+        setupLanguage()
+    }
 
     // Media3 ExoPlayer instance manager for audio streams / multi-language audio tracks
     val exoPlayerManager: PrayerExoPlayerManager by lazy { PrayerExoPlayerManager(context) }
@@ -68,17 +74,22 @@ class LatinAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
 
         tts?.let { t ->
             if (!isLatin) {
-                // English Audio with English (UK / British accent) for traditional English prayers
-                val ukLocale = Locale.UK
-                if (t.isLanguageAvailable(ukLocale) >= TextToSpeech.LANG_AVAILABLE) {
-                    t.language = ukLocale
-                    Log.d("LatinAudioPlayer", "Using English UK (British accent) voice for prayer")
+                if (activeLanguageLocale != Locale.ENGLISH && t.isLanguageAvailable(activeLanguageLocale) >= TextToSpeech.LANG_AVAILABLE) {
+                    t.language = activeLanguageLocale
+                    Log.d("LatinAudioPlayer", "Using custom selected language locale: $activeLanguageLocale")
                 } else {
-                    t.language = Locale.ENGLISH
-                    Log.d("LatinAudioPlayer", "Using default English voice for prayer")
+                    // English Audio with English (UK / British accent) for traditional English prayers
+                    val ukLocale = Locale.UK
+                    if (t.isLanguageAvailable(ukLocale) >= TextToSpeech.LANG_AVAILABLE) {
+                        t.language = ukLocale
+                        Log.d("LatinAudioPlayer", "Using English UK (British accent) voice for prayer")
+                    } else {
+                        t.language = Locale.ENGLISH
+                        Log.d("LatinAudioPlayer", "Using default English voice for prayer")
+                    }
                 }
             } else {
-                val laLocale = Locale("la")
+                val laLocale = Locale.forLanguageTag("la")
                 val isLatinAvailable = t.isLanguageAvailable(laLocale)
                 
                 if (useEcclesiastical) {
@@ -215,6 +226,7 @@ class LatinAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
             .replace("✔", "")
             .replace("✘", "")
             .replace("•", " ")
+            .replace(Regex("[\\r\\n]+"), ". ")
             .replace(Regex("\\s+"), " ")
             .trim()
     }

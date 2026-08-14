@@ -7,7 +7,8 @@ data class PrayerItem(
     val subtitle: String = "",
     val englishText: String,
     val latinText: String = "",
-    val notes: String = ""
+    val notes: String = "",
+    val subsection: String = ""
 )
 
 data class RosaryMystery(
@@ -19,7 +20,7 @@ data class RosaryMystery(
 )
 
 data class RosarySet(
-    val category: String, // Joyful, Sorrowful, Glorious, Luminous
+    val category: String, // Joyful, Sorrowful, Glorious
     val days: String,
     val mysteries: List<RosaryMystery>
 )
@@ -102,7 +103,7 @@ in saecula saeculorum. Amen."""
             id = "te_lucis",
             title = "Te Lucis Ante Terminum",
             category = "Night Prayers",
-            subtitle = "Traditional Compline Hymn",
+            subtitle = "Traditional Night Hymn",
             englishText = """To Thee before the close of day, Creator of the world, we pray, That, with Thy wonted favor, Thou Wouldst be our Guard and Keeper now.
 From all ill dreams defend our eyes, From nightly fears and fantasies; Tread under foot our ghostly foe, That no pollution we may know.
 O Father, that we ask be done, Through Jesus Christ, Thine only Son, Who, with the Holy Ghost and Thee, Doth live and reign eternally. Amen.""",
@@ -225,7 +226,7 @@ Nil hoc verbo veritatis verius."""
             title = "Prayer to St. Michael the Archangel",
             category = "Protection & Saints",
             subtitle = "Sancte Michael Archangele",
-            englishText = """St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray, and do thou, O Prince of the Heavenly Host, by the power of God, thrust into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen.""",
+            englishText = """St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray, and do thou, O Prince of the Heavenly Host, by the power of God, thrust into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Hear my humble prayer, O glorious Archangel, and obtain for me this request: (here make your request). Amen.""",
             latinText = """Sancte Michael Archangele, defende nos in praelio; contra nequitiam et insidias diaboli esto praesidium. Imperet illi Deus, supplices deprecamur: tuque, Princeps militiae caelestis, Satanam aliosque spiritus malignos, qui ad perditionem animarum pervagantur in mundo, divina virtute, in infernum detrude. Amen."""
         ),
         PrayerItem(
@@ -233,7 +234,7 @@ Nil hoc verbo veritatis verius."""
             title = "The Memorare",
             category = "Protection & Saints",
             subtitle = "Prayer of St. Bernard of Clairvaux",
-            englishText = """Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thine intercession was left unaided. Inspired by this confidence, I fly unto thee, O Virgin of virgins, my Mother; to thee do I come, before thee I stand, sinful and sorrowful. O Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me. Amen.""",
+            englishText = """Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thine intercession was left unaided. Inspired by this confidence, I fly unto thee, O Virgin of virgins, my Mother; to thee do I come, before thee I stand, sinful and sorrowful. O Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me, particularly in this my urgent necessity: (here make your request). Amen.""",
             latinText = """Memorare, o piissima Virgo Maria, a saeculo non esse auditum quemquam ad tua currentem praesidia, tua implorantem auxilia, tua petentem suffragia, esse derelictum. Ego tali animatus confidentia, ad te, Virgo Virginum, Mater, curro, ad te venio, coram te gemens peccator assisto. Noli, Mater Verbi, verba mea despicere; sed audi propitia et exaudi. Amen."""
         ),
         PrayerItem(
@@ -243,34 +244,378 @@ Nil hoc verbo veritatis verius."""
             subtitle = "Oratio ad Sanctum Benedictum",
             englishText = """O glorious Saint Benedict, sublime model of all virtues, pure vessel of God's grace! Behold me, humbly prostrate before thee. I implore thy loving heart to pray for me before the throne of God. To thee I have recourse in all the dangers which daily surround me. Shield me against my enemies, inspire me to imitate thee in all things. May thy blessing be with me always, so that I may flee from sin and avoid the occasions of it.
 
-Graciously obtain for me from God those favors and graces which I so greatly need, in the trials, miseries and afflictions of life. Thy heart was always so full of love, compassion, and mercy towards those who were afflicted or troubled in any way. Thou didst never dismiss without consolation and assistance any one who had recourse to thee. I therefore invoke thy powerful intercession, in the confident hope that thou wilt hear my prayers and obtain for me the special grace and favor I earnestly implore, if it be for the greater glory of God and the welfare of my soul.
+Graciously obtain for me from God those favors and graces which I so greatly need, in the trials, miseries and afflictions of life. Thy heart was always so full of love, compassion, and mercy towards those who were afflicted or troubled in any way. Thou didst never dismiss without consolation and assistance any one who had recourse to thee. I therefore invoke thy powerful intercession, in the confident hope that thou wilt hear my prayers and obtain for me the special grace and favor I earnestly implore: (here make your request), if it be for the greater glory of God and the welfare of my soul.
 
 Help me, O great Saint Benedict, to live and die as a faithful child of God, to be ever submissive to His holy will, and to attain the eternal happiness of heaven. Amen.""",
             latinText = """Crux sacra sit mihi lux! Non draco sit mihi dux! Vade retro Satana! Nunquam suade mihi vana! Sunt mala quae libas. Ipse venena bibas!
 
 (The Medal of Saint Benedict Exorcism: May the holy Cross be my light! Let not the dragon be my guide! Depart, Satan! Never suggest to me thy vanities! Evil are the things thou profferest. Drink thou thine own poison!)"""
+        ),
+        PrayerItem(
+            id = "st_joseph_ancient",
+            title = "Ancient Prayer to Saint Joseph",
+            category = "Protection & Saints",
+            subtitle = "Over 1900 Years Old Protection Prayer",
+            englishText = """O Saint Joseph, whose protection is so great, so strong, so prompt before the throne of God, I place in thee all my interests and desires.
+
+O Saint Joseph, do assist me by thy powerful intercession, and obtain for me from thy Divine Son all spiritual blessings, through Jesus Christ, our Lord, so that, having engaged here below thy heavenly power, I may offer my thanksgiving and homage to the most loving of Fathers.
+
+O Saint Joseph, I never weary of contemplating thee, and Jesus asleep in thine arms; I dare not approach while He reposes near thy heart. Press Him in my name and kiss His fine head for me and ask Him to return the kiss when I draw my dying breath. Saint Joseph, patron of departing souls, pray for me, and graciously obtain this my special request: (here make your request). Amen."""
+        ),
+        PrayerItem(
+            id = "st_jude_prayer",
+            title = "Prayer to Saint Jude Thaddeus",
+            category = "Protection & Saints",
+            subtitle = "Patron of Hopeless Cases",
+            englishText = """Most holy Apostle, Saint Jude, faithful servant and friend of Jesus, the name of the traitor who delivered thy beloved Master into the hands of His enemies hath caused thee to be forgotten by many, but the Church honors and invokes thee universally, as the patron of hopeless cases, of things almost despaired of.
+
+Pray for me, I am so helpless and alone. Make use, I implore thee, of that particular privilege given to thee, to bring visible and speedy help where help is almost despaired of. Come to my assistance in this great need, that I may receive the consolation and help of Heaven in all my necessities, tribulations, and sufferings, particularly (here make your request), and that I may praise God with thee and all the elect forever.
+
+I promise, O blessed Saint Jude, to be ever mindful of this great favor, to always honor thee as my special and powerful patron, and to gratefully encourage devotion to thee. Amen."""
+        ),
+        PrayerItem(
+            id = "st_anthony_prayer",
+            title = "Unfailing Prayer to Saint Anthony",
+            category = "Protection & Saints",
+            subtitle = "The Wonder-Worker of Padua",
+            englishText = """O holy Saint Anthony, gentlest of Saints, thy love for God and charity for His creatures made thee worthy, when on earth, to possess miraculous powers. Miracles waited on thy word, which thou wert ever ready to speak for those in trouble or anxiety. Encouraged by this thought, I implore thee to obtain for me (here make your request). The answer to my prayer may require a miracle; even so, thou art the Saint of Miracles.
+
+O gentle and loving Saint Anthony, whose heart was ever full of human sympathy, whisper my petition into the ears of the Sweet Infant Jesus, who loved to be folded in thine arms, and the gratitude of my heart will ever be thine. Amen."""
+        ),
+        PrayerItem(
+            id = "st_therese_prayer",
+            title = "Prayer to Saint Thérèse of Lisieux",
+            category = "Protection & Saints",
+            subtitle = "Greatest Saint of Modern Times",
+            englishText = """O Glorious St. Therese, whom Almighty God has raised up to aid and counsel mankind, I implore your miraculous intercession. So powerful are you in obtaining from God favors and graces that Holy Mother Church has called you 'the greatest saint of modern times.' Now I fervently beseech you to answer my petition: (specify petition) And to carry out your promises of spending heaven doing good upon earth, and of ever letting fall from heaven a shower of roses. Henceforth, dear little flower, I will fulfill your plea to be made known everywhere, and I will never cease to lead others to Jesus through you. Amen."""
+        ),
+        PrayerItem(
+            id = "st_philomena_prayer",
+            title = "Prayer to Saint Philomena",
+            category = "Protection & Saints",
+            subtitle = "Illustrious Virgin and Martyr",
+            englishText = """O faithful virgin and glorious martyr, Saint Philomena, who works so many miracles on behalf of the poor and sorrowing, have pity on me. Thou knowest the multitude and diversity of my griefs. Behold me at thy feet, full of misery, but full of hope.
+
+I entreat thy charity, O great Saint! Graciously hear me and obtain from God a favorable answer to the request which I now humbly lay before thee (here make your request).
+
+I firmly believe that through thy merits, thy scorn of the world, thy love for Jesus Christ, and thy heroic death, thou wilt obtain for me what I ask, and that through thy powerful intercession before the throne of God, I may find comfort in my afflictions and strength to do His holy will. Saint Philomena, powerful with God, pray for us. Amen."""
+        ),
+        PrayerItem(
+            id = "st_pius_x_prayer",
+            title = "Prayer to Saint Pius X",
+            category = "Protection & Saints",
+            subtitle = "Pope of the Blessed Sacrament & Restorer of All Things in Christ (Canonized 1954)",
+            englishText = """O Saint Pius X, glorious Pope of the Eucharist, model of humility and fortitude, who didst labor so zealously to restore all things in Christ, protect the Holy Church and all her faithful. Obtain for us a true love for the Holy Mass, devotion to the Blessed Sacrament, and unwavering fidelity to the traditional Catholic Faith. Teach us to preserve Christian modesty, to seek holiness in all our duties, and to defend the sacred traditions handed down by our fathers. Humbly do I beg thee to intercede for my special necessity: (here make your request). Pray for us, that we may be made worthy of the promises of Christ. Amen."""
+        ),
+        PrayerItem(
+            id = "st_anne_prayer",
+            title = "Prayer to Saint Anne",
+            category = "Protection & Saints",
+            subtitle = "Mother of the Blessed Virgin Mary",
+            englishText = """O glorious Saint Anne, filled with compassion for those who invoke thee and with love for those who suffer, heavily laden with the weight of my troubles, I cast myself at thy feet and humbly beg of thee to take the present affair which I recommend to thee under thy special protection: (here make your request). Vouchsafe to recommend it to thy daughter, the Blessed Virgin Mary, and lay it before the throne of Jesus, so that He may bring it to a happy issue. Cease not to intercede for us until my request is granted. Above all, obtain for us the grace of one day beholding our God face to face, and with thee and Mary and all the saints, praising Him through all eternity. Amen."""
+        ),
+        PrayerItem(
+            id = "st_augustine_prayer",
+            title = "Prayer to Saint Augustine of Hippo",
+            category = "Protection & Saints",
+            subtitle = "Doctor of Grace & Spiritual Discipline",
+            englishText = """O glorious Doctor of the Church, Saint Augustine, who didst wonderfully declare the deep mysteries of God's grace and love, I fly to thy powerful intercession. Obtain for us a true spirit of penance, a deep love of Sacred Scripture, and unwavering fidelity to the traditional Catholic Faith. Humbly do I beg thee to present my earnest request to the throne of the Almighty: (here make your request). Pray for us, O great Saint, that we may be made worthy of the promises of Christ. Amen."""
+        ),
+        PrayerItem(
+            id = "st_thomas_aquinas_prayer",
+            title = "Prayer to Saint Thomas Aquinas",
+            category = "Protection & Saints",
+            subtitle = "Doctor Angelicus (For Wisdom & Purity)",
+            englishText = """O glorious Doctor, Saint Thomas, patron of students and Catholic schools, who didst shine with the light of wisdom and the purity of an angel! Guide my mind in the pursuit of truth, guard my heart against all sinful errors, and intercede for me before the throne of the Savior. I earnestly implore thee to obtain for me the grace I now seek: (here make your request). Help me to know God more clearly and love Him more fervently. Amen."""
+        ),
+        PrayerItem(
+            id = "st_francis_prayer",
+            title = "Prayer to Saint Francis of Assisi",
+            category = "Protection & Saints",
+            subtitle = "The Seraphic Patriarch of the Poor",
+            englishText = """O glorious Saint Francis, who didst bear in thy flesh the sacred stigmata of our crucified King, I humbly have recourse to thy powerful prayers. Obtain for me from our Lord Jesus Christ a deep spirit of humility, holy poverty, and a burning charity for souls. Look down with pity upon my present trial, and intercede that my petition may be granted: (here make your request). Help me to follow Christ's footsteps faithfully until death. Amen."""
+        ),
+        PrayerItem(
+            id = "st_ignatius_prayer",
+            title = "Prayer to Saint Ignatius of Loyola",
+            category = "Protection & Saints",
+            subtitle = "Founder of the Society of Jesus",
+            englishText = """O glorious Saint Ignatius, founder of the Society of Jesus, who didst live solely for the Greater Glory of God, I beg thy powerful intercession. Obtain for me a generous heart to serve God, courage to fight against spiritual enemies, and the grace of final perseverance. Look with favor upon my present necessity, and present my petition before the Divine Majesty: (here make your request). Amen."""
+        ),
+        PrayerItem(
+            id = "st_monica_prayer",
+            title = "Prayer to Saint Monica",
+            category = "Protection & Saints",
+            subtitle = "Patroness of Mothers & Wayward Children",
+            englishText = """Exemplary Mother of the Great Augustine, thou didst perseveringly pursue thy wayward son not with threats but with prayerful cries to heaven. Intercede, O holy Monica, for all mothers of our day, that they may learn to draw their children to God through meekness, piety, and patient prayer. Obtain also for us the grace of a holy sorrow for our past sins, so that we may live in constant penitence and union with God, and present to the throne of God our particular petition: (here make your request). Amen."""
+        ),
+        PrayerItem(
+            id = "st_catherine_prayer",
+            title = "Prayer to Saint Catherine of Siena",
+            category = "Protection & Saints",
+            subtitle = "Doctor of the Church & Virgin",
+            englishText = """O glorious Saint Catherine, virgin and Doctor of the Church, who didst receive from God the gift of a most high wisdom and a burning love for the salvation of souls, pray for us. Teach us to love Jesus with that same pure and sacrificial love which filled thy heart. Guide us to defend the Holy Church and her sacred traditions with courage and meekness. Look with maternal pity upon my present sorrow, and obtain for me this grace which I humbly request: (here make your request). Amen."""
+        ),
+        PrayerItem(
+            id = "st_patrick_prayer",
+            title = "Prayer to Saint Patrick",
+            category = "Protection & Saints",
+            subtitle = "Apostle of Ireland",
+            englishText = """O glorious Apostle of Ireland, Saint Patrick, who didst plant the Standard of the Cross in a pagan land and didst chase away the darkness of error! We fly to thy protection and implore thy powerful intercession. Preserve in us the light of the true traditional Catholic Faith, obtain for us a strong and lively hope, and graciously present our special petition to the Lord: (here make your request). Amen."""
+        ),
+        PrayerItem(
+            id = "st_john_vianney_prayer",
+            title = "Prayer to Saint John Vianney",
+            category = "Protection & Saints",
+            subtitle = "The Curé of Ars (Patron of Priests)",
+            englishText = """O holy Curé of Ars, Saint John Marie Vianney, who didst make thy life a constant sacrifice for the conversion of sinners and the sanctification of souls, pray for us. Grant us a portion of that extraordinary spirit of prayer, penance, and love for the Holy Eucharist which consumed thy earthly life. Help us to make sincere and holy confessions, and present our present trials and petitions to the Sacred Heart of Jesus: (here make your request). Amen."""
+        ),
+        PrayerItem(
+            id = "st_gemma_prayer",
+            title = "Prayer to Saint Gemma Galgani",
+            category = "Protection & Saints",
+            subtitle = "The Passion Flower of Lucca",
+            englishText = """O glorious Saint Gemma, pure virgin and victim of divine love, who didst share in the Passion of our Lord Jesus Christ, look down with love upon me from thy place of heavenly glory. Obtain for me a tender devotion to the Blessed Sacrament and the grace to bear my daily cross with patience. Intercede for me in my current necessity, and present my prayer to the Savior: (here make your request). Amen."""
+        ),
+        PrayerItem(
+            id = "st_dominic_prayer",
+            title = "Prayer to Saint Dominic",
+            category = "Protection & Saints",
+            subtitle = "Founder of the Order of Preachers & Defender of the Rosary",
+            englishText = """O glorious Saint Dominic, who didst receive the Holy Rosary from the hands of the Blessed Virgin Mary to preach it to the world for the salvation of souls, pray for us. Inspire us to love the Rosary, to meditate devoutly on its mysteries, and to walk in the path of truth and holiness. Help us to be defenders of the sacred traditions, and obtain for us this special favor which we humbly beg: (here make your request). Amen."""
+        ),
+        PrayerItem(
+            id = "st_francis_de_sales_prayer",
+            title = "Prayer to Saint Francis de Sales",
+            category = "Protection & Saints",
+            subtitle = "Doctor of Spiritual Direction",
+            englishText = """O glorious Saint Francis de Sales, Doctor of Christian Gentleness, who didst convert thousands back to the true Fold through the sweetness of thy love! Direct my heart in the path of holy peace, obtain for me a spirit of meekness under trials, and intercede for me in this my urgent petition: (here make your request). Teach me to seek only the holy will of God. Amen."""
         )
     )
 
     val devotionsImmaculateHeart = listOf(
         PrayerItem(
+            id = "litany_immaculate_heart",
+            title = "Litany of the Immaculate Heart of Mary",
+            category = "Immaculate Heart Devotions",
+            subtitle = "Approved Traditional Litany for Private & Public Devotion",
+            subsection = "Litanies & Consecrations",
+            englishText = """Lord, have mercy on us. Christ, have mercy on us.
+Lord, have mercy on us. Christ, hear us. Christ, graciously hear us.
+God the Father of Heaven, have mercy on us.
+God the Son, Redeemer of the world, have mercy on us.
+God the Holy Ghost, have mercy on us.
+Holy Trinity, one God, have mercy on us.
+
+Heart of Mary, pray for us.
+Heart of Mary, according to the Heart of God, pray for us.
+Heart of Mary, united to the Heart of Jesus, pray for us.
+Heart of Mary, organ of the Holy Ghost, pray for us.
+Heart of Mary, sanctuary of the Adorable Trinity, pray for us.
+Heart of Mary, tabernacle of the Word Incarnate, pray for us.
+Heart of Mary, preserved from original sin, pray for us.
+Heart of Mary, richest treasury of God's grace, pray for us.
+Heart of Mary, blessed among all hearts, pray for us.
+Heart of Mary, throne of glory, pray for us.
+Heart of Mary, abyss of humility, pray for us.
+Heart of Mary, holocaust of divine love, pray for us.
+Heart of Mary, fastened to the Cross with Jesus Christ, pray for us.
+Heart of Mary, solace of the afflicted, pray for us.
+Heart of Mary, refuge of sinners, pray for us.
+Heart of Mary, hope of the agonizing, pray for us.
+Heart of Mary, seat of mercy, pray for us.
+
+Lamb of God, who takest away the sins of the world, spare us, O Lord.
+Lamb of God, who takest away the sins of the world, graciously hear us, O Lord.
+Lamb of God, who takest away the sins of the world, have mercy on us.
+
+V. Pray for us, O Holy Mother of God.
+R. That we may be made worthy of the promises of Christ.
+
+Let us pray: O God of all goodness, who didst fill the holy and immaculate Heart of Mary with the same sentiments of mercy and tenderness for us with which the Heart of Jesus Christ, Thy Son and her Son, was always filled: grant unto all who honor this virginal Heart that, by its merits and intercession, they may remain forever in conformity with the Hearts of Jesus and Mary. Through Christ our Lord. Amen.""",
+            latinText = """Kyrie, eleison. Christe, eleison. Kyrie, eleison.
+Christe, audi nos. Christe, exaudi nos.
+Pater de caelis, Deus, miserere nobis.
+Fili, Redemptor mundi, Deus, miserere nobis.
+Spiritus Sancte, Deus, miserere nobis.
+Sancta Trinitas, unus Deus, miserere nobis.
+
+Cor Mariae, ora pro nobis.
+Cor Mariae, Corde Dei conformatum, ora pro nobis.
+Cor Mariae, Corde Iesu unitum, ora pro nobis.
+Cor Mariae, organum Spiritus Sancti, ora pro nobis.
+Cor Mariae, sanctuarium Sanctissimae Trinitatis, ora pro nobis.
+Cor Mariae, tabernaculum Verbi Incarnati, ora pro nobis.
+Cor Mariae, sine labe originali conceptum, ora pro nobis.
+Cor Mariae, gratiae thesaurus plenissimus, ora pro nobis.
+Cor Mariae, benedictum inter omnia corda, ora pro nobis.
+Cor Mariae, thronus gloriae, ora pro nobis.
+Cor Mariae, abyssus humilitatis, ora pro nobis.
+Cor Mariae, holocaustum divini amoris, ora pro nobis.
+Cor Mariae, Cruci cum Christo confixum, ora pro nobis.
+Cor Mariae, solatium afflictorum, ora pro nobis.
+Cor Mariae, refugium peccatorum, ora pro nobis.
+Cor Mariae, spes agonizantium, ora pro nobis.
+Cor Mariae, sedes misericordiae, ora pro nobis.
+
+Agnus Dei, qui tollis peccata mundi, parce nobis, Domine.
+Agnus Dei, qui tollis peccata mundi, exaudi nos, Domine.
+Agnus Dei, qui tollis peccata mundi, miserere nobis.
+
+V. Ora pro nobis, Sancta Dei Genetrix.
+R. Ut digni efficiamur promissionibus Christi.
+
+Oremus: Deus totius bonitatis, qui beatis et immaculatum Cor Mariae eisdem misericordiae ac pietatis erga nos sensibus replevisti, quibus Iesu Christi Filii tui Cor redundavit: da omnibus hoc Cor virginale colentibus, ut eius meritis et intercessione, cum Cordibus Iesu et Mariae perpetuo conformentur. Per Christum Dominum nostrum. Amen."""
+        ),
+        PrayerItem(
             id = "consecration_mary",
             title = "Act of Consecration to the Immaculate Heart of Mary",
             category = "Immaculate Heart Devotions",
-            englishText = """O Queen of the Most Holy Rosary and tender Mother of men, to thy Immaculate Heart we solemnly consecrate ourselves, our families, our homes, and our country. We promise to cultivate a genuine spirit of prayer and penance, to fulfill our daily duties faithfully, and to practice the First Saturdays Devotion in reparation for blasphemies committed against thy Motherly Heart. Queen of Peace, reign over our hearts and guide us to eternal salvation.""",
-            latinText = """O Regina Sacratissimi Rosarii et dulcissima Mater hominum, Consecramus Nos Regio et Immaculato Cordi Tuo, familias nostras, domos nostras, et patriam nostram. Promittimus nos verum spiritum orationis et poenitentiae culturos, quotidiana officia fideliter impleturos, et Devotionem Primi Sabbati in reparationem blasphemiarum contra Maternum Cor tuum exercituros. Regina Pacis, regna super corda nostra et ad salutem aeternam nos perduc. Amen."""
+            subtitle = "Solemn Act of Consecration of the World (Pope Pius XII, October 31, 1942)",
+            subsection = "Litanies & Consecrations",
+            englishText = """Queen of the Holy Rosary, Help of Christians, Refuge of the human race, Conqueress of all the battles of God! To thee, to thy Immaculate Heart, we, in this hour of humanity's dire need, consecrate and surrender ourselves, in union not only with the Holy Church—the Mystical Body of thy Son, Jesus—which suffers in so many of its members, but also with the entire world.
+
+To thee and to thy Immaculate Heart we entrust, consecrate, and offer not only the Holy Church, but also our homes, our families, and our fatherland. Give peace to the nations and grant that the Church of God may enjoy liberty and quiet to spread throughout the world the Kingdom of Christ, the Kingdom of truth and life, the Kingdom of holiness and grace, the Kingdom of justice, love, and peace. Amen.""",
+            latinText = """Regina sanctissimi Rosarii, Auxilium christianorum, Refugium generis humani, Victrix in omnibus Dei proeliis! Ad pedes tuos provoluti, tibi ac tuo Immaculato Cordi, hac tragica humani generis hora, nos, quae tua sunt, quae nostra sunt, devovemus, consecramus, ac tradimus, non tantum cum Sancta Ecclesia, mystico Filii tui Corpore, quae in multis membris dolet et patitur, sed etiam cum universo mundo.
+
+Tibi et Immaculato Cordi tuo committimus, consecramus, ac tradimus nosmetipsos, familias nostras, domos nostras, patriam nostram. Da pacem populis et concede ut Ecclesia Dei libertate ac tranquillitate fruatur ad Christi Regnum, veritatis et vitae, sanctitatis et gratiae, iustitiae, amoris et pacis, ubique terrarum dilatandum. Amen."""
+        ),
+        PrayerItem(
+            id = "personal_consecration_immaculate_heart",
+            title = "Act of Personal Consecration to the Immaculate Heart of Mary",
+            category = "Immaculate Heart Devotions",
+            subtitle = "Traditional Consecration of St. John Eudes",
+            subsection = "Litanies & Consecrations",
+            englishText = """O Heart of Mary, Mother of God and my Mother, Heart most pure, most holy and most amiable, I surrender and consecrate myself entirely to thee. I dedicate to thee my body and my soul, my thoughts, desires, words, and actions, and all that I possess.
+
+O Mother most loving, take me under thy special protection; guard me from all occasions of sin; obtain for me the grace of true conversion and perfect love of God. Form my heart after the model of thine own, that I may live only for Jesus and for thee, and that at the hour of my death thou mayest present my soul to Jesus, thy Divine Son. Amen.""",
+            latinText = """O Cor Mariae, Mater Dei et Mater mea, Cor purissimum, sanctissimum atque amabilissimum, totum me tibi trado et consecro. Tibi dedico corpus et animam meam, cogitationes, desideria, verba et opera mea, omniaque bona mea.
+
+O Mater amantissima, suscipe me sub singulari tutela tua; custodi me ab omnibus peccati occasionibus; impetra mihi gratiam verae conversionis et perfectae caritatis. Conforma cor meum ad exemplar Cordis tui, ut solum pro Iesu et pro te vivam, et in hora mortis meae animam meam Iesu Divino Filio tuo praesentes. Amen."""
+        ),
+        PrayerItem(
+            id = "act_reparation_immaculate_heart",
+            title = "Act of Reparation to the Immaculate Heart of Mary",
+            category = "Immaculate Heart Devotions",
+            subtitle = "Prescribed for First Saturdays - Roman Raccolta 392",
+            subsection = "Acts of Reparation & First Saturdays",
+            englishText = """O Most Holy Virgin, and our beloved Mother, we listen with grief to the complaints of thy Immaculate Heart surrounded with the thorns which ungrateful men place therein at every moment by their blasphemies and ingratitude. Moved by the ardent desire of loving thee as our Mother and of promoting a true devotion to thy Immaculate Heart, we prostrate ourselves at thy feet to prove the sorrow we feel for the grievances that men cause thee, and to atone by our prayers and sacrifices for the offenses with which men return thy tender love.
+
+Obtain for them and for us the pardon of so many sins. A word from thee will obtain grace and forgiveness for all. Hasten, O Lady, the conversion of sinners, that they may love Jesus and cease to offend the Lord, already so much offended. Turn thine eyes of mercy toward us, that we may love God with all our heart on earth and enjoy Him forever in Heaven. Amen.""",
+            latinText = """O Virgo Sanctissima et Mater nostra dulcissima, maerore perculsi audimus gemitus tui Immaculati Cordis, spinis undique cincti quas ingrati homines suis blasphemiis et ingratitudinibus indesinenter infigunt. Magno flagrantes desiderio te ut Matrem diligendi veramque devotionem tuo Immaculato Cordi propagandi, ad pedes tuos provoluimur, testaturi dolorem quem sentimus ob iniurias tibi illatas, ac precibus et sacrificiis nostris expiaturi offensiones quibus homines tenerrimo amori tuo respondent. Amen."""
         ),
         PrayerItem(
             id = "five_first_saturdays",
-            title = "The Five First Saturdays Devotion",
+            title = "The Five First Saturdays Devotion of Reparation",
             category = "Immaculate Heart Devotions",
-            subtitle = "Our Lady's Promise at Fatima",
+            subtitle = "Given by Our Lady at Fatima & Pontevedra (1925)",
+            subsection = "Acts of Reparation & First Saturdays",
             englishText = """Our Lady promised to assist at the hour of death with all the graces necessary for salvation to all who, on the First Saturday of 5 consecutive months:
-1. Go to Confession (within 8 days before or after).
-2. Receive Holy Communion in reparation to the Immaculate Heart.
+1. Go to Confession (within 8 days before or after, with the intention of making reparation to the Immaculate Heart).
+2. Receive Holy Communion worthily on the First Saturday in reparation.
 3. Recite 5 decades of the Holy Rosary.
-4. Keep Our Lady company for 15 minutes meditating on the mysteries of the Rosary with the intention of making reparation to her.""",
+4. Keep Our Lady company for 15 minutes while meditating on one or more mysteries of the Rosary with the intention of making reparation to her Immaculate Heart.
+
+The Five Blasphemies made against the Immaculate Heart to be repaired:
+1. Blasphemies against her Immaculate Conception.
+2. Blasphemies against her Perpetual Virginity.
+3. Blasphemies against her Divine Maternity and refusing to accept her as the Mother of men.
+4. Blasphemies of those who publicly seek to instill in the hearts of children indifference, contempt, or hatred toward this Immaculate Mother.
+5. Direct insults against her sacred images.""",
             latinText = ""
+        ),
+        PrayerItem(
+            id = "reparation_sorrowful_immaculate_heart",
+            title = "Prayer of Reparation to the Sorrowful and Immaculate Heart of Mary",
+            category = "Immaculate Heart Devotions",
+            subtitle = "From the Roman Raccolta",
+            subsection = "Acts of Reparation & First Saturdays",
+            englishText = """O Sorrowful and Immaculate Heart of Mary, pierced with the sword of sorrow at the foot of the Cross, behold us humbly kneeling before thee. We desire to comfort thy afflicted Heart for the countless sins and outrages of mankind.
+
+We offer thee our prayers, our penances, and our total devotion, uniting our sufferings with the bitter tears thou didst shed for our salvation. May our love console thee, O Mother of Sorrows, and obtain from Jesus the pardon of our offenses and peace for the Church and the whole world. Amen.""",
+            latinText = """O Cor Dolorosum et Immaculatum Mariae, gladio doloris sub Cruce transfixum, en nos humiliter ante te provoluti. Desideramus afflictum Cor tuum consolari pro innumeris peccatis et iniuriis hominum.
+
+Offerimus tibi preces nostras, paenitentias nostras et plenam devotionem nostram, unientes dolores nostros cum lacrimis quas pro nostra salute effudisti. Amor noster te consoletur, o Mater Dolorosa, et impetret a Iesu veniam delictorum nostrorum ac pacem Ecclesiae et universo mundo. Amen."""
+        ),
+        PrayerItem(
+            id = "novena_immaculate_heart",
+            title = "Traditional Novena to the Immaculate Heart of Mary",
+            category = "Immaculate Heart Devotions",
+            subtitle = "Roman Raccolta 390",
+            subsection = "Novenas & Classical Devotions",
+            englishText = """O Heart of Mary, Mother of God and our Mother; Heart most worthy of love, in which the Adorable Trinity is well-pleased, and worthy of all the veneration and love of Angels and of men; Heart most like unto the Heart of Jesus, whereof thou art the most perfect copy; Heart full of goodness, which art so compassionate toward our miseries: do thou melt the coldness of our hearts and make them to be entirely turned to the Heart of our Divine Savior.
+
+Infuse into them the love of thy virtues, inflame them with that divine fire wherewith thine own ever burns. Take under thy protection the Holy Church, defend her and be her sweet refuge against every assault of her enemies. Be thou our way to Jesus, and the channel whereby we may receive all the graces needful for our salvation. Amen.""",
+            latinText = """Cor Mariae, Mater Dei et Mater nostra; Cor amabilissimum, in quo Sanctissima Trinitas sibi bene complacuit, omnibusque Angelorum et hominum laudibus dignissimum; Cor Iesu Cordi simillimum, cuius perfectissima es imago; Cor bonitate plenum et nostris miserationibus compatiens: liquefac cordium nostrorum duritiem, et fac ut ad Divini Salvatoris Cor penitus convertantur. Amen."""
+        ),
+        PrayerItem(
+            id = "memorare_immaculate_heart",
+            title = "Memorare to the Immaculate Heart of Mary",
+            category = "Immaculate Heart Devotions",
+            subtitle = "Roman Raccolta 395",
+            subsection = "Novenas & Classical Devotions",
+            englishText = """Remember, O most pure and compassionate Virgin Mary, that it is a thing unheard of that anyone who had recourse to thy Immaculate Heart, implored its help, or sought its intercession was left forsaken. Inspired with this confidence, I come to thee, O Virgin of virgins, and to thy maternal Heart do I fly; before thee I stand, sinful and sorrowful. O Mother of the Incarnate Word, despise not my petitions, but in thy clemency hear and answer me. Amen.""",
+            latinText = """Memorare, o purissima et clementissima Virgo Maria, a saeculo inauditum esse quemquam ad tuum Immaculatum Cor confugientem, tua implorantem auxilia, tua petentem suffragia, esse derelictum. Tali animatus confidentia, ad tuum Cor maternum curro, ad te venio, coram te gemens peccator assisto. Noli, Mater Verbi Incarnati, verba mea despicere, sed audi propitia et exaudi. Amen."""
+        ),
+        PrayerItem(
+            id = "ave_cor_sanctissimum_john_eudes",
+            title = "Salutation of St. John Eudes to the Immaculate Heart of Mary",
+            category = "Immaculate Heart Devotions",
+            subtitle = "Ave Cor Sanctissimum Mariae (St. John Eudes, 1601–1680)",
+            subsection = "Novenas & Classical Devotions",
+            englishText = """Hail, Heart most holy! Hail, Heart most meek! Hail, Heart most humble! Hail, Heart most pure! Hail, Heart most devoted! Hail, Heart most wise! Hail, Heart most patient! Hail, Heart most obedient! Hail, Heart most vigilant! Hail, Heart most faithful! Hail, Heart most blessed! Hail, Heart most merciful! Hail, most loving Heart of Jesus and Mary!
+
+We praise Thee, we bless Thee, we glorify Thee, we give Thee thanks; we love Thee with all our heart, with all our soul, and with all our strength. We offer Thee our heart, we give it to Thee, we consecrate it to Thee, we immolate it to Thee. Receive it and possess it wholly; purify it, enlighten it, sanctify it, that Thou mayest live and reign in it forever. Amen.""",
+            latinText = """Ave Cor sanctissimum, ave Cor mitissimum, ave Cor humillimum, ave Cor purissimum, ave Cor devotissimum, ave Cor sapientissimum, ave Cor patientissimum, ave Cor oboedientissimum, ave Cor vigilantissimum, ave Cor fidelissimum, ave Cor beatissimum, ave Cor misericordissimum, ave Cor amantissimum Iesu et Mariae!
+
+Te laudamus, te benedicimus, te glorificamus, tibi gratias agimus; te amamus ex toto corde nostro, ex tota anima nostra, et ex totis viribus nostris. Tibi cor nostrum offerimus, donamus, consecramus, immolamus. Accipe illud et posside totum; purifica illud, illumina illud, sanctifica illud, ut in eo vivas et regnes in saecula saeculorum. Amen."""
+        ),
+        PrayerItem(
+            id = "prayer_claret_immaculate_heart",
+            title = "Prayer of St. Anthony Mary Claret to the Immaculate Heart",
+            category = "Immaculate Heart Devotions",
+            subtitle = "For the Salvation and Conversion of Sinners",
+            subsection = "Novenas & Classical Devotions",
+            englishText = """O Heart of Mary, furnace and instrument of love, enkindle me with the love of God and of my neighbor. Thou didst so ardently desire the salvation of souls that thou didst suffer martyrdom of heart at the foot of the Cross.
+
+Obtain for me, O Mother, an ardent zeal for the salvation of my brethren, that I may spare no labor, fear no trial, and shrink from no sacrifice to win souls to Jesus Christ, and to lead them to the eternal joy of Heaven. Amen.""",
+            latinText = """O Cor Mariae, fornax et instrumentum divini amoris, accende me amore Dei et proximi. Quae tanto animarum salutis ardore flagrabas, ut sub Cruce cordis martyrium perpessa sis:
+
+Impetra mihi, o Mater, fervidum zelum pro salute fratrum meorum, ut nullum laborem detrectem, nullum periculum timeam, nullumque sacrificium reformidem ad animas Iesu Christo lucrandas et ad aeternam caeli beatitudinem perducendas. Amen."""
+        ),
+        PrayerItem(
+            id = "sweet_heart_mary_aspiration",
+            title = "Aspiration: Sweet Heart of Mary, Be My Salvation!",
+            category = "Immaculate Heart Devotions",
+            subtitle = "Pope Pius IX Indulgence (Raccolta 393)",
+            subsection = "Invocations & Aspirations",
+            englishText = """Sweet Heart of Mary, be my salvation!
+
+(Latin: Dulcissimum Cor Mariae, esto salus mea!)""",
+            latinText = """Dulcissimum Cor Mariae, esto salus mea!"""
+        ),
+        PrayerItem(
+            id = "immaculate_heart_invocations",
+            title = "Invocations to the Immaculate Heart of Mary",
+            category = "Immaculate Heart Devotions",
+            subtitle = "Traditional Roman Raccolta Invocations (Raccolta 391 & 394)",
+            subsection = "Invocations & Aspirations",
+            englishText = """V. Immaculate Heart of Mary, pray for us now and at the hour of our death.
+R. Amen.
+
+V. Heart of Mary, Mother of God, pray for us.
+R. That we may be made worthy of the promises of Christ.
+
+V. Queen of Peace and Mother of Mercy,
+R. Pray for our families, protect the Church, and save our souls.""",
+            latinText = """V. Cor Mariae Immaculatum, ora pro nobis nunc et in hora mortis nostrae.
+R. Amen.
+
+V. Cor Mariae, Mater Dei, ora pro nobis.
+R. Ut digni efficiamur promissionibus Christi.
+
+V. Regina pacis et Mater misericordiae,
+R. Ora pro familiis nostris, custodi Ecclesiam, et salva animas nostras. Amen."""
         )
     )
 
@@ -279,6 +624,8 @@ Help me, O great Saint Benedict, to live and die as a faithful child of God, to 
             id = "litany_sacred_heart",
             title = "Litany of the Sacred Heart of Jesus",
             category = "Sacred Heart Devotions",
+            subtitle = "Approved by Pope Leo XIII (June 2, 1899) - Roman Raccolta 242",
+            subsection = "Litanies & Consecrations",
             englishText = """Lord, have mercy on us. Christ, have mercy on us.
 Lord, have mercy on us. Christ, hear us. Christ, graciously hear us.
 God the Father of Heaven, have mercy on us.
@@ -291,10 +638,31 @@ Heart of Jesus, formed by the Holy Ghost in the womb of the Virgin Mother, have 
 Heart of Jesus, substantially united to the Word of God, have mercy on us.
 Heart of Jesus, of Infinite Majesty, have mercy on us.
 Heart of Jesus, Sacred Temple of God, have mercy on us.
+Heart of Jesus, Tabernacle of the Most High, have mercy on us.
+Heart of Jesus, House of God and Gate of Heaven, have mercy on us.
 Heart of Jesus, Burning Furnace of Charity, have mercy on us.
 Heart of Jesus, Abode of Justice and Love, have mercy on us.
+Heart of Jesus, full of Goodness and Love, have mercy on us.
+Heart of Jesus, Abyss of all Virtues, have mercy on us.
+Heart of Jesus, most worthy of all praise, have mercy on us.
 Heart of Jesus, King and Center of all hearts, have mercy on us.
 Heart of Jesus, in whom are all the treasures of wisdom and knowledge, have mercy on us.
+Heart of Jesus, in whom dwelleth the fullness of the Divinity, have mercy on us.
+Heart of Jesus, in whom the Father was well pleased, have mercy on us.
+Heart of Jesus, of whose fullness we have all received, have mercy on us.
+Heart of Jesus, desire of the everlasting hills, have mercy on us.
+Heart of Jesus, patient and most merciful, have mercy on us.
+Heart of Jesus, enriching all who invoke Thee, have mercy on us.
+Heart of Jesus, Fountain of life and holiness, have mercy on us.
+Heart of Jesus, Propitiation for our sins, have mercy on us.
+Heart of Jesus, loaded down with opprobrium, have mercy on us.
+Heart of Jesus, bruised for our offenses, have mercy on us.
+Heart of Jesus, obedient unto death, have mercy on us.
+Heart of Jesus, pierced with a lance, have mercy on us.
+Heart of Jesus, Source of all consolation, have mercy on us.
+Heart of Jesus, our Life and Resurrection, have mercy on us.
+Heart of Jesus, our Peace and Reconciliation, have mercy on us.
+Heart of Jesus, Victim for our sins, have mercy on us.
 Heart of Jesus, Salvation of those who trust in Thee, have mercy on us.
 Heart of Jesus, Hope of those who die in Thee, have mercy on us.
 Heart of Jesus, Delight of all the Saints, have mercy on us.
@@ -304,7 +672,9 @@ Lamb of God, who takest away the sins of the world, graciously hear us, O Lord.
 Lamb of God, who takest away the sins of the world, have mercy on us.
 
 V. Jesus, meek and humble of Heart,
-R. Make our hearts like unto Thine.""",
+R. Make our hearts like unto Thine.
+
+Let us pray: Almighty and everlasting God, look upon the Heart of Thy well-beloved Son and upon the praise and satisfaction which He offers unto Thee in the name of sinners; and do Thou, of Thy great goodness, grant forgiveness unto them that seek Thy mercy, in the name of the same Jesus Christ, Thy Son, who liveth and reigneth with Thee in the unity of the Holy Ghost, God, world without end. Amen.""",
             latinText = """Kyrie, eleison. Christe, eleison.
 Kyrie, eleison. Christe, audi nos. Christe, exaudi nos.
 Pater de caelis, Deus, miserere nobis.
@@ -317,22 +687,265 @@ Cor Iesu, in sinu Virginis Matris a Spiritu Sancto formatum, miserere nobis.
 Cor Iesu, Verbo Dei substantialiter unitum, miserere nobis.
 Cor Iesu, maiestatis infinitae, miserere nobis.
 Cor Iesu, templum Dei sanctum, miserere nobis.
+Cor Iesu, tabernaculum Altissimi, miserere nobis.
+Cor Iesu, domus Dei et porta caeli, miserere nobis.
 Cor Iesu, fornax ardens caritatis, miserere nobis.
+Cor Iesu, iustitiae et amoris receptaculum, miserere nobis.
+Cor Iesu, bonitate et amore plenum, miserere nobis.
+Cor Iesu, virtutum omnium abyssus, miserere nobis.
+Cor Iesu, omni laude dignissimum, miserere nobis.
+Cor Iesu, rex et centrum omnium cordium, miserere nobis.
+Cor Iesu, in quo sunt omnes thesauri sapientiae et scientiae, miserere nobis.
+Cor Iesu, in quo habitat omnis plenitudo divinitatis, miserere nobis.
+Cor Iesu, in quo Pater sibi bene complacuit, miserere nobis.
+Cor Iesu, de cuius plenitudine omnes nos accepimus, miserere nobis.
+Cor Iesu, desiderium collium aeternorum, miserere nobis.
+Cor Iesu, patiens et multae misericordiae, miserere nobis.
+Cor Iesu, dives in omnes qui invocant te, miserere nobis.
+Cor Iesu, fons vitae et sanctitatis, miserere nobis.
+Cor Iesu, propitiatio pro peccatis nostris, miserere nobis.
+Cor Iesu, saturatum opprobriis, miserere nobis.
+Cor Iesu, attritum propter scelera nostra, miserere nobis.
+Cor Iesu, usque ad mortem oboediens factum, miserere nobis.
+Cor Iesu, lancea perforatum, miserere nobis.
+Cor Iesu, fons totius consolationis, miserere nobis.
+Cor Iesu, vita et resurrectio nostra, miserere nobis.
+Cor Iesu, pax et reconciliatio nostra, miserere nobis.
+Cor Iesu, victima peccatorum, miserere nobis.
+Cor Iesu, salus in te sperantium, miserere nobis.
+Cor Iesu, spes in te morientium, miserere nobis.
+Cor Iesu, deliciae Sanctorum omnium, miserere nobis.
 
 Agnus Dei, qui tollis peccata mundi, parce nobis, Domine.
 Agnus Dei, qui tollis peccata mundi, exaudi nos, Domine.
 Agnus Dei, qui tollis peccata mundi, miserere nobis.
 
 V. Iesu, mitis et humilis Corde,
-R. Fac cor nostrum secundum Cor tuum."""
+R. Fac cor nostrum secundum Cor tuum.
+
+Oremus: Omnipotens sempiterne Deus, respice in Cor dilectissimi Filii tui et in laudes et satisfactiones, quas in nomine peccatorum tibi persolvit; eisque misericordiam tuam petentibus, tu veniam concede placatus in nomine eiusdem Filii tui Iesu Christi: Qui tecum vivit et regnat in unitate Spiritus Sancti, Deus, per omnia saecula saeculorum. Amen."""
+        ),
+        PrayerItem(
+            id = "act_consecration_sacred_heart_leo_xiii",
+            title = "Act of Consecration of the Human Race to the Sacred Heart",
+            category = "Sacred Heart Devotions",
+            subtitle = "Pope Leo XIII (Annum Sacrum, 1899) - Roman Raccolta 271",
+            subsection = "Litanies & Consecrations",
+            englishText = """Most Sweet Jesus, Redeemer of the human race, look down upon us humbly prostrate before Thy altar. We are Thine, and Thine we wish to be; but to be more surely united to Thee, behold each one of us freely consecrates ourselves today to Thy Most Sacred Heart.
+
+Many indeed have never known Thee; many, too, despising Thy precepts, have rejected Thee. Have mercy on them all, most merciful Jesus, and draw them to Thy Sacred Heart. Be Thou King, O Lord, not only of the faithful who have never forsaken Thee, but also of the prodigal children who have abandoned Thee; grant that they may quickly return to their Father's house, lest they die of wretchedness and hunger.
+
+Be Thou King of those who are deceived by erroneous opinions, or whom discord keeps aloof, and call them back to the harbor of truth and unity of faith, so that soon there may be but one flock and one Shepherd.
+
+Grant, O Lord, to Thy Church assurance of freedom and immunity from harm; give peace and order to all nations, and make the earth resound from pole to pole with one cry: Praise to the Divine Heart that wrought our salvation; to It be glory and honor forever. Amen.""",
+            latinText = """Iesu dulcissime, Redemptor humani generis, respice nos ad altare tuum humillime provolutos. Tui sumus, tui esse volumus; quo autem perfici possit unio nostra tecum, en hodie Sacratissimo Cordi tuo se quisque nostrum libenter consecrat.
+
+Multi quidem te nunquam cognovere; multi item, spreti mandatis tuis, te reiecere. Miserere utrorumque, benignissime Iesu, atque ad sacrum Cor tuum pertrahe universos. Rex esto, Domine, non solum fidelium qui nullo tempore a te discessere, sed etiam prodigorum filiorum qui te reliquere; fac hos in domum paternam cito redeant, ne inedia et miseria pereant.
+
+Rex esto eorum, quos vel opinionum error decepit, vel discordia separavit, eosque ad portum veritatis atque ad fidei unitatem revoca, ut brevi fiat unum ovile et unus pastor.
+
+Largire, Domine, Ecclesiae tuae securam cum incolumitate libertatem; largire cunctis gentibus tranquillitatem ordinis; perfice ut ab utroque terrae vertice una resonet vox: Sit laus Divino Cordi, per quod nobis parta salus; ipsi gloria et honor in saecula. Amen."""
+        ),
+        PrayerItem(
+            id = "act_consecration_margaret_mary",
+            title = "Personal Act of Consecration to the Sacred Heart",
+            category = "Sacred Heart Devotions",
+            subtitle = "Saint Margaret Mary Alacoque - Roman Raccolta 258",
+            subsection = "Litanies & Consecrations",
+            englishText = """I, (Name), give and consecrate to the Sacred Heart of our Lord Jesus Christ my person and my life, my actions, pains, and sufferings, so that I may be unwilling to make use of any part of my being other than to honor, love, and glorify Him.
+
+This is my unchanging purpose: to be all His, and to do all things for His love, while renouncing with all my heart whatever could displease Him.
+
+I therefore take Thee, O Sacred Heart, for the only object of my love, the guardian of my life, the assurance of my salvation, the remedy of my weakness and inconstancy, the atonement for all the faults of my life, and the secure refuge at the hour of my death.
+
+Be then, O Heart of goodness, my justification before God Thy Father, and turn away from me the strokes of His righteous anger. O Heart of love, I put all my trust in Thee, for I fear all things from my own weakness and malice, but I hope for all things from Thy bounty.
+
+Consume in me whatever can displease or resist Thee; let Thy pure love imprint Thee so deeply upon my heart that I may never forget Thee or be separated from Thee. I beseech Thee by all Thy goodness that my name may be written upon Thee, for I wish to make all my happiness and all my glory consist in living and dying in quality of Thy slave. Amen.""",
+            latinText = """Ego (Nomen), do et consecro Sacratissimo Cordi Domini nostri Iesu Christi personam et vitam meam, actiones, aerumnas et passiones meas, ut nulla mea parte uti velim nisi ad ipsum honorandum, amandum et glorificandum. Hoc est meum irrevocabile propositum: totus ipsius esse, et omnia pro eius amore facere, ex toto corde renuntiando quidquid ipsi displicere possit. Amen."""
+        ),
+        PrayerItem(
+            id = "act_consecration_family_sacred_heart",
+            title = "Act of Consecration of the Family to the Sacred Heart",
+            category = "Sacred Heart Devotions",
+            subtitle = "Enthronement of the Sacred Heart in the Home (Benedict XV)",
+            subsection = "Litanies & Consecrations",
+            englishText = """O Sacred Heart of Jesus, Who didst make known to Saint Margaret Mary Thine ardent desire to reign over Christian families, behold us assembled here today to proclaim Thy absolute dominion over our home.
+
+Henceforth we resolve to live according to Thy life, to cultivate in our midst the virtues for which Thou didst promise peace on earth, and to banish from our home the spirit of the world which Thou didst curse.
+
+Reign over our intellects by the simplicity of our faith; reign over our hearts by Thine unreserved love, wherewith they shall burn for Thee and whose flame we will nourish by the frequent reception of Thy Divine Eucharist.
+
+Deign, O Divine Heart, to preside over our gatherings, to bless our enterprises, both spiritual and temporal, to dispel our cares, to sanctify our joys, and to assuage our sufferings. If ever one of us should have the misfortune to displease Thee, remind him, O Heart of Jesus, that Thou art good and merciful to the penitent sinner. Amen.""",
+            latinText = """Sacratissimum Cor Iesu, quod sanctae Margaritae Mariae ardenti studio patefecisti desiderium tuum regnandi in christianis familiis, en nos hodie congregati ad proclamandum absolutum dominium tuum super domum nostram.
+
+Ex hoc tempore proponimus vivere secundum vitam tuam, virtutes in nostro medio fovere quibus pacem in terris promisisti, et a domo nostra spiritum saeculi quem condemnasti procul expellere.
+
+Regna super mentes nostras per fidei simplicitatem; regna super corda nostra per amorem tuum integrum, quo pro te flagrent et cuius flammam frequenti sanctissimae Eucharistiae sumptione alamus. Amen."""
+        ),
+        PrayerItem(
+            id = "act_reparation_sacred_heart_pius_xi",
+            title = "Act of Reparation to the Sacred Heart (Miserentissimus Redemptor)",
+            category = "Sacred Heart Devotions",
+            subtitle = "Pope Pius XI (1928) - Roman Raccolta 256",
+            subsection = "Acts of Reparation & First Fridays",
+            englishText = """O sweet Jesus, whose overflowing charity for men is requited by so much forgetfulness, negligence, and contempt, behold us prostrate before Thee, eager to repair by a special act of homage the cruel indifference and outrages to which Thy loving Heart is everywhere subjected.
+
+Mindful, alas! that we ourselves have had a share in such great indignities, which we now deplore from the depths of our hearts, we humbly ask Thy pardon and declare our readiness to atone by voluntary expiation not only for our own personal offenses, but also for the sins of those who, straying far from the path of salvation, refuse in their obstinate infidelity to follow Thee, their Shepherd and Leader, or, renouncing their baptismal vows, have cast off the sweet yoke of Thy law.
+
+We are now resolved to expiate each and every deplorable outrage committed against Thee: we are determined to make amends for the manifold offenses against Christian modesty in unbecoming dress and behavior, for all the foul seductions laid to ensnare the feet of the innocent, for the frequent violations of Sundays and holidays, and the shocking blasphemies uttered against Thee and Thy Saints.
+
+Accept, then, O most loving Jesus, through the intercession of the Blessed Virgin Mary, the Mother of Reparation, this willing act of expiation; and by the great gift of final perseverance, keep us faithful unto death in our duty and the allegiance we owe to Thee, so that we may all one day come to that happy home where Thou, with the Father and the Holy Ghost, livest and reignest, God, world without end. Amen.""",
+            latinText = """Iesu dulcissime, cuius effusa in homines caritas tanta oblivione, negligentia, contemptione rependitur, en nos, ante altaria tua provoluti, conspicuo honore compescare gestimus nefariam hominum socordiam et iniurias, quibus amantissimum Cor tuum undique afficitur.
+
+Attamen, memores tantae et ipsi nos indignitatis non expertes fuisse, cuius alto dolore nunc sauciamur, tuam imprimis misericordiam nobis imploramus, parati voluntaria expiatione compensare non modo commissa a nobis scelera, sed eorum etiam qui, a salutis tramite longe devii, te pastorem ducemque sequi detrectant, in sua perfidia contumaces, vel, baptismi promissa conculcantes, suavissimum tuae legis iugum excussere.
+
+Accipe, quaesumus, benignissime Iesu, beata Virgine Maria Reparatrice intercedente, voluntarium huius expiationis obsequium, nosque in officio tibique servitio fideles usque ad mortem serva magno illo perseverantiae dono, quo tandem omnes ad illam perveniamus patriam, ubi tu cum Patre et Spiritu Sancto vivis et regnas Deus in saecula saeculorum. Amen."""
         ),
         PrayerItem(
             id = "nine_first_fridays",
-            title = "The Nine First Fridays Devotion",
+            title = "The Nine First Fridays Devotion & 12 Promises",
             category = "Sacred Heart Devotions",
-            subtitle = "Great Promise of St. Margaret Mary Alacoque",
-            englishText = """Our Lord promised to St. Margaret Mary: 'I promise thee in the excessive mercy of My Heart that My all-powerful love will grant to all those who receive Holy Communion on the First Friday in nine consecutive months the grace of final perseverance; they shall not die in My disgrace, nor without receiving their sacraments; My Divine Heart shall be their safe refuge in this last moment.'""",
+            subtitle = "Revealed by Our Lord to St. Margaret Mary Alacoque",
+            subsection = "Acts of Reparation & First Fridays",
+            englishText = """Our Lord made 12 specific promises to those who practice devotion to His Sacred Heart:
+1. I will give them all the graces necessary in their state of life.
+2. I will establish peace in their homes.
+3. I will comfort them in all their afflictions.
+4. I will be their secure refuge in life, and above all in death.
+5. I will bestow abundant blessings upon all their undertakings.
+6. Sinners will find in My Heart the source and infinite ocean of mercy.
+7. Lukewarm souls shall become fervent.
+8. Fervent souls shall quickly mount to high perfection.
+9. I will bless every place in which an image of My Sacred Heart is exposed and honored.
+10. I will give to priests the gift of touching the most hardened hearts.
+11. Those who promote this devotion shall have their names written in My Heart, never to be effaced.
+12. The Great Promise: 'I promise thee in the excessive mercy of My Heart that My all-powerful love will grant to all those who receive Holy Communion on the First Friday in nine consecutive months the grace of final perseverance; they shall not die in My disgrace, nor without receiving their sacraments; My Divine Heart shall be their safe refuge in this last moment.'""",
             latinText = ""
+        ),
+        PrayerItem(
+            id = "act_reparation_eucharistic_sacred_heart",
+            title = "Act of Reparation to the Sacred Heart in the Holy Eucharist",
+            category = "Sacred Heart Devotions",
+            subtitle = "Roman Raccolta 247",
+            subsection = "Acts of Reparation & First Fridays",
+            englishText = """O Divine Savior, Who in the excess of Thy love hast chosen to dwell with us in the Sacrament of the Altar, behold us here prostrate to repair the many outrages and cold neglects to which Thy Sacred Heart is daily subjected in the Holy Eucharist.
+
+Forgive, O Lord, our lukewarmness, our wandering thoughts, and our lack of reverence in Thy Holy Presence. We desire to love Thee for all who love Thee not, to adore Thee for all who adore Thee not, and to praise Thee for all who blaspheme Thy holy name. May Thy Sacred Heart in the Blessed Sacrament be praised, adored, and loved with grateful affection, at every moment, in all the tabernacles of the world, even unto the end of time. Amen.""",
+            latinText = """O Salvator Divine, qui in excessu amoris tui in Sacramento Altaris nobiscum manere voluisti, en nos hic provoluti ad expiandas tot iniurias et socordias quibus Sacratissimum Cor tuum quotidie in Sanctissima Eucharistia afficitur.
+
+Dimitte nobis, Domine, tepiditatem nostram et irreverentiam in Sanctissima Praesentia tua. Desideramus te amare pro omnibus qui te non amant, te adorare pro omnibus qui te non adorant, et te benedicere pro omnibus qui nomen sanctum tuum blasphemant. Sit laus, adoratio et amor grato animo Sacratissimo Cordi Iesu in Sanctissimo Sacramento, omni momento, in omnibus tabernaculis mundi, usque ad consummationem saeculi. Amen."""
+        ),
+        PrayerItem(
+            id = "novena_sacred_heart_padre_pio",
+            title = "Efficacious Novena to the Sacred Heart of Jesus",
+            category = "Sacred Heart Devotions",
+            subtitle = "Padre Pio's Daily Novena of the Three Promises",
+            subsection = "Novenas & Classical Devotions",
+            englishText = """I. O my Jesus, Who hast said: 'Truly I say to you, ask and you shall receive, seek and you shall find, knock and it shall be opened to you.' Behold, I knock, I seek, and I ask for the grace of (mention petition).
+Our Father... Hail Mary... Glory be...
+Sacred Heart of Jesus, I place all my trust in Thee.
+
+II. O my Jesus, Who hast said: 'Truly I say to you, if you ask anything of the Father in My name, He will give it to you.' Behold, in Thy name, I ask the Father for the grace of (mention petition).
+Our Father... Hail Mary... Glory be...
+Sacred Heart of Jesus, I place all my trust in Thee.
+
+III. O my Jesus, Who hast said: 'Truly I say to you, heaven and earth shall pass away, but My words shall not pass away.' Encouraged by Thine infallible words, I now ask for the grace of (mention petition).
+Our Father... Hail Mary... Glory be...
+Sacred Heart of Jesus, I place all my trust in Thee.
+
+O Sacred Heart of Jesus, for whom it is impossible not to have compassion on the afflicted, have pity on us miserable sinners, and grant us the grace which we ask of Thee, through the Sorrowful and Immaculate Heart of Mary, Thy tender Mother and ours.
+Hail, Holy Queen... St. Joseph, foster father of Jesus, pray for us.""",
+            latinText = """I. O mi Iesu, qui dixisti: 'Petite et accipietis, quaerite et invenietis, pulsate et aperietur vobis.' En pulso, quaero, et peto gratiam...
+Pater noster... Ave Maria... Gloria Patri...
+Sacratissimum Cor Iesu, in te confido.
+
+II. O mi Iesu, qui dixisti: 'Quidquid petieritis Patrem in nomine meo, dabit vobis.' En in nomine tuo a Patre peto gratiam...
+Pater noster... Ave Maria... Gloria Patri...
+Sacratissimum Cor Iesu, in te confido.
+
+III. O mi Iesu, qui dixisti: 'Caelum et terra transibunt, verba autem mea non praeteribunt.' Verbis tuis fretus, peto gratiam...
+Pater noster... Ave Maria... Gloria Patri...
+Sacratissimum Cor Iesu, in te confido.
+
+O Sacratissimum Cor Iesu, cui impossibile est non misereri afflictorum, miserere nostri miserorum peccatorum, et concede nobis gratiam quam a te petimus, per Dolorosum et Immaculatum Cor Mariae, Matris tuae et nostrae.
+Salve Regina... Sancte Ioseph, ora pro nobis. Amen."""
+        ),
+        PrayerItem(
+            id = "morning_offering_sacred_heart",
+            title = "Daily Offering to the Sacred Heart of Jesus",
+            category = "Sacred Heart Devotions",
+            subtitle = "Apostleship of Prayer (1844, approved by Pius IX & Leo XIII)",
+            subsection = "Novenas & Classical Devotions",
+            englishText = """O Jesus, through the Immaculate Heart of Mary, I offer Thee my prayers, works, joys, and sufferings of this day, for all the intentions of Thy Sacred Heart, in union with the Holy Sacrifice of the Mass throughout the world, in reparation for my sins, for the intentions of all our associates, and in particular for the intentions of the Sovereign Pontiff. Amen.""",
+            latinText = """O Iesu, per Immaculatum Cor Mariae, offero tibi orationes, opera, gaudia et passiones huius diei, pro omnibus intentionibus Sacratissimi Cordis tui, in unione cum Sancto Missae Sacrificio ubique terrarum celebrato, in reparationem peccatorum meorum, et pro intentionibus Summi Pontificis. Amen."""
+        ),
+        PrayerItem(
+            id = "prayer_st_gertrude_sacred_heart",
+            title = "Prayer of St. Gertrude the Great to the Sacred Heart",
+            category = "Sacred Heart Devotions",
+            subtitle = "Living Fountain of Eternal Life (St. Gertrude, 1256–1302)",
+            subsection = "Novenas & Classical Devotions",
+            englishText = """O Sacred Heart of Jesus, living and life-giving fountain of eternal life, infinite treasury of the Divinity, and burning furnace of divine love, Thou art my refuge and my sanctuary.
+
+O my loving Savior, consume my heart with that burning fire with which Thine own is ever inflamed. Pour down upon my soul those graces which flow from Thy love. Let my heart be so united with Thine that our wills may be one, and that mine may in all things be conformed to Thine. Amen.""",
+            latinText = """O Sacratissimum Cor Iesu, fons vivus et vivificans vitae aeternae, infinitus thesaurus Divinitatis, et fornax ardens divini amoris, tu es refugium meum et sanctuarium meum.
+
+O Salvator amantissime, consume cor meum illo ardenti igne quo tuum indesinenter inflammatur. Effunde super animam meam gratias quae ex amore tuo manant. Sit cor meum ita tuo unitum, ut una sit voluntas nostra, et mea in omnibus tuae conformetur. Amen."""
+        ),
+        PrayerItem(
+            id = "prayer_st_bonaventure_sacred_heart",
+            title = "Prayer of St. Bonaventure to the Sacred Heart",
+            category = "Sacred Heart Devotions",
+            subtitle = "The Wound of Divine Love (St. Bonaventure, Doctor Seraphicus)",
+            subsection = "Novenas & Classical Devotions",
+            englishText = """O most sweet Jesus, pierce the inmost depths of my soul with the most joyous and health-giving wound of Thy love, with true, serene, and most holy apostolic charity, that my soul may ever languish and melt with love and longing for Thee alone.
+
+May my soul yearn for Thee and faint for Thy courts; may it long to be dissolved and to be with Thee. Grant that my heart may ever hunger after Thee, the Bread of Angels, the refreshment of holy souls, our daily and supersubstantial Bread. Amen.""",
+            latinText = """Transfige, dulcissime Domine Iesu, medullas et viscera animae meae suavissimo ac saluberrimo amoris tui vulnere, vera serenaque et apostolica sanctissima caritate, ut languat et liquefiat anima mea solo semper amore et desiderio tui.
+
+Te concupiscat et deficiat in atria tua, cupiat dissolvi et esse tecum. Da ut cor meum semper esuriat te, Panem Angelorum, refectionem animarum sanctarum, Panem nostrum quotidianum et supersubstantialem. Amen."""
+        ),
+        PrayerItem(
+            id = "act_resignation_sickness_sacred_heart",
+            title = "Act of Resignation & Offering in Sickness to the Sacred Heart",
+            category = "Sacred Heart Devotions",
+            subtitle = "Written by Saint Margaret Mary Alacoque",
+            subsection = "Novenas & Classical Devotions",
+            englishText = """O Sacred Heart of Jesus, I accept from Thy hand this sickness and all the sufferings, bodily and spiritual, which it brings, in union with the bitter agony and sufferings of Thy Sacred Heart.
+
+I offer them to Thee in expiation of my sins, for the relief of the souls in Purgatory, and for the sanctification of the Holy Catholic Church. Dispose of me, O Lord, in life and in death, according to Thy holy and adorable will. Amen.""",
+            latinText = """O Sacratissimum Cor Iesu, accipio de manu tua hanc infirmitatem et omnes dolores corporales et spirituales quos affert, in unione cum amara agonia et passionibus Sacratissimi Cordis tui.
+
+Offerro ea tibi in expiationem peccatorum meorum, pro levamine animarum in Purgatorio, et pro sanctificatione Sanctae Ecclesiae Catholicae. Dispone de me, Domine, in vita et in morte, secundum sanctam et adorabilem voluntatem tuam. Amen."""
+        ),
+        PrayerItem(
+            id = "sacred_heart_aspiration",
+            title = "Indulgenced Aspirations to the Sacred Heart of Jesus",
+            category = "Sacred Heart Devotions",
+            subtitle = "From the Roman Raccolta (Raccolta 251, 249, 267, 250)",
+            subsection = "Invocations & Aspirations",
+            englishText = """V. Sacred Heart of Jesus, I place my trust in Thee!
+(Raccolta 251 - 300 Days Indulgence)
+
+V. Jesus, meek and humble of Heart, make our hearts like unto Thine!
+(Raccolta 249 - 300 Days Indulgence)
+
+V. Eucharistic Heart of Jesus, have mercy on us!
+(Raccolta 267 - 300 Days Indulgence)
+
+V. May the Sacred Heart of Jesus be loved everywhere!
+(Raccolta 250 - 100 Days Indulgence)""",
+            latinText = """V. Sacratissimum Cor Iesu, in te confido!
+(Raccolta 251)
+
+V. Iesu, mitis et humilis Corde, fac cor nostrum secundum Cor tuum!
+(Raccolta 249)
+
+V. Cor Iesu Eucharisticum, miserere nobis!
+(Raccolta 267)
+
+V. Sit laus, honor et gloria Cordi Divino Iesu per infinita saeculorum saecula!
+(Raccolta 250)"""
         )
     )
 

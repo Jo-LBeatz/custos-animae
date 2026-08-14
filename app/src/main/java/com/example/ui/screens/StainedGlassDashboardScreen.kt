@@ -16,7 +16,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Circle
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import android.widget.Toast
@@ -33,6 +36,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import com.example.ui.components.TrackLazyGridScroll
+import com.example.ui.components.fullScreenToggleOnTap
+import com.example.ui.components.rememberDirectionalScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +62,8 @@ import com.example.ui.components.ChaliceSymbolCanvas
 import com.example.ui.components.CrownSymbolCanvas
 import com.example.ui.components.LiturgicalSunCanvas
 import com.example.ui.theme.*
+import com.example.util.AppLanguage
+import com.example.util.AppTranslationHelper
 import java.util.Calendar
 
 // Stained Glass Cathedral Arch Shape
@@ -81,40 +90,6 @@ data class StainedGlassPaneData(
 )
 
 @Composable
-private fun TrackLazyGridScroll(
-    gridState: androidx.compose.foundation.lazy.grid.LazyGridState,
-    viewModel: MainViewModel
-) {
-    LaunchedEffect(gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset) {
-        val currentIndex = gridState.firstVisibleItemIndex
-        val currentOffset = gridState.firstVisibleItemScrollOffset
-
-        if (currentIndex == 0 && currentOffset <= 10) {
-            viewModel.setBottomNavVisible(true)
-            viewModel.setTopHeaderVisible(true)
-        } else if (currentIndex > 0 || currentOffset > 30) {
-            viewModel.setBottomNavVisible(false)
-            viewModel.setTopHeaderVisible(false)
-        }
-
-        val layoutInfo = gridState.layoutInfo
-        val totalItemsCount = layoutInfo.totalItemsCount
-        if (totalItemsCount > 1) {
-            val firstVisibleItem = layoutInfo.visibleItemsInfo.firstOrNull()
-            if (firstVisibleItem != null) {
-                val itemSize = firstVisibleItem.size.height
-                val fraction = if (itemSize > 0) currentOffset.toFloat() / itemSize else 0f
-                val currentPosition = currentIndex + fraction
-                val progress = (currentPosition / (totalItemsCount - 1).coerceAtLeast(1)).coerceIn(0f, 1f)
-                viewModel.setReadingProgress(progress)
-            }
-        } else {
-            viewModel.setReadingProgress(0f)
-        }
-    }
-}
-
-@Composable
 fun StainedGlassDashboardScreen(
     viewModel: MainViewModel,
     duties: List<SpiritualDuty>,
@@ -123,10 +98,13 @@ fun StainedGlassDashboardScreen(
     val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
     TrackLazyGridScroll(gridState = gridState, viewModel = viewModel)
 
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+
     DisposableEffect(Unit) {
         onDispose {
             viewModel.setReadingProgress(0f)
             viewModel.setBottomNavVisible(true)
+            viewModel.setTopHeaderVisible(true)
         }
     }
 
@@ -134,19 +112,22 @@ fun StainedGlassDashboardScreen(
     val todayInfo = viewModel.getTodayLiturgicalInfo()
     val todaySaint = viewModel.getTodaySaint()
 
+    val cleanSinceTimestamp by viewModel.virtueCleanSinceTimestamp.collectAsStateWithLifecycle()
+    val cleanDays = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(maxOf(0L, System.currentTimeMillis() - cleanSinceTimestamp))
+
     val completedDutiesCount = duties.count { it.isCompleted }
     val totalDutiesCount = duties.size
 
     val cal = Calendar.getInstance()
     val dayOfWeek = cal.get(Calendar.DAY_OF_WEEK)
     val todayRosaryMystery = when (dayOfWeek) {
-        Calendar.SUNDAY, Calendar.WEDNESDAY -> "Glorious Mysteries"
-        Calendar.MONDAY, Calendar.SATURDAY -> "Joyful Mysteries"
+        Calendar.SUNDAY, Calendar.WEDNESDAY, Calendar.SATURDAY -> "Glorious Mysteries"
+        Calendar.MONDAY, Calendar.THURSDAY -> "Joyful Mysteries"
         Calendar.TUESDAY, Calendar.FRIDAY -> "Sorrowful Mysteries"
-        else -> "Luminous Mysteries"
+        else -> "Joyful Mysteries"
     }
 
-    val panes = remember(completedDutiesCount, totalDutiesCount, todaySaint, todayRosaryMystery, todayInfo) {
+    val panes = remember(completedDutiesCount, totalDutiesCount, todaySaint, todayRosaryMystery, todayInfo, cleanDays) {
         listOf(
             StainedGlassPaneData(
                 title = "RULE OF LIFE",
@@ -159,31 +140,41 @@ fun StainedGlassDashboardScreen(
                 testTag = "pane_rule_of_life"
             ),
             StainedGlassPaneData(
-                title = "PRAYER LIBRARY",
-                subtitle = "Holy Rosary ($todayRosaryMystery) & Devotions",
-                liveBadge = "Today: $todayRosaryMystery",
-                icon = Icons.AutoMirrored.Filled.MenuBook,
-                targetTab = 3,
-                primaryGlassColor = Color(0xFF0F2B5C), // Sapphire Blue
-                secondaryGlassColor = Color(0xFF1D4ED8),
-                testTag = "pane_prayers"
+                title = "VIRTUE & CHASTITY",
+                subtitle = "Chastity Timer & Victory Log",
+                liveBadge = "$cleanDays Days Clean",
+                icon = Icons.Default.Shield,
+                targetTab = 2,
+                primaryGlassColor = Color(0xFF581C87), // Deep Imperial Purple
+                secondaryGlassColor = Color(0xFF7E22CE),
+                testTag = "pane_virtue"
             ),
             StainedGlassPaneData(
                 title = "SAINT MEDITATION",
                 subtitle = "Virtues & Daily Reflection",
                 liveBadge = todaySaint.saintName,
                 icon = Icons.Default.SelfImprovement,
-                targetTab = 2,
+                targetTab = 3,
                 primaryGlassColor = Color(0xFF680014), // Crimson Ruby
                 secondaryGlassColor = Color(0xFF991B1B),
                 testTag = "pane_saint"
+            ),
+            StainedGlassPaneData(
+                title = "PRAYER LIBRARY",
+                subtitle = "Holy Rosary ($todayRosaryMystery) & Devotions",
+                liveBadge = "Today: $todayRosaryMystery",
+                icon = Icons.AutoMirrored.Filled.MenuBook,
+                targetTab = 4,
+                primaryGlassColor = Color(0xFF0F2B5C), // Sapphire Blue
+                secondaryGlassColor = Color(0xFF1D4ED8),
+                testTag = "pane_prayers"
             ),
             StainedGlassPaneData(
                 title = "NIGHT EXAMEN",
                 subtitle = "Conscience, Virtues & Gratitude",
                 liveBadge = "Daily Examen of Conscience",
                 icon = Icons.Default.Church,
-                targetTab = 4,
+                targetTab = 5,
                 primaryGlassColor = Color(0xFF78350F), // Topaz Amber
                 secondaryGlassColor = Color(0xFFB45309),
                 testTag = "pane_examen"
@@ -193,7 +184,7 @@ fun StainedGlassDashboardScreen(
                 subtitle = "Traditional Feasts & Fasting Rules",
                 liveBadge = if (todayInfo.isFastingDay) "Traditional Fast Day" else "Feast Day",
                 icon = Icons.Default.CalendarMonth,
-                targetTab = 5,
+                targetTab = 6,
                 primaryGlassColor = Color(0xFF134E4A), // Deep Cobalt Teal
                 secondaryGlassColor = Color(0xFF0F766E),
                 testTag = "pane_calendar"
@@ -203,15 +194,33 @@ fun StainedGlassDashboardScreen(
                 subtitle = "Conciliar Analysis & Critical Studies",
                 liveBadge = "Traditional Theological Critique",
                 icon = Icons.Default.Warning,
-                targetTab = 6,
+                targetTab = 7,
                 primaryGlassColor = Color(0xFF4A0E17), // Deep Obsidian Blood
                 secondaryGlassColor = Color(0xFF881337),
                 testTag = "pane_deception"
+            ),
+            StainedGlassPaneData(
+                title = "REGULAVITAE",
+                subtitle = "Powered by RegulaVitae • Socials & Web",
+                liveBadge = "Official Community",
+                icon = Icons.Default.Info,
+                targetTab = 9,
+                primaryGlassColor = Color(0xFF3B1E54), // Royal Purple & Gold
+                secondaryGlassColor = Color(0xFF5D2E8C),
+                testTag = "pane_regulavitae"
             )
         )
     }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(DarkCathedralBackground)) {
+    val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DarkCathedralBackground)
+            .fullScreenToggleOnTap(viewModel)
+            .nestedScroll(directionalScrollConnection)
+    ) {
         val columns = if (maxWidth > 600.dp) 3 else 2
 
         LazyVerticalGrid(
@@ -219,10 +228,12 @@ fun StainedGlassDashboardScreen(
             state = gridState,
             modifier = Modifier
                 .fillMaxSize()
+                .widthIn(max = 1000.dp)
+                .align(Alignment.TopCenter)
                 .padding(horizontal = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(top = 4.dp, bottom = 60.dp)
+            contentPadding = PaddingValues(top = 4.dp, bottom = 120.dp)
         ) {
             // Title Header & Liturgical Banner
             item(span = { GridItemSpan(columns) }) {
@@ -237,23 +248,16 @@ fun StainedGlassDashboardScreen(
                         Column {
                             GothicHeader(
                                 title = "CUSTOS ANIMAE",
-                                subtitle = "REGULA • Sacred Rule & Stained Glass Panes",
-                                badgeText = todayInfo.season.displayName
+                                subtitle = AppTranslationHelper.translate("POWERED BY REGULAVITAE • Sacred Rule & Stained Glass Panes", appLanguage)
                             )
 
-                            LiturgicalColorAndSeasonWidget(info = todayInfo)
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            LiturgicalBanner(info = todayInfo)
+                            LiturgicalBanner(info = todayInfo, appLanguage = appLanguage)
 
                             Spacer(modifier = Modifier.height(10.dp))
                         }
                     }
 
-                    LiturgicalSeasonTrackerCard(currentSeason = todayInfo.season)
-
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
 
                     RuleOfLifeProgressCard(
                         viewModel = viewModel,
@@ -265,7 +269,7 @@ fun StainedGlassDashboardScreen(
 
                     // Glass Lead Tracery Notice
                     Text(
-                        text = "☩ Tap any stained glass pane to enter devotion or rule ☩",
+                        text = AppTranslationHelper.translate("☩ Tap any stained glass pane to enter devotion or rule ☩", appLanguage),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontFamily = FontFamily.Serif,
                             letterSpacing = 1.1.sp
@@ -284,6 +288,7 @@ fun StainedGlassDashboardScreen(
                 val pane = panes[index]
                 StainedGlassPaneContainer(
                     pane = pane,
+                    appLanguage = appLanguage,
                     onClick = { onNavigateToTab(pane.targetTab) }
                 )
             }
@@ -296,6 +301,13 @@ fun StainedGlassDashboardScreen(
                     saintName = todaySaint.saintName
                 )
             }
+
+            // RegulaVitae Apostolate & Social Community Banner
+            item(span = { GridItemSpan(columns) }) {
+                RegulaVitaeDashboardCard(
+                    onNavigateToRegulaVitae = { onNavigateToTab(9) }
+                )
+            }
         }
     }
 }
@@ -303,6 +315,7 @@ fun StainedGlassDashboardScreen(
 @Composable
 fun StainedGlassPaneContainer(
     pane: StainedGlassPaneData,
+    appLanguage: AppLanguage,
     onClick: () -> Unit
 ) {
     Box(
@@ -402,11 +415,14 @@ fun StainedGlassPaneContainer(
                 )
                 when (pane.targetTab) {
                     1 -> ChiRhoSymbolCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
-                    3 -> RosarySymbolCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
-                    4 -> ChaliceSymbolCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
                     2 -> CrownSymbolCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
-                    5 -> SacredCrossCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
-                    6 -> LiturgicalSunCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
+                    3 -> SacredCrossCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
+                    4 -> RosarySymbolCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
+                    5 -> ChaliceSymbolCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
+                    6 -> SacredCrossCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
+                    7 -> LiturgicalSunCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
+                    9 -> ChiRhoSymbolCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
+                    else -> SacredCrossCanvas(modifier = Modifier.size(20.dp), tint = GoldBright)
                 }
             }
 
@@ -416,7 +432,7 @@ fun StainedGlassPaneContainer(
                 modifier = Modifier.padding(horizontal = 2.dp)
             ) {
                 Text(
-                    text = pane.title,
+                    text = AppTranslationHelper.translate(pane.title, appLanguage),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
@@ -430,7 +446,7 @@ fun StainedGlassPaneContainer(
                 )
 
                 Text(
-                    text = pane.subtitle,
+                    text = AppTranslationHelper.translate(pane.subtitle, appLanguage),
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.5.sp),
                     color = Color(0xFFCBD5E1),
                     textAlign = TextAlign.Center,
@@ -447,7 +463,7 @@ fun StainedGlassPaneContainer(
                 modifier = Modifier.padding(bottom = 2.dp)
             ) {
                 Text(
-                    text = pane.liveBadge,
+                    text = AppTranslationHelper.translateDynamic(pane.liveBadge, appLanguage),
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.SemiBold,
@@ -1065,6 +1081,184 @@ fun SaintlyQuotesCard(
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun RegulaVitaeDashboardCard(
+    onNavigateToRegulaVitae: () -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .testTag("regulavitae_dashboard_card"),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+        border = BorderStroke(
+            1.5.dp,
+            Brush.linearGradient(
+                listOf(GoldBright, CrimsonBurgundy, GoldSacred)
+            )
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(CrimsonBurgundy.copy(alpha = 0.3f), CircleShape)
+                            .border(1.dp, GoldBright, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "RegulaVitae",
+                            tint = GoldBright,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = "POWERED BY REGULAVITAE",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            ),
+                            color = GoldBright
+                        )
+                        Text(
+                            text = "My Personal Work & Social Channels",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMutedParchment
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = GoldSacred.copy(alpha = 0.2f),
+                    border = BorderStroke(0.5.dp, GoldBright.copy(alpha = 0.5f))
+                ) {
+                    Text(
+                        text = "Connect",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = GoldBright,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Follow my official channels under RegulaVitae for daily traditional feast reflections, rules of life, video catechesis, and spiritual discipline updates.",
+                style = MaterialTheme.typography.bodySmall,
+                color = ParchmentLight
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Quick Social Links Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://regulavitae.vercel.app/"))
+                        context.startActivity(intent)
+                    },
+                    border = BorderStroke(1.dp, GoldSacred),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Default.Language, contentDescription = null, tint = GoldBright, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Website", fontSize = 11.sp, color = ParchmentLight)
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://whatsapp.com/channel/0029VbCj8TYKGGGDxtDcrc0h"))
+                        context.startActivity(intent)
+                    },
+                    border = BorderStroke(1.dp, Color(0xFF25D366)),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Default.Forum, contentDescription = null, tint = Color(0xFF25D366), modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("WhatsApp", fontSize = 11.sp, color = ParchmentLight)
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.instagram.com/regulavitae/#"))
+                        context.startActivity(intent)
+                    },
+                    border = BorderStroke(1.dp, Color(0xFFE1306C)),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color(0xFFE1306C), modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Instagram", fontSize = 11.sp, color = ParchmentLight)
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/@regulavitae"))
+                        context.startActivity(intent)
+                    },
+                    border = BorderStroke(1.dp, Color(0xFFFF0000)),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color(0xFFFF0000), modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("YouTube", fontSize = 11.sp, color = ParchmentLight)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onNavigateToRegulaVitae,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("open_regulavitae_page_btn"),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = CrimsonBurgundy,
+                    contentColor = ParchmentLight
+                ),
+                border = BorderStroke(1.dp, GoldSacred),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = null,
+                    modifier = Modifier.size(15.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Open RegulaVitae Community & Links Page",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
             }
         }
     }

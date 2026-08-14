@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.MainViewModel
 import com.example.ui.theme.*
 
@@ -27,10 +28,12 @@ fun LatinAudioPlayerController(
     viewModel: MainViewModel,
     prayerId: String,
     prayerText: String,
-    isLatin: Boolean = viewModel.isLatinMode.collectAsState().value,
+    isLatin: Boolean? = null,
     modifier: Modifier = Modifier
 ) {
-    val playbackState by viewModel.latinAudioState.collectAsState()
+    val isLatinModeState by viewModel.isLatinMode.collectAsStateWithLifecycle()
+    val isLatin = isLatin ?: isLatinModeState
+    val playbackState by viewModel.latinAudioState.collectAsStateWithLifecycle()
     val isPlayingThis = playbackState.isPlaying && playbackState.currentId == prayerId
 
     var showControls by remember { mutableStateOf(false) }

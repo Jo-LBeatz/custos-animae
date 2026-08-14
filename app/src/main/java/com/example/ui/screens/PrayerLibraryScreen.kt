@@ -20,6 +20,8 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,66 +38,18 @@ import com.example.data.PrayerEntity
 import com.example.data.prayers.PrayerItem
 import com.example.data.prayers.RosarySet
 import com.example.data.prayers.TraditionalPrayerLibrary
+import com.example.util.AppLanguage
+import com.example.util.AppTranslationHelper
 import com.example.ui.MainViewModel
 import com.example.ui.components.GothicHeader
 import com.example.ui.components.IlluminatedDivider
 import com.example.ui.theme.*
 
-@Composable
-private fun TrackLazyListScroll(
-    listState: androidx.compose.foundation.lazy.LazyListState,
-    viewModel: MainViewModel
-) {
-    LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
-        val currentIndex = listState.firstVisibleItemIndex
-        val currentOffset = listState.firstVisibleItemScrollOffset
-
-        if (currentIndex == 0 && currentOffset <= 10) {
-            viewModel.setBottomNavVisible(true)
-            viewModel.setTopHeaderVisible(true)
-        } else if (currentIndex > 0 || currentOffset > 30) {
-            viewModel.setBottomNavVisible(false)
-            viewModel.setTopHeaderVisible(false)
-        }
-
-        val layoutInfo = listState.layoutInfo
-        val totalItemsCount = layoutInfo.totalItemsCount
-        if (totalItemsCount > 1) {
-            val firstVisibleItem = layoutInfo.visibleItemsInfo.firstOrNull()
-            if (firstVisibleItem != null) {
-                val itemSize = firstVisibleItem.size
-                val fraction = if (itemSize > 0) currentOffset.toFloat() / itemSize else 0f
-                val currentPosition = currentIndex + fraction
-                val progress = (currentPosition / (totalItemsCount - 1).coerceAtLeast(1)).coerceIn(0f, 1f)
-                viewModel.setReadingProgress(progress)
-            }
-        } else {
-            viewModel.setReadingProgress(0f)
-        }
-    }
-}
-
-@Composable
-private fun TrackScrollState(
-    scrollState: androidx.compose.foundation.ScrollState,
-    viewModel: MainViewModel
-) {
-    LaunchedEffect(scrollState.value, scrollState.maxValue) {
-        val currentScroll = scrollState.value
-        val maxScroll = scrollState.maxValue
-        
-        if (currentScroll <= 10) {
-            viewModel.setBottomNavVisible(true)
-            viewModel.setTopHeaderVisible(true)
-        } else if (currentScroll > 30) {
-            viewModel.setBottomNavVisible(false)
-            viewModel.setTopHeaderVisible(false)
-        }
-        
-        val progress = if (maxScroll > 0) currentScroll.toFloat() / maxScroll.toFloat() else 0f
-        viewModel.setReadingProgress(progress)
-    }
-}
+import com.example.ui.components.TrackLazyListScroll
+import com.example.ui.components.TrackScrollState
+import com.example.ui.components.fullScreenToggleOnTap
+import com.example.ui.components.rememberDirectionalScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 @Composable
 fun PrayerLibraryScreen(
@@ -103,7 +57,8 @@ fun PrayerLibraryScreen(
 ) {
     var selectedCategoryIndex by remember { mutableStateOf(0) }
     var showFullRosaryScreen by remember { mutableStateOf(false) }
-    val isLatinMode by viewModel.isLatinMode.collectAsState()
+    val isLatinMode by viewModel.isLatinMode.collectAsStateWithLifecycle()
+    val manualIntention by viewModel.manualDevotionalIntention.collectAsStateWithLifecycle()
 
     val searchQuery by viewModel.prayerSearchQuery.collectAsStateWithLifecycle()
     val searchResults by viewModel.prayerSearchResults.collectAsStateWithLifecycle()
@@ -123,6 +78,7 @@ fun PrayerLibraryScreen(
         onDispose {
             viewModel.setReadingProgress(0f)
             viewModel.setBottomNavVisible(true)
+            viewModel.setTopHeaderVisible(true)
         }
     }
 
@@ -150,6 +106,8 @@ fun PrayerLibraryScreen(
         "Sacred Heart"
     )
 
+    val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -157,6 +115,8 @@ fun PrayerLibraryScreen(
             .wrapContentWidth(Alignment.CenterHorizontally)
             .widthIn(max = 600.dp)
             .padding(horizontal = 16.dp)
+            .fullScreenToggleOnTap(viewModel)
+            .nestedScroll(directionalScrollConnection)
     ) {
         androidx.compose.animation.AnimatedVisibility(
             visible = isTopHeaderVisible,
@@ -270,34 +230,17 @@ fun PrayerLibraryScreen(
 
         if (searchQuery.isBlank()) {
             when (selectedCategoryIndex) {
-                0 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.morningPrayers, isLatin = isLatinMode, viewModel = viewModel)
-                1 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.nightPrayers, isLatin = isLatinMode, viewModel = viewModel)
+                0 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.morningPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
+                1 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.nightPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
                 2 -> InteractiveRosaryViewer(isLatin = isLatinMode, viewModel = viewModel, onLaunchFullRosary = { showFullRosaryScreen = true })
-                3 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.eucharisticDevotions, isLatin = isLatinMode, viewModel = viewModel)
-                4 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.protectionAndSaints, isLatin = isLatinMode, viewModel = viewModel)
-                5 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.angelusAndRegina, isLatin = isLatinMode, viewModel = viewModel)
-                6 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsImmaculateHeart, isLatin = isLatinMode, viewModel = viewModel)
-                7 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsSacredHeart, isLatin = isLatinMode, viewModel = viewModel)
+                3 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.eucharisticDevotions, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
+                4 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.protectionAndSaints, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
+                5 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.angelusAndRegina, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
+                6 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsImmaculateHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
+                7 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsSacredHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
             }
         } else {
             // Room DB Search Results View
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Offline Prayer Search Results (${searchResults.size})",
-                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold),
-                    color = GoldBright
-                )
-                TextButton(onClick = { viewModel.setPrayerSearchQuery("") }) {
-                    Text("Clear Search", color = TextMutedParchment, fontSize = 12.sp)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
             if (searchResults.isEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -315,10 +258,10 @@ fun PrayerLibraryScreen(
                 LazyColumn(
                     state = searchListState,
                     verticalArrangement = Arrangement.spacedBy(14.dp),
-                    contentPadding = PaddingValues(bottom = 90.dp)
+                    contentPadding = PaddingValues(bottom = 120.dp)
                 ) {
                     items(searchResults, key = { it.id }) { prayerEntity ->
-                        PrayerEntityCard(prayer = prayerEntity, isLatin = isLatinMode, viewModel = viewModel)
+                        PrayerEntityCard(prayer = prayerEntity, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention)
                     }
                 }
             }
@@ -327,7 +270,12 @@ fun PrayerLibraryScreen(
 }
 
 @Composable
-fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainViewModel) {
+fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainViewModel, manualIntention: String = "") {
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+    val translatedTitle = if (!isLatin) AppTranslationHelper.translate(prayer.title, appLanguage) else prayer.title
+    val translatedCategory = if (!isLatin) AppTranslationHelper.translate(prayer.category, appLanguage) else prayer.category
+    val translatedSubtitle = if (!isLatin && prayer.subtitle.isNotBlank()) AppTranslationHelper.translate(prayer.subtitle, appLanguage) else prayer.subtitle
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -339,7 +287,7 @@ fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainView
         Column(modifier = Modifier.padding(16.dp)) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = prayer.title,
+                    text = translatedTitle,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold
@@ -353,7 +301,7 @@ fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainView
                     border = BorderStroke(1.dp, GoldSacred.copy(alpha = 0.5f))
                 ) {
                     com.example.ui.components.ResponsiveText(
-                        text = prayer.category,
+                        text = translatedCategory,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = GoldLight,
@@ -363,10 +311,10 @@ fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainView
                 }
             }
 
-            if (prayer.subtitle.isNotBlank()) {
+            if (translatedSubtitle.isNotBlank()) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = prayer.subtitle,
+                    text = translatedSubtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = TextMutedParchment
                 )
@@ -376,14 +324,52 @@ fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainView
             IlluminatedDivider()
             Spacer(modifier = Modifier.height(10.dp))
 
-            val prayerText = if (isLatin && prayer.latinText.isNotBlank()) {
+            val basePrayerText = if (isLatin && prayer.latinText.isNotBlank()) {
                 prayer.latinText
             } else {
                 prayer.englishText
             }
 
+            val prayerText = if (!isLatin) {
+                AppTranslationHelper.translatePrayerText(prayer.id, basePrayerText, appLanguage)
+            } else {
+                basePrayerText
+            }
+
+            val formattedAnnotatedString = remember(prayerText, manualIntention) {
+                val placeholders = listOf("(here make your request)", "(specify petition)", "(mention petition)")
+                androidx.compose.ui.text.buildAnnotatedString {
+                    var cursor = 0
+                    val len = prayerText.length
+                    while (cursor < len) {
+                        var foundPlaceholder: String? = null
+                        for (p in placeholders) {
+                            if (prayerText.startsWith(p, cursor, ignoreCase = true)) {
+                                foundPlaceholder = p
+                                break
+                            }
+                        }
+                        if (foundPlaceholder != null) {
+                            if (manualIntention.isNotBlank()) {
+                                withStyle(style = androidx.compose.ui.text.SpanStyle(color = GoldBright, fontWeight = FontWeight.Bold)) {
+                                    append(" [ $manualIntention ] ")
+                                }
+                            } else {
+                                withStyle(style = androidx.compose.ui.text.SpanStyle(color = GoldLight.copy(alpha = 0.8f), fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)) {
+                                    append(prayerText.substring(cursor, cursor + foundPlaceholder.length))
+                                }
+                            }
+                            cursor += foundPlaceholder.length
+                        } else {
+                            append(prayerText[cursor].toString())
+                            cursor++
+                        }
+                    }
+                }
+            }
+
             Text(
-                text = prayerText,
+                text = formattedAnnotatedString,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontFamily = FontFamily.Serif,
                     lineHeight = 22.sp
@@ -392,7 +378,7 @@ fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainView
             )
 
             // Optional Pronunciation Controller
-            val textToPronounce = if (isLatin && prayer.latinText.isNotBlank()) prayer.latinText else prayer.englishText
+            val textToPronounce = prayerText
             Spacer(modifier = Modifier.height(12.dp))
             com.example.ui.components.LatinAudioPlayerController(
                 viewModel = viewModel,
@@ -406,64 +392,245 @@ fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainView
 
 
 @Composable
-fun PrayerCategoryList(prayers: List<PrayerItem>, isLatin: Boolean, viewModel: MainViewModel) {
-    val listState = remember(prayers) { androidx.compose.foundation.lazy.LazyListState() }
+fun PrayerCategoryList(
+    prayers: List<PrayerItem>,
+    isLatin: Boolean,
+    viewModel: MainViewModel,
+    manualIntention: String,
+    onManualIntentionChange: (String) -> Unit
+) {
+    val subsections = remember(prayers) {
+        val list = prayers.map { it.subsection }.filter { it.isNotBlank() }.distinct()
+        if (list.isNotEmpty()) listOf("All") + list else emptyList()
+    }
+    var selectedSubsection by remember(prayers) { mutableStateOf("All") }
+
+    val filteredPrayers = remember(prayers, selectedSubsection) {
+        if (selectedSubsection == "All" || selectedSubsection.isBlank()) {
+            prayers
+        } else {
+            prayers.filter { it.subsection == selectedSubsection }
+        }
+    }
+
+    val listState = remember(filteredPrayers) { androidx.compose.foundation.lazy.LazyListState() }
     TrackLazyListScroll(listState = listState, viewModel = viewModel)
-    LazyColumn(
-        state = listState,
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-        contentPadding = PaddingValues(bottom = 90.dp)
-    ) {
-        items(prayers, key = { it.id }) { prayer ->
-            Card(
+
+    val hasIntercessoryPrayers = remember(prayers) {
+        prayers.any {
+            it.englishText.contains("(here make your request)", ignoreCase = true) ||
+            it.englishText.contains("(specify petition)", ignoreCase = true) ||
+            it.englishText.contains("(mention petition)", ignoreCase = true)
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (subsections.size > 1) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("prayer_card_${prayer.id}"),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
-                border = BorderStroke(1.dp, GoldSacred.copy(alpha = 0.7f))
+                    .horizontalScroll(rememberScrollState())
+                    .padding(bottom = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = prayer.title,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold
+                subsections.forEach { sub ->
+                    val isSelected = selectedSubsection == sub
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { selectedSubsection = sub },
+                        label = {
+                            Text(
+                                text = sub,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontFamily = FontFamily.Serif
+                                )
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = GoldSacred,
+                            selectedLabelColor = DarkCathedralBackground,
+                            containerColor = DarkCathedralSurfaceVariant,
+                            labelColor = TextMutedParchment
                         ),
-                        color = GoldBright
+                        border = BorderStroke(
+                            1.dp,
+                            if (isSelected) GoldBright else DarkCathedralCardBorder
+                        )
                     )
-                    if (prayer.subtitle.isNotBlank()) {
+                }
+            }
+        }
+
+        LazyColumn(
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(bottom = 120.dp)
+        ) {
+            if (hasIntercessoryPrayers) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("intention_card"),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = DarkCathedralSurfaceVariant),
+                        border = BorderStroke(1.dp, GoldSacred.copy(alpha = 0.5f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "MANUAL DEVOTIONAL INTENTION",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Serif
+                                ),
+                                color = GoldBright
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Enter your custom petition. It will dynamically embed into placeholders (e.g. '(specify petition)', '(here make your request)') within the intercessory prayers below for focused meditation.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextMutedParchment
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            OutlinedTextField(
+                                value = manualIntention,
+                                onValueChange = onManualIntentionChange,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("manual_intention_input"),
+                                placeholder = { Text("e.g. For the health and recovery of my family...", color = TextMutedParchment, fontSize = 13.sp) },
+                                trailingIcon = {
+                                    if (manualIntention.isNotEmpty()) {
+                                        IconButton(onClick = { onManualIntentionChange("") }) {
+                                            Icon(Icons.Default.Clear, contentDescription = "Clear", tint = GoldBright)
+                                        }
+                                    }
+                                },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = GoldSacred,
+                                    unfocusedBorderColor = DarkCathedralCardBorder,
+                                    focusedContainerColor = DarkCathedralBackground,
+                                    unfocusedContainerColor = DarkCathedralBackground,
+                                    focusedTextColor = ParchmentLight,
+                                    unfocusedTextColor = ParchmentLight
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                singleLine = true
+                            )
+                        }
+                    }
+                }
+            }
+
+            items(filteredPrayers, key = { it.id }) { prayer ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("prayer_card_${prayer.id}"),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+                    border = BorderStroke(1.dp, GoldSacred.copy(alpha = 0.7f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = prayer.title,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = GoldBright,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        if (prayer.subsection.isNotBlank() && selectedSubsection == "All") {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Surface(
+                                color = CrimsonBurgundy.copy(alpha = 0.25f),
+                                shape = RoundedCornerShape(4.dp),
+                                border = BorderStroke(0.5.dp, GoldSacred.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = prayer.subsection,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = GoldLight,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        if (prayer.subtitle.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = prayer.subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextMutedParchment
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        IlluminatedDivider()
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        val textToShow = if (isLatin && prayer.latinText.isNotBlank()) prayer.latinText else prayer.englishText
+                        val formattedAnnotatedString = remember(textToShow, manualIntention) {
+                            val placeholders = listOf("(here make your request)", "(specify petition)", "(mention petition)")
+                            androidx.compose.ui.text.buildAnnotatedString {
+                                var cursor = 0
+                                val len = textToShow.length
+                                while (cursor < len) {
+                                    var foundPlaceholder: String? = null
+                                    for (p in placeholders) {
+                                        if (textToShow.startsWith(p, cursor, ignoreCase = true)) {
+                                            foundPlaceholder = p
+                                            break
+                                        }
+                                    }
+                                    if (foundPlaceholder != null) {
+                                        if (manualIntention.isNotBlank()) {
+                                            withStyle(style = androidx.compose.ui.text.SpanStyle(color = GoldBright, fontWeight = FontWeight.Bold)) {
+                                                append(" [ $manualIntention ] ")
+                                            }
+                                        } else {
+                                            withStyle(style = androidx.compose.ui.text.SpanStyle(color = GoldLight.copy(alpha = 0.8f), fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)) {
+                                                append(textToShow.substring(cursor, cursor + foundPlaceholder.length))
+                                            }
+                                        }
+                                        cursor += foundPlaceholder.length
+                                    } else {
+                                        append(textToShow[cursor].toString())
+                                        cursor++
+                                    }
+                                }
+                            }
+                        }
+
                         Text(
-                            text = prayer.subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextMutedParchment
+                            text = formattedAnnotatedString,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 15.sp,
+                                lineHeight = 22.sp
+                            ),
+                            color = ParchmentLight
+                        )
+
+                        // Optional Pronunciation Controller
+                        val textToPronounce = if (isLatin && prayer.latinText.isNotBlank()) prayer.latinText else prayer.englishText
+                        Spacer(modifier = Modifier.height(12.dp))
+                        com.example.ui.components.LatinAudioPlayerController(
+                            viewModel = viewModel,
+                            prayerId = "item_${prayer.id}",
+                            prayerText = textToPronounce,
+                            isLatin = isLatin
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-                    IlluminatedDivider()
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    val textToShow = if (isLatin && prayer.latinText.isNotBlank()) prayer.latinText else prayer.englishText
-                    Text(
-                        text = textToShow,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 15.sp,
-                            lineHeight = 22.sp
-                        ),
-                        color = ParchmentLight
-                    )
-
-                    // Optional Pronunciation Controller
-                    val textToPronounce = if (isLatin && prayer.latinText.isNotBlank()) prayer.latinText else prayer.englishText
-                    Spacer(modifier = Modifier.height(12.dp))
-                    com.example.ui.components.LatinAudioPlayerController(
-                        viewModel = viewModel,
-                        prayerId = "item_${prayer.id}",
-                        prayerText = textToPronounce,
-                        isLatin = isLatin
-                    )
                 }
             }
         }

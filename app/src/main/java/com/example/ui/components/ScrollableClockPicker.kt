@@ -461,12 +461,12 @@ fun ScrollableClockDialog(
     var currentTime by remember { mutableStateOf(initialTime) }
 
     val presetTimes = listOf(
-        "06:00" to "06:00 Matins",
-        "08:00" to "08:00 Prime",
+        "06:00" to "06:00 Morning",
+        "08:00" to "08:00 Duties",
         "12:00" to "12:00 Angelus",
         "15:00" to "15:00 Mercy",
-        "18:00" to "18:00 Vespers",
-        "21:00" to "21:00 Compline"
+        "18:00" to "18:00 Evening",
+        "21:00" to "21:00 Night"
     )
 
     AlertDialog(

@@ -9,6 +9,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.WindowManager
+import android.app.KeyguardManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -32,9 +34,24 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import com.example.ui.PageViewMode
+import com.example.util.AppTranslationHelper
+import com.example.ui.components.PageViewPreferenceDialog
+import com.example.ui.screens.VirtueTrackerScreen
+import com.example.ui.components.universalScrollAndGestureTracker
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -51,6 +68,7 @@ import com.example.ui.theme.DarkCathedralBackground
 import com.example.ui.theme.DarkCathedralCardBorder
 import com.example.ui.theme.DarkCathedralSurface
 import com.example.ui.theme.GoldBright
+import com.example.ui.theme.GoldDark
 import com.example.ui.theme.GoldSacred
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.TextMutedParchment
@@ -69,6 +87,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleCallIntent(intent)
     }
 
@@ -76,7 +95,43 @@ class MainActivity : ComponentActivity() {
         if (intent != null && intent.action == com.example.notifications.CallActionReceiver.ACTION_ANSWER_CALL) {
             val title = intent.getStringExtra("EXTRA_CALL_TITLE") ?: "Rule of Life Call"
             val message = intent.getStringExtra("EXTRA_CALL_MESSAGE") ?: "Time for your scheduled spiritual duty."
+            val notificationId = intent.getIntExtra("EXTRA_NOTIFICATION_ID", 1001)
+
+            // Immediately stop call ringer and service
+            com.example.notifications.CallRingerManager.stopRinging()
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+            manager?.cancel(notificationId)
+
+            try {
+                val serviceIntent = Intent(this, com.example.notifications.RuleOfLifeCallService::class.java).apply {
+                    action = com.example.notifications.RuleOfLifeCallService.ACTION_STOP_CALL
+                    putExtra("EXTRA_NOTIFICATION_ID", notificationId)
+                }
+                stopService(serviceIntent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                setShowWhenLocked(true)
+                setTurnScreenOn(true)
+            } else {
+                @Suppress("DEPRECATION")
+                window.addFlags(
+                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                )
+            }
+
             activeCallData.value = ActiveCallState(title, message)
+
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+            if (keyguardManager != null && keyguardManager.isKeyguardLocked) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    keyguardManager.requestDismissKeyguard(this, null)
+                }
+            }
         }
     }
 
@@ -85,8 +140,20 @@ class MainActivity : ComponentActivity() {
         viewModel.resetExpiredDuties()
     }
 
+    @Suppress("DEPRECATION")
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        // Explicitly handle system-level memory trimming to proactively free graphics and ashmem buffers
+        // as recommended by the OS warning: "Pinning is deprecated since Android Q. Please use trim or other methods."
+        if (level >= TRIM_MEMORY_BACKGROUND || level == TRIM_MEMORY_RUNNING_LOW) {
+            // Encourage the runtime to garbage collect and release unused shared memory allocations
+            System.gc()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.example.util.AppTranslationHelper.init(applicationContext)
         enableEdgeToEdge()
 
         // Handle incoming call action intent if activity started from call notification
@@ -103,11 +170,11 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val appTheme by viewModel.appTheme.collectAsState()
+            val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
             MyApplicationTheme(themeId = appTheme) {
-                val profile by viewModel.userProfile.collectAsState()
-                val duties by viewModel.allDuties.collectAsState()
-                val currentTab by viewModel.currentTab.collectAsState()
+                val profile by viewModel.userProfile.collectAsStateWithLifecycle()
+                val duties by viewModel.allDuties.collectAsStateWithLifecycle()
+                val currentTab by viewModel.currentTab.collectAsStateWithLifecycle()
                 val context = LocalContext.current
 
                 var showBackgroundPermissionDialog by remember { mutableStateOf(false) }
@@ -141,6 +208,15 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             onEndCall = {
                                 activeCallData.value = null
+                                com.example.notifications.CallRingerManager.stopRinging()
+                                try {
+                                    val serviceIntent = Intent(context, com.example.notifications.RuleOfLifeCallService::class.java).apply {
+                                        action = com.example.notifications.RuleOfLifeCallService.ACTION_STOP_CALL
+                                    }
+                                    context.stopService(serviceIntent)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
                             }
                         )
                     } else if (profile == null || !profile!!.isConfigured) {
@@ -288,109 +364,68 @@ fun MainAppContent(
 ) {
     val isBottomNavVisible by viewModel.isBottomNavVisible.collectAsStateWithLifecycle()
     val readingProgress by viewModel.readingProgress.collectAsStateWithLifecycle()
+    val pageViewMode by viewModel.pageViewMode.collectAsStateWithLifecycle()
+    val showPageVisibilityPrompt by viewModel.showPageVisibilityPrompt.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
+
+    var buttonOffsetX by remember { mutableStateOf(0f) }
+    var buttonOffsetY by remember { mutableStateOf(100f) }
+
+    if (showPageVisibilityPrompt) {
+        PageViewPreferenceDialog(
+            currentMode = pageViewMode,
+            onModeSelected = { newMode ->
+                viewModel.setPageViewMode(newMode)
+            },
+            onDismiss = { dontAskAgain ->
+                viewModel.dismissPageVisibilityPrompt(dontAskAgain)
+            }
+        )
+    }
 
     val navItems = listOf(
         NavItem("Home", Icons.Default.Home, "nav_home_tab"),
         NavItem("Rule", Icons.Default.Checklist, "nav_rule_tab"),
+        NavItem("Timer", Icons.Default.Shield, "nav_virtue_tab"),
         NavItem("Saint", Icons.Default.AccountCircle, "nav_saint_tab"),
         NavItem("Prayers", Icons.AutoMirrored.Filled.MenuBook, "nav_prayers_tab"),
         NavItem("Examine", Icons.Default.Church, "nav_examine_tab"),
         NavItem("Calendar", Icons.Default.CalendarMonth, "nav_calendar_tab"),
         NavItem("Deception", Icons.Default.Warning, "nav_deception_tab"),
-        NavItem("Catechism", Icons.AutoMirrored.Filled.MenuBook, "nav_catechism_tab"),
-        NavItem("Settings", Icons.Default.Settings, "nav_settings_tab")
+        NavItem("Settings", Icons.Default.Settings, "nav_settings_tab"),
+        NavItem("RegulaVitae", Icons.Default.Info, "nav_regulavitae_tab")
     )
 
-    Scaffold(
-        bottomBar = {
-            androidx.compose.animation.AnimatedVisibility(
-                visible = isBottomNavVisible,
-                enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.expandVertically(animationSpec = androidx.compose.animation.core.tween(300)),
-                exit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.shrinkVertically(animationSpec = androidx.compose.animation.core.tween(300))
-            ) {
-                Surface(
-                    color = DarkCathedralSurface.copy(alpha = 0.95f),
-                    tonalElevation = 12.dp,
-                    shadowElevation = 16.dp,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DarkCathedralBackground)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .universalScrollAndGestureTracker(viewModel)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            if (readingProgress > 0f) {
+                LinearProgressIndicator(
+                    progress = { readingProgress },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .border(
-                            BorderStroke(
-                                1.dp,
-                                androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                    listOf(
-                                        GoldBright.copy(alpha = 0.8f),
-                                        GoldSacred.copy(alpha = 0.2f),
-                                        GoldBright.copy(alpha = 0.8f)
-                                    )
-                                )
-                            )
-                        )
-                ) {
-                    ScrollableTabRow(
-                        selectedTabIndex = currentTab,
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                        contentColor = GoldBright,
-                        edgePadding = 8.dp,
-                        indicator = { tabPositions ->
-                            if (currentTab < tabPositions.size) {
-                                TabRowDefaults.SecondaryIndicator(
-                                    Modifier.tabIndicatorOffset(tabPositions[currentTab]),
-                                    color = CrimsonBurgundy
-                                )
-                            }
-                        },
-                        divider = {}
-                    ) {
-                        navItems.forEachIndexed { index, item ->
-                            val isSelected = currentTab == index
-                            Tab(
-                                selected = isSelected,
-                                onClick = { onTabSelected(index) },
-                                icon = {
-                                    Icon(
-                                        imageVector = item.icon,
-                                        contentDescription = item.title,
-                                        tint = if (isSelected) GoldBright else TextMutedParchment,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                },
-                                text = {
-                                    Text(
-                                        text = item.title,
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontSize = 10.sp,
-                                            fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
-                                        ),
-                                        color = if (isSelected) GoldBright else TextMutedParchment,
-                                        maxLines = 1
-                                    )
-                                },
-                                modifier = Modifier.testTag(item.tag)
-                            )
-                        }
-                    }
-                }
+                        .height(3.dp)
+                        .testTag("reading_progress_bar"),
+                    color = GoldBright,
+                    trackColor = androidx.compose.ui.graphics.Color.Transparent
+                )
             }
-        },
-        containerColor = DarkCathedralBackground,
-        contentWindowInsets = WindowInsets.safeDrawing
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                if (readingProgress > 0f) {
-                    LinearProgressIndicator(
-                        progress = { readingProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(3.dp)
-                            .testTag("reading_progress_bar"),
-                        color = GoldBright,
-                        trackColor = androidx.compose.ui.graphics.Color.Transparent
-                    )
-                }
-                Box(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .widthIn(max = 640.dp)
+                        .align(Alignment.TopCenter)
+                ) {
                     androidx.compose.animation.AnimatedContent(
                         targetState = currentTab,
                         transitionSpec = {
@@ -398,26 +433,137 @@ fun MainAppContent(
                         },
                         label = "tab_transition"
                     ) { tab ->
-                        when (tab) {
-                            0 -> StainedGlassDashboardScreen(
-                                viewModel = viewModel,
-                                duties = duties,
-                                onNavigateToTab = onTabSelected
+                    when (tab) {
+                        0 -> StainedGlassDashboardScreen(
+                            viewModel = viewModel,
+                            duties = duties,
+                            onNavigateToTab = onTabSelected
+                        )
+                        1 -> RuleOfLifeScreen(viewModel = viewModel, duties = duties)
+                        2 -> VirtueTrackerScreen(viewModel = viewModel)
+                        3 -> SaintMeditationScreen(viewModel = viewModel)
+                        4 -> PrayerLibraryScreen(viewModel = viewModel)
+                        5 -> ExaminationScreen(viewModel = viewModel)
+                        6 -> CalendarScreen(viewModel = viewModel)
+                        7 -> DeceptionScreen(viewModel = viewModel)
+                        8 -> SettingsScreen(viewModel = viewModel)
+                        9 -> RegulaVitaeScreen(viewModel = viewModel)
+                        else -> StainedGlassDashboardScreen(
+                            viewModel = viewModel,
+                            duties = duties,
+                            onNavigateToTab = onTabSelected
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+        // Floating Page Visibility Preference Quick Toggle Button (Available on ALL PAGES)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset { IntOffset(buttonOffsetX.roundToInt(), buttonOffsetY.roundToInt()) }
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        buttonOffsetX += dragAmount.x
+                        buttonOffsetY += dragAmount.y
+                    }
+                }
+                .size(36.dp)
+                .background(
+                    color = DarkCathedralSurface.copy(alpha = 0.9f),
+                    shape = androidx.compose.foundation.shape.CircleShape
+                )
+                .border(1.dp, GoldDark.copy(alpha = 0.6f), androidx.compose.foundation.shape.CircleShape)
+                .testTag("page_view_mode_toggle_button")
+        ) {
+            IconButton(
+                onClick = { viewModel.openPageVisibilityPrompt() },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = when (pageViewMode) {
+                        PageViewMode.PURE_CONTENT -> Icons.Default.VisibilityOff
+                        PageViewMode.STANDARD_WITH_BARS -> Icons.Default.Visibility
+                        PageViewMode.DYNAMIC_AUTO_HIDE -> Icons.Default.Tune
+                    },
+                    contentDescription = "Change Page Viewing Preference",
+                    tint = GoldBright,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
+        // Overlay Bottom Navigation Bar (does not trigger layout recalculations or content jumps)
+        androidx.compose.animation.AnimatedVisibility(
+            visible = isBottomNavVisible,
+            enter = androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)) + androidx.compose.animation.slideInVertically(initialOffsetY = { it }, animationSpec = androidx.compose.animation.core.tween(250)),
+            exit = androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(250)) + androidx.compose.animation.slideOutVertically(targetOffsetY = { it }, animationSpec = androidx.compose.animation.core.tween(250)),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            Surface(
+                color = DarkCathedralSurface.copy(alpha = 0.95f),
+                tonalElevation = 12.dp,
+                shadowElevation = 16.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .border(
+                        BorderStroke(
+                            1.dp,
+                            androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                listOf(
+                                    GoldBright.copy(alpha = 0.8f),
+                                    GoldSacred.copy(alpha = 0.2f),
+                                    GoldBright.copy(alpha = 0.8f)
+                                )
                             )
-                            1 -> RuleOfLifeScreen(viewModel = viewModel, duties = duties)
-                            2 -> SaintMeditationScreen(viewModel = viewModel)
-                            3 -> PrayerLibraryScreen(viewModel = viewModel)
-                            4 -> ExaminationScreen(viewModel = viewModel)
-                            5 -> CalendarScreen(viewModel = viewModel)
-                            6 -> DeceptionScreen(viewModel = viewModel)
-                            7 -> CatechismScreen(viewModel = viewModel)
-                            8 -> SettingsScreen(viewModel = viewModel)
-                            else -> StainedGlassDashboardScreen(
-                                viewModel = viewModel,
-                                duties = duties,
-                                onNavigateToTab = onTabSelected
+                        )
+                    )
+            ) {
+                ScrollableTabRow(
+                    selectedTabIndex = currentTab,
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    contentColor = GoldBright,
+                    edgePadding = 8.dp,
+                    indicator = { tabPositions ->
+                        if (currentTab < tabPositions.size) {
+                            TabRowDefaults.SecondaryIndicator(
+                                Modifier.tabIndicatorOffset(tabPositions[currentTab]),
+                                color = CrimsonBurgundy
                             )
                         }
+                    },
+                    divider = {}
+                ) {
+                    navItems.forEachIndexed { index, item ->
+                        val isSelected = currentTab == index
+                        Tab(
+                            selected = isSelected,
+                            onClick = { onTabSelected(index) },
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.title,
+                                    tint = if (isSelected) GoldBright else TextMutedParchment,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = AppTranslationHelper.translate(item.title, appLanguage),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 10.sp,
+                                        fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                    ),
+                                    color = if (isSelected) GoldBright else TextMutedParchment,
+                                    maxLines = 1
+                                )
+                            },
+                            modifier = Modifier.testTag(item.tag)
+                        )
                     }
                 }
             }

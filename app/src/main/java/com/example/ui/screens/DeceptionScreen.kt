@@ -69,6 +69,18 @@ import com.example.ui.theme.ParchmentLight
 import com.example.ui.theme.TextMutedParchment
 import kotlinx.coroutines.launch
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.components.TrackLazyListScroll
+import com.example.ui.components.fullScreenToggleOnTap
+import com.example.ui.components.rememberDirectionalScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+
 @Composable
 fun DeceptionScreen(
     viewModel: MainViewModel
@@ -88,14 +100,39 @@ fun DeceptionScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
+    TrackLazyListScroll(listState = listState, viewModel = viewModel)
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.setReadingProgress(0f)
+            viewModel.setBottomNavVisible(true)
+            viewModel.setTopHeaderVisible(true)
+        }
+    }
+
+    val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
+    val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
+
     val showScrollToTop by remember {
         derivedStateOf { listState.firstVisibleItemIndex > 1 }
     }
 
+    val isBottomNavVisible by viewModel.isBottomNavVisible.collectAsStateWithLifecycle()
+    val dynamicFabBottomPadding by androidx.compose.animation.core.animateDpAsState(
+        targetValue = if (isBottomNavVisible) 80.dp else 20.dp,
+        animationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+        ),
+        label = "deception_fab_bottom_padding"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkCathedralBackground),
+            .background(DarkCathedralBackground)
+            .fullScreenToggleOnTap(viewModel)
+            .nestedScroll(directionalScrollConnection),
         contentAlignment = Alignment.TopCenter
     ) {
         LazyColumn(
@@ -104,24 +141,30 @@ fun DeceptionScreen(
                 .fillMaxHeight()
                 .widthIn(max = 600.dp)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .testTag("deception_screen_lazy_column")
+                .testTag("deception_screen_lazy_column"),
+            contentPadding = PaddingValues(bottom = 120.dp)
         ) {
             // Header Title Card
             item {
-                val context = LocalContext.current
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
-                    border = BorderStroke(1.5.dp, CrimsonBurgundy),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .testTag("deception_header_card")
+                AnimatedVisibility(
+                    visible = isTopHeaderVisible,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    val context = LocalContext.current
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+                        border = BorderStroke(1.5.dp, CrimsonBurgundy),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                            .testTag("deception_header_card")
                     ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
@@ -238,6 +281,7 @@ fun DeceptionScreen(
                         }
                     }
                 }
+                }
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
@@ -302,7 +346,7 @@ fun DeceptionScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(80.dp))
+                Spacer(modifier = Modifier.height(120.dp))
             }
         }
 
@@ -313,7 +357,7 @@ fun DeceptionScreen(
             exit = fadeOut(),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(20.dp)
+                .padding(end = 20.dp, bottom = dynamicFabBottomPadding)
         ) {
             FloatingActionButton(
                 onClick = {

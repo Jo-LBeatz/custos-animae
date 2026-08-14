@@ -38,10 +38,17 @@ import com.example.ui.components.GothicHeader
 import com.example.ui.components.IlluminatedDivider
 import com.example.ui.components.LiturgicalBanner
 import com.example.ui.theme.*
+import com.example.util.AppLanguage
+import com.example.util.AppTranslationHelper
 import java.util.Calendar
 
 
-enum class CalendarViewMode { MONTHLY, DAILY }
+import com.example.ui.components.TrackScrollState
+import com.example.ui.components.fullScreenToggleOnTap
+import com.example.ui.components.rememberDirectionalScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+
+enum class CalendarViewMode { MONTHLY, DAILY, FASTING_GUIDE }
 
 @Composable
 fun CalendarScreen(
@@ -58,6 +65,7 @@ fun CalendarScreen(
     var viewMode by remember { mutableStateOf(CalendarViewMode.MONTHLY) }
 
     val calendarState by viewModel.selectedCalendarDate.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
 
     val year = calendarState.get(Calendar.YEAR)
     val month = calendarState.get(Calendar.MONTH) + 1
@@ -79,37 +87,29 @@ fun CalendarScreen(
     var dialogIsLatin by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
-
-    LaunchedEffect(scrollState.value, scrollState.maxValue) {
-        val currentScroll = scrollState.value
-        val maxScroll = scrollState.maxValue
-        
-        if (currentScroll <= 10) {
-            viewModel.setBottomNavVisible(true)
-            viewModel.setTopHeaderVisible(true)
-        } else if (currentScroll > 30) {
-            viewModel.setBottomNavVisible(false)
-            viewModel.setTopHeaderVisible(false)
-        }
-        
-        val progress = if (maxScroll > 0) currentScroll.toFloat() / maxScroll.toFloat() else 0f
-        viewModel.setReadingProgress(progress)
-    }
+    TrackScrollState(scrollState = scrollState, viewModel = viewModel)
 
     DisposableEffect(Unit) {
         onDispose {
             viewModel.setReadingProgress(0f)
             viewModel.setBottomNavVisible(true)
+            viewModel.setTopHeaderVisible(true)
         }
     }
+
+    val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(screenBg)
+            .wrapContentWidth(Alignment.CenterHorizontally)
+            .widthIn(max = 640.dp)
             .padding(horizontal = 16.dp)
+            .fullScreenToggleOnTap(viewModel)
+            .nestedScroll(directionalScrollConnection)
             .verticalScroll(scrollState)
-            .padding(bottom = 90.dp)
+            .padding(bottom = 120.dp)
     ) {
 
         val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
@@ -121,8 +121,8 @@ fun CalendarScreen(
         ) {
             Column {
                 GothicHeader(
-                    title = "1954 ROMAN CALENDAR",
-                    subtitle = "Pre-1955 Liturgical Seasons, Ember Days & Vigils",
+                    title = AppTranslationHelper.translate("1954 ROMAN CALENDAR", appLanguage),
+                    subtitle = AppTranslationHelper.translate("Pre-1955 Liturgical Seasons, Ember Days & Vigils", appLanguage),
                     badgeText = "${String.format("%02d/%02d", month, day)}/$year"
                 )
                 
@@ -130,13 +130,19 @@ fun CalendarScreen(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.Center
                 ) {
+                    val selectedIndex = when (viewMode) {
+                        CalendarViewMode.MONTHLY -> 0
+                        CalendarViewMode.DAILY -> 1
+                        CalendarViewMode.FASTING_GUIDE -> 2
+                    }
+
                     TabRow(
-                        selectedTabIndex = if (viewMode == CalendarViewMode.MONTHLY) 0 else 1,
+                        selectedTabIndex = selectedIndex,
                         containerColor = Color.Transparent,
                         contentColor = goldAccent,
                         indicator = { tabPositions ->
                             TabRowDefaults.SecondaryIndicator(
-                                Modifier.tabIndicatorOffset(tabPositions[if (viewMode == CalendarViewMode.MONTHLY) 0 else 1]),
+                                Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
                                 color = goldAccent
                             )
                         },
@@ -145,12 +151,17 @@ fun CalendarScreen(
                         Tab(
                             selected = viewMode == CalendarViewMode.MONTHLY,
                             onClick = { viewMode = CalendarViewMode.MONTHLY },
-                            text = { Text("MONTHLY GRID") }
+                            text = { Text(AppTranslationHelper.translate("MONTHLY", appLanguage), fontSize = 11.sp, fontWeight = FontWeight.Bold) }
                         )
                         Tab(
                             selected = viewMode == CalendarViewMode.DAILY,
                             onClick = { viewMode = CalendarViewMode.DAILY },
-                            text = { Text("DAILY DETAILS") }
+                            text = { Text(AppTranslationHelper.translate("DAILY", appLanguage), fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                        )
+                        Tab(
+                            selected = viewMode == CalendarViewMode.FASTING_GUIDE,
+                            onClick = { viewMode = CalendarViewMode.FASTING_GUIDE },
+                            text = { Text(AppTranslationHelper.translate("FASTING", appLanguage), fontSize = 11.sp, fontWeight = FontWeight.Bold) }
                         )
                     }
                 }
@@ -326,9 +337,17 @@ fun CalendarScreen(
                 }
             }
             Spacer(modifier = Modifier.height(14.dp))
-        }
-
-        // Date Stepper
+        } else if (viewMode == CalendarViewMode.FASTING_GUIDE) {
+            TraditionalFastingGuideView(
+                isLightTheme = isLightTheme,
+                cardBg = cardBg,
+                cardBorder = cardBorder,
+                goldAccent = goldAccent,
+                textNormal = textNormal,
+                textMuted = textMuted
+            )
+        } else {
+            // Date Stepper
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
@@ -385,7 +404,7 @@ fun CalendarScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         // Liturgical Day Banner
-        LiturgicalBanner(info = info)
+        LiturgicalBanner(info = info, appLanguage = appLanguage)
 
         Spacer(modifier = Modifier.height(14.dp))
 
@@ -598,6 +617,7 @@ fun CalendarScreen(
                 }
             }
         }
+    }
     }
 
         }

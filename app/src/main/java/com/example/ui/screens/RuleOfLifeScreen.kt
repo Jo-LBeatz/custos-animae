@@ -5,6 +5,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,6 +44,13 @@ import com.example.data.SpiritualDuty
 import com.example.ui.MainViewModel
 import com.example.ui.components.*
 import com.example.ui.theme.*
+import com.example.util.AppLanguage
+import com.example.util.AppTranslationHelper
+
+import com.example.ui.components.TrackLazyListScroll
+import com.example.ui.components.fullScreenToggleOnTap
+import com.example.ui.components.rememberDirectionalScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 @Composable
 fun RuleOfLifeScreen(
@@ -80,7 +88,8 @@ fun RuleOfLifeScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var editingDuty by remember { mutableStateOf<SpiritualDuty?>(null) }
 
-    val userProfile by viewModel.userProfile.collectAsState()
+    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
 
     val todayInfo = viewModel.getTodayLiturgicalInfo()
     val filteredDuties = duties.filter { it.frequency == selectedFrequency }
@@ -96,38 +105,13 @@ fun RuleOfLifeScreen(
         onDispose {
             viewModel.setReadingProgress(0f)
             viewModel.setBottomNavVisible(true)
-        }
-    }
-
-    LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
-        val currentIndex = listState.firstVisibleItemIndex
-        val currentOffset = listState.firstVisibleItemScrollOffset
-
-        if (currentIndex == 0 && currentOffset <= 10) {
-            viewModel.setBottomNavVisible(true)
             viewModel.setTopHeaderVisible(true)
-        } else if (currentIndex > 0 || currentOffset > 30) {
-            viewModel.setBottomNavVisible(false)
-            viewModel.setTopHeaderVisible(false)
-        }
-
-        val layoutInfo = listState.layoutInfo
-        val totalItemsCount = layoutInfo.totalItemsCount
-        if (totalItemsCount > 1) {
-            val firstVisibleItem = layoutInfo.visibleItemsInfo.firstOrNull()
-            if (firstVisibleItem != null) {
-                val itemSize = firstVisibleItem.size
-                val fraction = if (itemSize > 0) currentOffset.toFloat() / itemSize else 0f
-                val currentPosition = currentIndex + fraction
-                val progress = (currentPosition / (totalItemsCount - 1).coerceAtLeast(1)).coerceIn(0f, 1f)
-                viewModel.setReadingProgress(progress)
-            }
-        } else {
-            viewModel.setReadingProgress(0f)
         }
     }
 
-    val pendingGuardDuty by viewModel.pendingReflectionDuty.collectAsState()
+    TrackLazyListScroll(listState = listState, viewModel = viewModel)
+
+    val pendingGuardDuty by viewModel.pendingReflectionDuty.collectAsStateWithLifecycle()
 
     // Dialog for Reflection Guard
     pendingGuardDuty?.let { pending ->
@@ -157,24 +141,72 @@ fun RuleOfLifeScreen(
     }
 
 
+    val isBottomNavVisible by viewModel.isBottomNavVisible.collectAsStateWithLifecycle()
+    val pageViewMode by viewModel.pageViewMode.collectAsStateWithLifecycle()
+
+    val dynamicFabBottomPadding by androidx.compose.animation.core.animateDpAsState(
+        targetValue = if (isBottomNavVisible) 80.dp else 16.dp,
+        animationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+        ),
+        label = "fab_bottom_padding"
+    )
+
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
+            val dynamicActionLabel = when (selectedFrequency) {
+                "DAILY" -> "Add Daily Rule"
+                "WEEKLY" -> "Add Weekly Rule"
+                "MONTHLY" -> "Add Monthly Rule"
+                "YEARLY" -> "Add Yearly Rule"
+                else -> "Add ${selectedFrequency.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} Rule"
+            }
+            ExtendedFloatingActionButton(
                 onClick = { showAddDialog = true },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = dynamicActionLabel
+                    )
+                },
+                text = {
+                    androidx.compose.animation.AnimatedContent(
+                        targetState = dynamicActionLabel,
+                        transitionSpec = {
+                            (androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 })
+                                .togetherWith(androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { -it / 2 })
+                        },
+                        label = "fab_text_anim"
+                    ) { labelText ->
+                        Text(
+                            text = labelText,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Serif,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                },
                 containerColor = GoldSacred,
                 contentColor = Color.Black,
-                modifier = Modifier.testTag("add_duty_fab")
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Spiritual Duty")
-            }
+                modifier = Modifier
+                    .padding(bottom = dynamicFabBottomPadding)
+                    .testTag("add_duty_fab")
+            )
         },
         containerColor = DarkCathedralBackground
     ) { padding ->
+        val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = 640.dp)
                 .padding(horizontal = 16.dp)
+                .fullScreenToggleOnTap(viewModel)
+                .nestedScroll(directionalScrollConnection)
         ) {
             val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
 
@@ -224,7 +256,7 @@ fun RuleOfLifeScreen(
                     )
 
                     // Liturgical Banner
-                    LiturgicalBanner(info = todayInfo)
+                    LiturgicalBanner(info = todayInfo, appLanguage = appLanguage)
 
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -276,7 +308,10 @@ fun RuleOfLifeScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(24.dp)
+                    ) {
                         Text(
                             text = "☩ No spiritual duties under $selectedFrequency rule",
                             style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Serif),
@@ -284,10 +319,38 @@ fun RuleOfLifeScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Tap + below to add a new sacred duty or devotion.",
+                            text = "Set a holy routine for your ${selectedFrequency.lowercase(Locale.getDefault())} rule of life.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextMutedParchment
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { showAddDialog = true },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = GoldSacred,
+                                contentColor = Color.Black
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.testTag("empty_state_add_duty_btn")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = when (selectedFrequency) {
+                                    "DAILY" -> "Add Daily Rule"
+                                    "WEEKLY" -> "Add Weekly Rule"
+                                    "MONTHLY" -> "Add Monthly Rule"
+                                    "YEARLY" -> "Add Yearly Rule"
+                                    else -> "Add Rule"
+                                },
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Serif
+                            )
+                        }
                     }
                 }
             } else {
@@ -295,7 +358,7 @@ fun RuleOfLifeScreen(
                     state = listState,
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp)
+                    contentPadding = PaddingValues(bottom = if (isBottomNavVisible) 160.dp else 100.dp)
                 ) {
                     items(filteredDuties, key = { it.id }) { duty ->
                         SpiritualDutyCard(
@@ -351,8 +414,19 @@ fun DutyEditDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
+            val dialogTitle = if (duty == null) {
+                when (frequency) {
+                    "DAILY" -> "New Daily Rule"
+                    "WEEKLY" -> "New Weekly Rule"
+                    "MONTHLY" -> "New Monthly Rule"
+                    "YEARLY" -> "New Yearly Rule"
+                    else -> "New Spiritual Rule"
+                }
+            } else {
+                "Edit Spiritual Rule"
+            }
             Text(
-                text = if (duty == null) "New Spiritual Duty" else "Edit Duty",
+                text = dialogTitle,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold
@@ -998,6 +1072,17 @@ fun DutyEditDialog(
             }
         },
         confirmButton = {
+            val saveButtonText = if (duty == null) {
+                when (frequency) {
+                    "DAILY" -> "Save Daily Rule"
+                    "WEEKLY" -> "Save Weekly Rule"
+                    "MONTHLY" -> "Save Monthly Rule"
+                    "YEARLY" -> "Save Yearly Rule"
+                    else -> "Save Rule"
+                }
+            } else {
+                "Save Changes"
+            }
             Button(
                 onClick = {
                     if (title.isNotBlank()) {
@@ -1018,7 +1103,7 @@ fun DutyEditDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = GoldSacred, contentColor = Color.Black),
                 modifier = Modifier.testTag("save_duty_button")
             ) {
-                Text("Save Duty", fontWeight = FontWeight.Bold)
+                Text(saveButtonText, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

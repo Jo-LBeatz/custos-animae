@@ -83,6 +83,8 @@ fun PermissionsSetupScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkCathedralBackground)
+            .wrapContentWidth(Alignment.CenterHorizontally)
+            .widthIn(max = 640.dp)
             .padding(20.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,

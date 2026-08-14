@@ -2,8 +2,10 @@ package com.example.util
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionParameters
@@ -35,6 +37,17 @@ class PrayerExoPlayerManager(private val context: Context) {
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             _isPlaying.value = isPlaying
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            Log.e("PrayerExoPlayerManager", "ExoPlayer error occurred: ${error.message}", error)
+            _isPlaying.value = false
+            _currentMediaId.value = null
+            try {
+                Toast.makeText(context, "Sourcing local text recitation fallback", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                // Safe-catch for background context usage
+            }
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {

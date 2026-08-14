@@ -11,7 +11,6 @@ import com.example.data.SpiritualDuty
 import com.example.data.SpiritualRepository
 import com.example.data.UserProfile
 import com.example.data.PrayerEntity
-import com.example.data.CatechismArticle
 import com.example.data.calendar.LiturgicalDayInfo
 import com.example.data.calendar.Roman1954Calendar
 import com.example.data.calendar.SaintData
@@ -34,6 +33,14 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import com.example.util.AppLanguage
+import com.example.util.AppTranslationHelper
+
+enum class PageViewMode {
+    PURE_CONTENT,       // View WITHOUT top and bottom elements for pure content visibility
+    STANDARD_WITH_BARS, // View WITH top and bottom elements always visible
+    DYNAMIC_AUTO_HIDE   // Dynamic auto-hide top/bottom elements on scroll
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -69,10 +76,65 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _readingTextSize = MutableStateFlow(sharedPrefs.getFloat("reading_text_size", 14f))
     val readingTextSize: StateFlow<Float> = _readingTextSize.asStateFlow()
 
+    // Page Viewing Mode Preference (Pure Content View without top/bottom bars vs Standard with bars vs Dynamic Auto-Hide)
+    private val _pageViewMode = MutableStateFlow<PageViewMode>(
+        try {
+            PageViewMode.valueOf(
+                sharedPrefs.getString("page_view_mode", PageViewMode.DYNAMIC_AUTO_HIDE.name)
+                    ?: PageViewMode.DYNAMIC_AUTO_HIDE.name
+            )
+        } catch (e: Exception) {
+            PageViewMode.DYNAMIC_AUTO_HIDE
+        }
+    )
+    val pageViewMode: StateFlow<PageViewMode> = _pageViewMode.asStateFlow()
+
+    // Page Visibility Prompt Dialog State
+    private val _showPageVisibilityPrompt = MutableStateFlow<Boolean>(
+        sharedPrefs.getBoolean("show_page_visibility_prompt_on_launch", true)
+    )
+    val showPageVisibilityPrompt: StateFlow<Boolean> = _showPageVisibilityPrompt.asStateFlow()
+
     fun updateReadingTextSize(newSize: Float) {
         viewModelScope.launch {
             _readingTextSize.value = newSize
             sharedPrefs.edit().putFloat("reading_text_size", newSize).apply()
+        }
+    }
+
+    fun setPageViewMode(mode: PageViewMode) {
+        viewModelScope.launch {
+            _pageViewMode.value = mode
+            sharedPrefs.edit().putString("page_view_mode", mode.name).apply()
+            applyPageViewMode(mode)
+        }
+    }
+
+    fun applyPageViewMode(mode: PageViewMode = _pageViewMode.value) {
+        when (mode) {
+            PageViewMode.PURE_CONTENT -> {
+                _isBottomNavVisible.value = false
+                _isTopHeaderVisible.value = false
+            }
+            PageViewMode.STANDARD_WITH_BARS -> {
+                _isBottomNavVisible.value = true
+                _isTopHeaderVisible.value = true
+            }
+            PageViewMode.DYNAMIC_AUTO_HIDE -> {
+                _isBottomNavVisible.value = true
+                _isTopHeaderVisible.value = true
+            }
+        }
+    }
+
+    fun openPageVisibilityPrompt() {
+        _showPageVisibilityPrompt.value = true
+    }
+
+    fun dismissPageVisibilityPrompt(dontAskAgainOnLaunch: Boolean = false) {
+        _showPageVisibilityPrompt.value = false
+        if (dontAskAgainOnLaunch) {
+            sharedPrefs.edit().putBoolean("show_page_visibility_prompt_on_launch", false).apply()
         }
     }
 
@@ -102,9 +164,142 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Virtue & Purity Counter State (Days without relapse into sin)
+    private val initialCleanSince = sharedPrefs.getLong("virtue_clean_since_timestamp", 0L).let {
+        if (it == 0L) {
+            val now = System.currentTimeMillis()
+            sharedPrefs.edit().putLong("virtue_clean_since_timestamp", now).apply()
+            now
+        } else {
+            it
+        }
+    }
+    private val _virtueCleanSinceTimestamp = MutableStateFlow(initialCleanSince)
+    val virtueCleanSinceTimestamp: StateFlow<Long> = _virtueCleanSinceTimestamp.asStateFlow()
+
+    private val _virtueLongestStreakDays = MutableStateFlow(sharedPrefs.getInt("virtue_longest_streak_days", 0))
+    val virtueLongestStreakDays: StateFlow<Int> = _virtueLongestStreakDays.asStateFlow()
+
+    private fun parseRelapseLogs(jsonStr: String?): List<com.example.data.RelapseLog> {
+        if (jsonStr.isNullOrBlank()) return emptyList()
+        val list = mutableListOf<com.example.data.RelapseLog>()
+        try {
+            val array = org.json.JSONArray(jsonStr)
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                list.add(
+                    com.example.data.RelapseLog(
+                        id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                        timestamp = obj.optLong("timestamp", System.currentTimeMillis()),
+                        streakDays = obj.optInt("streakDays", 0),
+                        streakHours = obj.optInt("streakHours", 0),
+                        triggerNote = obj.optString("triggerNote", ""),
+                        resolutionNote = obj.optString("resolutionNote", "")
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return list
+    }
+
+    private fun serializeRelapseLogs(logs: List<com.example.data.RelapseLog>): String {
+        val array = org.json.JSONArray()
+        for (log in logs) {
+            val obj = org.json.JSONObject()
+            obj.put("id", log.id)
+            obj.put("timestamp", log.timestamp)
+            obj.put("streakDays", log.streakDays)
+            obj.put("streakHours", log.streakHours)
+            obj.put("triggerNote", log.triggerNote)
+            obj.put("resolutionNote", log.resolutionNote)
+            array.put(obj)
+        }
+        return array.toString()
+    }
+
+    private val _virtueRelapseLogs = MutableStateFlow(parseRelapseLogs(sharedPrefs.getString("virtue_relapse_logs_json", "[]")))
+    val virtueRelapseLogs: StateFlow<List<com.example.data.RelapseLog>> = _virtueRelapseLogs.asStateFlow()
+
+    fun resetVirtueTimer(
+        triggerNote: String = "",
+        resolutionNote: String = "",
+        customResetTimestamp: Long = System.currentTimeMillis()
+    ) {
+        viewModelScope.launch {
+            val currentStart = _virtueCleanSinceTimestamp.value
+            val elapsedMs = maxOf(0L, customResetTimestamp - currentStart)
+            val streakDays = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(elapsedMs).toInt()
+            val streakHours = (java.util.concurrent.TimeUnit.MILLISECONDS.toHours(elapsedMs) % 24).toInt()
+
+            val currentLongest = _virtueLongestStreakDays.value
+            if (streakDays > currentLongest) {
+                _virtueLongestStreakDays.value = streakDays
+                sharedPrefs.edit().putInt("virtue_longest_streak_days", streakDays).apply()
+            }
+
+            val newLog = com.example.data.RelapseLog(
+                timestamp = customResetTimestamp,
+                streakDays = streakDays,
+                streakHours = streakHours,
+                triggerNote = triggerNote,
+                resolutionNote = resolutionNote
+            )
+            val updatedLogs = listOf(newLog) + _virtueRelapseLogs.value
+            _virtueRelapseLogs.value = updatedLogs
+            sharedPrefs.edit().putString("virtue_relapse_logs_json", serializeRelapseLogs(updatedLogs)).apply()
+
+            _virtueCleanSinceTimestamp.value = customResetTimestamp
+            sharedPrefs.edit().putLong("virtue_clean_since_timestamp", customResetTimestamp).apply()
+        }
+    }
+
+    fun updateVirtueStartTimestamp(newTimestamp: Long) {
+        viewModelScope.launch {
+            _virtueCleanSinceTimestamp.value = newTimestamp
+            sharedPrefs.edit().putLong("virtue_clean_since_timestamp", newTimestamp).apply()
+        }
+    }
+
+    fun deleteRelapseLog(logId: String) {
+        viewModelScope.launch {
+            val updated = _virtueRelapseLogs.value.filter { it.id != logId }
+            _virtueRelapseLogs.value = updated
+            sharedPrefs.edit().putString("virtue_relapse_logs_json", serializeRelapseLogs(updated)).apply()
+        }
+    }
+
     // Latin Mode Toggle for Prayer Library
     private val _isLatinMode = MutableStateFlow(false)
     val isLatinMode: StateFlow<Boolean> = _isLatinMode.asStateFlow()
+
+    // Persisted Manual Devotional Intention
+    private val _manualDevotionalIntention = MutableStateFlow(sharedPrefs.getString("manual_devotional_intention", "") ?: "")
+    val manualDevotionalIntention: StateFlow<String> = _manualDevotionalIntention.asStateFlow()
+
+    fun updateManualDevotionalIntention(intention: String) {
+        viewModelScope.launch {
+            _manualDevotionalIntention.value = intention
+            sharedPrefs.edit().putString("manual_devotional_intention", intention).apply()
+        }
+    }
+
+
+    // App-wide language setting (Indian languages + English)
+    private val _appLanguage = MutableStateFlow(
+        AppLanguage.fromCode(sharedPrefs.getString("app_language_code", AppLanguage.ENGLISH.code) ?: AppLanguage.ENGLISH.code)
+    )
+    val appLanguage: StateFlow<AppLanguage> = _appLanguage.asStateFlow()
+
+    fun updateAppLanguage(language: AppLanguage) {
+        viewModelScope.launch {
+            _appLanguage.value = language
+            sharedPrefs.edit().putString("app_language_code", language.code).apply()
+            java.util.Locale.setDefault(language.locale)
+            latinAudioPlayer.setLanguageLocale(language.locale)
+        }
+    }
 
     // Latin / English Audio Pronunciation & Media3 ExoPlayer Manager
     private val latinAudioPlayer = com.example.util.LatinAudioPlayer(application)
@@ -141,9 +336,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         useEcclesiastical: Boolean = true,
         isLatin: Boolean = _isLatinMode.value
     ) {
+        val finalSpeechText = if (!isLatin) {
+            AppTranslationHelper.translatePrayerText(id, text, _appLanguage.value)
+        } else {
+            text
+        }
         latinAudioPlayer.play(
             id = id,
-            text = text,
+            text = finalSpeechText,
             speed = speed,
             useEcclesiastical = useEcclesiastical,
             isLatin = isLatin
@@ -194,28 +394,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val prayerSearchQuery: StateFlow<String> = _prayerSearchQuery.asStateFlow()
     val prayerSearchResults: StateFlow<List<PrayerEntity>>
 
-    // Catechism Local Storage & Offline Search
-    private val _catechismSearchQuery = MutableStateFlow("")
-    val catechismSearchQuery: StateFlow<String> = _catechismSearchQuery.asStateFlow()
-
-    private val _selectedCatechismSection = MutableStateFlow("ALL")
-    val selectedCatechismSection: StateFlow<String> = _selectedCatechismSection.asStateFlow()
-
-    val catechismSearchResults: StateFlow<List<CatechismArticle>>
-
-    // Offline AI Question & Answer Search State
-    private val _aiQuestionInput = MutableStateFlow("")
-    val aiQuestionInput: StateFlow<String> = _aiQuestionInput.asStateFlow()
-
-    private val _aiAnswerResult = MutableStateFlow<String?>(null)
-    val aiAnswerResult: StateFlow<String?> = _aiAnswerResult.asStateFlow()
-
-    private val _matchedArticlesForAi = MutableStateFlow<List<CatechismArticle>>(emptyList())
-    val matchedArticlesForAi: StateFlow<List<CatechismArticle>> = _matchedArticlesForAi.asStateFlow()
-
-    private val _isAiSearching = MutableStateFlow(false)
-    val isAiSearching: StateFlow<Boolean> = _isAiSearching.asStateFlow()
-
     // Reflection Guard Dialog State
     private val _pendingReflectionDuty = MutableStateFlow<SpiritualDuty?>(null)
     val pendingReflectionDuty: StateFlow<SpiritualDuty?> = _pendingReflectionDuty.asStateFlow()
@@ -227,12 +405,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val db = AppDatabase.getDatabase(application)
         repository = SpiritualRepository(db.appDao(), application)
+        
+        // Load initial translation locale settings to audio player
+        latinAudioPlayer.setLanguageLocale(_appLanguage.value.locale)
 
-        // Seed 1954 Roman Calendar, Prayers, and Catechism into local Room storage
+        // Seed 1954 Roman Calendar and Prayers into local Room storage
         viewModelScope.launch {
             repository.ensureCalendarSeeded()
             repository.ensurePrayersSeeded()
-            repository.ensureCatechismSeeded()
             repository.resetExpiredDuties()
             repository.hardRefreshForDate(_selectedCalendarDate.value)
             
@@ -297,39 +477,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }.stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
         )
-
-        catechismSearchResults = combine(
-            _catechismSearchQuery,
-            _selectedCatechismSection
-        ) { query, section ->
-            Pair(query, section)
-        }.flatMapLatest { (query, section) ->
-            if (query.isBlank() && (section.equals("ALL", ignoreCase = true) || section.isBlank())) {
-                repository.getAllCatechismArticles()
-            } else if (query.isBlank()) {
-                repository.getCatechismArticlesBySection(section)
-            } else {
-                repository.searchCatechismArticles(query).combine(MutableStateFlow(section)) { list, activeSection ->
-                    if (activeSection.equals("ALL", ignoreCase = true) || activeSection.isBlank()) {
-                        list
-                    } else {
-                        list.filter { article ->
-                            article.section.contains(activeSection, ignoreCase = true) ||
-                            activeSection.contains(article.section, ignoreCase = true)
-                        }
-                    }
-                }
-            }
-        }.map { list ->
-            list.sortedBy { article ->
-                val numStr = article.articleNumber.replace("[^0-9]".toRegex(), "")
-                numStr.toIntOrNull() ?: article.id.replace("[^0-9]".toRegex(), "").toIntOrNull() ?: 0
-            }
-        }.stateIn(
-            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
-        )
-
-
 
         // Automatically schedule device notifications whenever duties or user profile are updated
         viewModelScope.launch {
@@ -403,11 +550,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val duty = allDuties.value.find { it.id == dutyId }
             if (duty != null) {
+                com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), dutyId)
                 val updated = duty.copy(reminderTime = newTime)
                 repository.insertDuty(updated)
+                val currentDuties = allDuties.value.map { if (it.id == dutyId) updated else it }
                 com.example.notifications.NotificationScheduler.scheduleAll(
                     getApplication(),
-                    allDuties.value,
+                    currentDuties,
                     userProfile.value?.saintNotificationTime ?: "07:30",
                     userProfile.value
                 )
@@ -447,9 +596,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setTab(tabIndex: Int) {
         _currentTab.value = tabIndex
-        _isBottomNavVisible.value = true
-        _isTopHeaderVisible.value = true
         _readingProgress.value = 0f
+        when (_pageViewMode.value) {
+            PageViewMode.PURE_CONTENT -> {
+                _isBottomNavVisible.value = false
+                _isTopHeaderVisible.value = false
+            }
+            PageViewMode.STANDARD_WITH_BARS, PageViewMode.DYNAMIC_AUTO_HIDE -> {
+                _isBottomNavVisible.value = true
+                _isTopHeaderVisible.value = true
+            }
+        }
     }
 
     fun setBottomNavVisible(visible: Boolean) {
@@ -555,6 +712,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             val isNew = duty.id == 0
+            if (!isNew) {
+                com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), duty.id)
+            }
             val savedDuty = if (isNew) {
                 val newId = repository.insertDuty(duty)
                 duty.copy(id = newId.toInt())
@@ -578,6 +738,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val pending = _pendingReflectionDuty.value ?: return
         viewModelScope.launch {
             val isNew = pending.id == 0
+            if (!isNew) {
+                com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), pending.id)
+            }
             val savedDuty = if (isNew) {
                 val newId = repository.insertDuty(pending)
                 pending.copy(id = newId.toInt())
@@ -610,7 +773,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun needsSpiritualReflection(title: String, description: String): Boolean {
         val text = "$title $description".lowercase(Locale.getDefault())
-        val spiritualKeywords = listOf("pray", "rosary", "mass", "fast", "charity", "read", "bible", "gospel", "saint", "examen", "confession", "sacrament", "virtue", "god", "church", "vespers", "lauds", "silence", "work", "duty", "family", "help", "penance")
+        val spiritualKeywords = listOf("pray", "rosary", "mass", "fast", "charity", "read", "bible", "gospel", "saint", "examen", "confession", "sacrament", "virtue", "god", "church", "adoration", "devotion", "silence", "work", "duty", "family", "help", "penance")
         val worldlyKeywords = listOf("game", "gaming", "movie", "tv", "party", "social media", "scroll", "bar", "gambling", "shopping", "gossip", "idle", "lounge")
 
         if (worldlyKeywords.any { text.contains(it) }) return true
@@ -684,108 +847,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
 
-
-    // Catechism Functions
-    fun setCatechismSearchQuery(query: String) {
-        _catechismSearchQuery.value = query
-    }
-
-    fun setSelectedCatechismSection(section: String) {
-        _selectedCatechismSection.value = section
-    }
-
-    fun setAiQuestionInput(input: String) {
-        _aiQuestionInput.value = input
-    }
-
-    fun askCatechismQuestion(question: String) {
-        if (question.isBlank()) return
-        viewModelScope.launch {
-            _isAiSearching.value = true
-            _aiQuestionInput.value = question
-            _aiAnswerResult.value = null
-            _matchedArticlesForAi.value = emptyList()
-
-            // Perform offline NLP & keyword score search across local Catechism Room database
-            val rawMatches = repository.searchCatechismArticlesSync(question)
-            val allArticles = if (rawMatches.isEmpty()) repository.getAllCatechismArticlesSync() else rawMatches
-
-            // Tokenize question words
-            val tokens = question.lowercase(Locale.getDefault())
-                .replace(Regex("[^a-zA-Z0-9\\s]"), "")
-                .split("\\s+".toRegex())
-                .filter { it.length > 2 }
-
-            // Score each article based on keyword frequency in title, question, answer, keywords
-            val scoredArticles = allArticles.map { article ->
-                var score = 0
-                val titleLower = article.title.lowercase(Locale.getDefault())
-                val questionLower = article.question.lowercase(Locale.getDefault())
-                val answerLower = article.answerText.lowercase(Locale.getDefault())
-                val keywordsLower = article.keywords.lowercase(Locale.getDefault())
-
-                tokens.forEach { token ->
-                    if (titleLower.contains(token)) score += 10
-                    if (questionLower.contains(token)) score += 8
-                    if (keywordsLower.contains(token)) score += 6
-                    if (answerLower.contains(token)) score += 2
-                }
-                Pair(article, score)
-            }.sortedByDescending { it.second }.filter { it.second > 0 || rawMatches.contains(it.first) }
-
-            val topMatches = scoredArticles.take(3).map { it.first }
-            _matchedArticlesForAi.value = topMatches
-
-            if (topMatches.isEmpty()) {
-                val fallbackArticles = allArticles.take(2)
-                _matchedArticlesForAi.value = fallbackArticles
-                val answerSb = StringBuilder()
-                answerSb.append("### Dogmatic Catholic Response:\n\n")
-                answerSb.append("Based on the Traditional Catholic Catechism, regarding your query: *\"$question\"*\n\n")
-                answerSb.append("The Catholic Faith teaches that all truth revealed by Almighty God must be firmly believed. ")
-                answerSb.append("Here are the closest relevant Catechism Articles for your reflection:\n\n")
-                fallbackArticles.forEach { article ->
-                    answerSb.append("• **[${article.articleNumber}] ${article.title}** (${article.section})\n")
-                    answerSb.append("  *\"${article.question}\"*\n")
-                    answerSb.append("  ${article.answerText}\n")
-                    if (article.citations.isNotBlank()) {
-                        answerSb.append("  *Magisterial Citation:* ${article.citations}\n")
-                    }
-                    answerSb.append("\n")
-                }
-                _aiAnswerResult.value = answerSb.toString()
-            } else {
-                val primary = topMatches.first()
-                val answerSb = StringBuilder()
-                answerSb.append("### Dogmatic Catholic Response:\n\n")
-                answerSb.append("According to the Traditional Catholic Catechism (vaticancatholic.com/catechism/):\n\n")
-                answerSb.append("**Core Article Referenced:** [${primary.articleNumber}] ${primary.title} (${primary.section})\n\n")
-                answerSb.append("**Question:** ${primary.question}\n\n")
-                answerSb.append("**Dogmatic Answer:** ${primary.answerText}\n\n")
-                if (primary.citations.isNotBlank()) {
-                    answerSb.append("**Magisterial Citations & Scripture:** ${primary.citations}\n\n")
-                }
-
-                if (topMatches.size > 1) {
-                    answerSb.append("---\n**Additional Supporting Catechism Articles:**\n\n")
-                    topMatches.drop(1).forEach { related ->
-                        answerSb.append("• **[${related.articleNumber}] ${related.title}**: ${related.answerText.take(180)}...\n")
-                        if (related.citations.isNotBlank()) {
-                            answerSb.append("  *(Ref: ${related.citations})*\n")
-                        }
-                    }
-                }
-                _aiAnswerResult.value = answerSb.toString()
-            }
-            _isAiSearching.value = false
-        }
-    }
-
-    fun toggleCatechismBookmark(article: CatechismArticle) {
-        viewModelScope.launch {
-            repository.toggleCatechismBookmark(article)
-        }
-    }
 
     suspend fun exportEncryptedBackup(
         password: String,

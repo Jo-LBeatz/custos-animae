@@ -143,62 +143,6 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBreviaryEntries(entries: List<BreviaryEntryEntity>)
 
-    // Catechism Articles (100% Local Storage & Offline Search)
-    @Query("SELECT * FROM catechism_articles ORDER BY CAST(REPLACE(id, 'cat_', '') AS INTEGER) ASC")
-    fun getAllCatechismArticles(): Flow<List<CatechismArticle>>
-
-    @Query("SELECT * FROM catechism_articles ORDER BY CAST(REPLACE(id, 'cat_', '') AS INTEGER) ASC")
-    suspend fun getAllCatechismArticlesSync(): List<CatechismArticle>
-
-    @Query("SELECT * FROM catechism_articles WHERE section = :section OR section LIKE '%' || :section || '%' OR :section LIKE '%' || section || '%' ORDER BY CAST(REPLACE(id, 'cat_', '') AS INTEGER) ASC")
-    fun getCatechismArticlesBySection(section: String): Flow<List<CatechismArticle>>
-
-    @Query("SELECT * FROM catechism_articles WHERE title LIKE '%' || :query || '%' OR question LIKE '%' || :query || '%' OR answerText LIKE '%' || :query || '%' OR keywords LIKE '%' || :query || '%' OR section LIKE '%' || :query || '%' OR citations LIKE '%' || :query || '%' ORDER BY CAST(REPLACE(id, 'cat_', '') AS INTEGER) ASC")
-    fun searchCatechismArticles(query: String): Flow<List<CatechismArticle>>
-
-    @Query("SELECT * FROM catechism_articles WHERE title LIKE '%' || :query || '%' OR question LIKE '%' || :query || '%' OR answerText LIKE '%' || :query || '%' OR keywords LIKE '%' || :query || '%' OR section LIKE '%' || :query || '%' OR citations LIKE '%' || :query || '%' ORDER BY CAST(REPLACE(id, 'cat_', '') AS INTEGER) ASC")
-    suspend fun searchCatechismArticlesSync(query: String): List<CatechismArticle>
-
-    @Query("""
-        SELECT c.* FROM catechism_articles c
-        JOIN catechism_articles_fts fts ON c.id = fts.articleId
-        WHERE catechism_articles_fts MATCH :ftsQuery
-        ORDER BY CAST(REPLACE(c.id, 'cat_', '') AS INTEGER) ASC
-    """)
-    fun searchCatechismArticlesFts(ftsQuery: String): Flow<List<CatechismArticle>>
-
-    @Query("""
-        SELECT c.* FROM catechism_articles c
-        JOIN catechism_articles_fts fts ON c.id = fts.articleId
-        WHERE catechism_articles_fts MATCH :ftsQuery
-        ORDER BY CAST(REPLACE(c.id, 'cat_', '') AS INTEGER) ASC
-    """)
-    suspend fun searchCatechismArticlesFtsSync(ftsQuery: String): List<CatechismArticle>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCatechismArticlesFts(ftsArticles: List<CatechismArticleFts>)
-
-    @Query("DELETE FROM catechism_articles_fts")
-    suspend fun clearCatechismFts()
-
-    @Query("SELECT COUNT(*) FROM catechism_articles_fts")
-    suspend fun getCatechismFtsCount(): Int
-
-    @Query("SELECT * FROM catechism_articles WHERE isBookmarked = 1 ORDER BY CAST(REPLACE(id, 'cat_', '') AS INTEGER) ASC")
-    fun getBookmarkedCatechismArticles(): Flow<List<CatechismArticle>>
-
-    @Query("SELECT * FROM catechism_articles WHERE isBookmarked = 1 ORDER BY CAST(REPLACE(id, 'cat_', '') AS INTEGER) ASC")
-    suspend fun getBookmarkedCatechismArticlesSync(): List<CatechismArticle>
-
-    @Query("SELECT COUNT(*) FROM catechism_articles")
-    suspend fun getCatechismCount(): Int
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCatechismArticles(articles: List<CatechismArticle>)
-
-    @Update
-    suspend fun updateCatechismArticle(article: CatechismArticle)
-
     // Saint quotes queries
     @Query("SELECT * FROM saint_quotes WHERE saintId = :saintId ORDER BY fetchedTimestamp DESC")
     fun getQuotesForSaint(saintId: String): Flow<List<SaintQuoteEntity>>

@@ -47,6 +47,8 @@ fun OnboardingGenderScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkCathedralBackground)
+            .wrapContentWidth(Alignment.CenterHorizontally)
+            .widthIn(max = 640.dp)
             .padding(20.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -82,6 +84,14 @@ fun OnboardingGenderScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = TextMutedParchment,
             textAlign = TextAlign.Center
+        )
+
+        Text(
+            text = "Powered & Developed by RegulaVitae",
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = GoldBright,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 4.dp)
         )
 
         Spacer(modifier = Modifier.height(20.dp))

@@ -43,6 +43,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.example.data.SpiritualDuty
 import com.example.data.calendar.LiturgicalDayInfo
 import com.example.ui.theme.*
+import com.example.util.AppLanguage
+import com.example.util.AppTranslationHelper
 
 /**
  * Traditional Catholic Canvas Geometry: Futuristic Gothic Rose Window
@@ -333,7 +335,7 @@ fun IlluminatedDivider(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun LiturgicalBanner(info: LiturgicalDayInfo) {
+fun LiturgicalBanner(info: LiturgicalDayInfo, appLanguage: AppLanguage = AppLanguage.ENGLISH) {
     val seasonColor = try {
         Color(android.graphics.Color.parseColor(info.season.colorHex))
     } catch (e: Exception) {
@@ -368,8 +370,9 @@ fun LiturgicalBanner(info: LiturgicalDayInfo) {
                             .border(1.dp, GoldBright, CircleShape)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
+                    val vestmentLabel = if (info.vestmentColor.isNotEmpty()) "${info.vestmentColor.uppercase()} VESTMENTS" else "TODAY'S FEAST"
                     Text(
-                        text = info.season.displayName.uppercase(),
+                        text = AppTranslationHelper.translate(vestmentLabel, appLanguage),
                         style = MaterialTheme.typography.labelMedium.copy(
                             letterSpacing = 1.2.sp,
                             fontWeight = FontWeight.Bold
@@ -379,7 +382,7 @@ fun LiturgicalBanner(info: LiturgicalDayInfo) {
                 }
 
                 Text(
-                    text = info.rank,
+                    text = AppTranslationHelper.translate(info.rank, appLanguage),
                     style = MaterialTheme.typography.bodySmall,
                     color = TextMutedParchment
                 )
@@ -388,7 +391,7 @@ fun LiturgicalBanner(info: LiturgicalDayInfo) {
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = info.feastName,
+                text = AppTranslationHelper.translate(info.feastName, appLanguage),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold
@@ -406,7 +409,7 @@ fun LiturgicalBanner(info: LiturgicalDayInfo) {
                     if (info.isEmberDay) {
                         AssistChip(
                             onClick = {},
-                            label = { com.example.ui.components.ResponsiveText("Quattuor Tempora (Ember Day)", fontSize = 11.sp, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
+                            label = { com.example.ui.components.ResponsiveText(AppTranslationHelper.translate("Quattuor Tempora (Ember Day)", appLanguage), fontSize = 11.sp, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
                             colors = AssistChipDefaults.assistChipColors(
                                 containerColor = LiturgicalViolet.copy(alpha = 0.3f),
                                 labelColor = GoldBright
@@ -417,7 +420,7 @@ fun LiturgicalBanner(info: LiturgicalDayInfo) {
                     if (info.isFastingDay) {
                         AssistChip(
                             onClick = {},
-                            label = { com.example.ui.components.ResponsiveText("Traditional Fast", fontSize = 11.sp, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
+                            label = { com.example.ui.components.ResponsiveText(AppTranslationHelper.translate("Traditional Fast", appLanguage), fontSize = 11.sp, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
                             colors = AssistChipDefaults.assistChipColors(
                                 containerColor = CrimsonBurgundy.copy(alpha = 0.3f),
                                 labelColor = CrimsonLight
@@ -428,7 +431,7 @@ fun LiturgicalBanner(info: LiturgicalDayInfo) {
                     if (info.isAbstinenceDay) {
                         AssistChip(
                             onClick = {},
-                            label = { com.example.ui.components.ResponsiveText("Abstinence", fontSize = 11.sp, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
+                            label = { com.example.ui.components.ResponsiveText(AppTranslationHelper.translate("Abstinence", appLanguage), fontSize = 11.sp, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
                             colors = AssistChipDefaults.assistChipColors(
                                 containerColor = DarkCathedralSurfaceVariant,
                                 labelColor = TextGoldHighlight
@@ -1194,7 +1197,7 @@ fun LiturgicalColorAndSeasonWidget(
             }
 
             // Expandable Traditional Color Guide
-            Divider(color = GoldSacred.copy(alpha = 0.2f), thickness = 1.dp)
+            HorizontalDivider(color = GoldSacred.copy(alpha = 0.2f), thickness = 1.dp)
 
             Row(
                 modifier = Modifier
@@ -1249,7 +1252,7 @@ fun LiturgicalColorAndSeasonWidget(
                         )
                     }
 
-                    Divider(color = GoldSacred.copy(alpha = 0.15f), thickness = 0.5.dp)
+                    HorizontalDivider(color = GoldSacred.copy(alpha = 0.15f), thickness = 0.5.dp)
 
                     // Current Color detailed rule
                     Column {
@@ -1270,7 +1273,7 @@ fun LiturgicalColorAndSeasonWidget(
                         )
                     }
 
-                    Divider(color = GoldSacred.copy(alpha = 0.15f), thickness = 0.5.dp)
+                    HorizontalDivider(color = GoldSacred.copy(alpha = 0.15f), thickness = 0.5.dp)
 
                     // 1954 Rubrics note
                     Text(

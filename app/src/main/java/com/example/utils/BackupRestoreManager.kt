@@ -51,7 +51,6 @@ object BackupRestoreManager {
             val duties = appDao.getAllDutiesSync()
             val dutyLogs = appDao.getAllDutyLogsSync()
             val userProfile = appDao.getUserProfileSync()
-            val bookmarkedCatechismArticles = appDao.getBookmarkedCatechismArticlesSync()
 
             // 2. Gather SharedPreferences for confession ledger security
             val ledgerSharedPref = context.getSharedPreferences("confession_ledger_pref", Context.MODE_PRIVATE)
@@ -157,13 +156,6 @@ object BackupRestoreManager {
             ledgerObj.put("ledger_security_q", ledgerSecurityQ)
             ledgerObj.put("ledger_security_a", ledgerSecurityA)
             innerJson.put("ledgerPrefs", ledgerObj)
-
-            // Catechism Bookmarks
-            val catBookmarksArray = JSONArray()
-            bookmarkedCatechismArticles.forEach { cat ->
-                catBookmarksArray.put(cat.id)
-            }
-            innerJson.put("bookmarkedCatechismIds", catBookmarksArray)
 
             val innerBytes = innerJson.toString().toByteArray(Charsets.UTF_8)
 
@@ -393,24 +385,7 @@ object BackupRestoreManager {
                 editor.apply()
             }
 
-            // Restore Catechism Bookmarks
-            var catCount = 0
-            if (innerJson.has("bookmarkedCatechismIds")) {
-                val catBookmarksArray = innerJson.getJSONArray("bookmarkedCatechismIds")
-                val catArticles = appDao.getAllCatechismArticlesSync()
-                val bookmarkSet = mutableSetOf<String>()
-                for (i in 0 until catBookmarksArray.length()) {
-                    bookmarkSet.add(catBookmarksArray.getString(i))
-                }
-                catArticles.forEach { cat ->
-                    if (bookmarkSet.contains(cat.id)) {
-                        appDao.updateCatechismArticle(cat.copy(isBookmarked = true))
-                        catCount++
-                    }
-                }
-            }
-
-            val summaryText = "Restored: $examCount Examen entries, $saintCount reflections, $dutyCount duties, $logCount logs, $catCount catechism bookmarks, and settings."
+            val summaryText = "Restored: $examCount Examen entries, $saintCount reflections, $dutyCount duties, $logCount logs, and settings."
             RestoreResult.Success(summaryText)
         } catch (e: Exception) {
             e.printStackTrace()

@@ -120,6 +120,7 @@ class NotificationReceiver : BroadcastReceiver() {
                             }
                         }
 
+                        RescheduleManager.clearReschedule(context, dutyId)
                         RuleOfLifeCallStateHelper.markScheduledEventTriggered(context)
                         NotificationHelper.showIncomingCallNotification(
                             context,

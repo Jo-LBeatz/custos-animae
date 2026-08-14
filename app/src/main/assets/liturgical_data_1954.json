@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "rubrics": "1954 Rubrics (Divinum Officium & Missale Romanum 1954)",
+  "rubrics": "1954 Roman Rite Traditional Calendar",
   "calendar_entries": [
     {
       "dateCode": "01-01",
@@ -178,7 +178,7 @@
       "subtitle": "Symbolum Apostolorum",
       "englishText": "I believe in God, the Father Almighty, Creator of heaven and earth. And in Jesus Christ, His only Son, our Lord; Who was conceived by the Holy Ghost, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died, and was buried. He descended into hell; the third day He arose again from the dead; He ascended into heaven, and sitteth at the right hand of God the Father Almighty; from thence He shall come to judge the living and the dead. I believe in the Holy Ghost, the Holy Catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.",
       "latinText": "Credo in Deum Patrem omnipotentem, Creatorem caeli et terrae. Et in Iesum Christum, Filium eius unicum, Dominum nostrum, qui conceptus est de Spiritu Sancto, natus ex Maria Virgine, passus sub Pontio Pilato, crucifixus, mortuus, et sepultus, descendit ad inferos, tertia die resurrexit a mortuis, ascendit ad caelos, sedet ad dexteram Dei Patris omnipotentis, inde venturus est iudicare vivos et mortuos. Credo in Spiritum Sanctum, sanctam Ecclesiam catholicam, sanctorum communionem, remissionem peccatorum, carnis resurrectionem, vitam aeternam. Amen.",
-      "notes": "Professed before the Holy Rosary and Divine Office."
+      "notes": "Professed before the Holy Rosary and morning/evening prayers."
     },
     {
       "id": "st_michael_archangel",
@@ -196,115 +196,7 @@
       "subtitle": "Antiphona Finalis B.M.V.",
       "englishText": "Hail, Holy Queen, Mother of Mercy, our life, our sweetness and our hope. To thee do we cry, poor banished children of Eve. To thee do we send up our sighs, mourning and weeping in this valley of tears. Turn then, most gracious advocate, thine eyes of mercy toward us, and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.",
       "latinText": "Salve, Regina, Mater misericordiae, vita, dulcedo, et spes nostra, salve. Ad te clamamus exsules filii Hevae. Ad te suspiramus gementes et flentes in hac lacrimarum valle. Eia ergo, advocata nostra, illos tuos misericordes oculos ad nos converte. Et Iesum, benedictum fructum ventris tui, nobis post hoc exsilium ostende. O clemens, o pia, o dulcis Virgo Maria.",
-      "notes": "Chanted at the end of Compline and Holy Rosary."
-    }
-  ],
-  "missal_entries": [
-    {
-      "code": "07-31",
-      "dateCode": "07-31",
-      "year": 2026,
-      "month": 7,
-      "day": 31,
-      "title": "St. Ignatius of Loyola, Confessor",
-      "latinTitle": "S. Ignatii de Loyola, Confessoris",
-      "rank": "Greater Double",
-      "season": "Time after Pentecost",
-      "color": "White",
-      "introitLatin": "In nomine Iesu omne genu flectatur, caelestium, terrestrium et infernorum: et omnis lingua confiteatur, quia Dominus Iesus Christus in gloria est Dei Patris.",
-      "introitEnglish": "At the name of Jesus let every knee bow, of things in heaven, of things on earth, and of things under the earth: and let every tongue confess that the Lord Jesus Christ is in the glory of God the Father.",
-      "collectLatin": "Deus, qui ad maiorem tui nominis gloriam propagandam, novo per beatum Ignatium subsidio militantem Ecclesiam roborasti: concede; ut, eius auxilio et imitatione certantes in terris, coronari cum ipso mereamur in caelis.",
-      "collectEnglish": "O God, Who for the greater glory of Thy Name didst strengthen Thy Church militant with a new help through blessed Ignatius: grant that, fighting on earth with his help and after his example, we may deserve to be crowned with him in heaven.",
-      "epistleRef": "2 Tim 2:8-10; 3:10-12",
-      "epistleLatin": "Carissime: Memor esto Dominum Iesum Christum resurrexisse a mortuis ex semine David, secundum Evangelium meum, in quo laboro usque ad vincula, quasi male operans: sed verbum Dei non est alligatum.",
-      "epistleEnglish": "Dearly beloved: Remember that the Lord Jesus Christ is risen again from the dead, of the seed of David, according to my Gospel, in which I labor even unto chains, as an evildoer: but the word of God is not bound.",
-      "gradualLatin": "Iustus ut palma florebit: sicut cedrus Libani multiplicabitur in domo Domini. V. Ad annuntiandum mane misericordiam tuam, et veritatem tuam per noctem.",
-      "gradualEnglish": "The just shall flourish like the palm tree: he shall grow up like the cedar of Libanus in the house of the Lord. V. To show forth Thy mercy in the morning, and Thy truth in the night.",
-      "gospelRef": "Luke 10:1-9",
-      "gospelLatin": "In illo tempore: Designavit Dominus et alios septuaginta duos: et misit illos binos ante faciem suam in omnem civitatem et locum, quo erat ipse venturus. Et dicebat illis: Messis quidem multa, operarii autem pauci.",
-      "gospelEnglish": "At that time: The Lord appointed also other seventy-two: and He sent them two and two before His face into every city and place whither He Himself was to come. And He said to them: The harvest indeed is great, but the laborers are few.",
-      "offertoryLatin": "Veritas mea et misericordia mea cum ipso: et in nomine meo exaltabitur cornu eius.",
-      "offertoryEnglish": "My truth and My mercy shall be with him: and in My name shall his horn be exalted.",
-      "secretLatin": "Adsit, Domine Deus, oblationibus nostris sancti Ignatii benigna precatio: ut sacrosancta mysteria, in quibus omnis sanctitatis fontem constituisti, nos quoque in veritate sanctificent.",
-      "secretEnglish": "May the kindly prayer of St. Ignatius, O Lord God, accompany our offerings, that the most holy mysteries, in which Thou hast established the fountain of all holiness, may also sanctify us in truth.",
-      "communionLatin": "Ignem veni mittere in terram: et quid volo nisi ut accendatur?",
-      "communionEnglish": "I am come to cast fire on the earth: and what will I, but that it be kindled?",
-      "postcommunionLatin": "Laudis tibi, Domine, hostia quam in sancti Ignatii commemoratione obtulimus, maiestatem tuam iugiter deprecetur: ut per haec sancta mysteria, nos quoque in sanctitate confirmes.",
-      "postcommunionEnglish": "May the sacrifice of praise, O Lord, which we have offered in commemoration of St. Ignatius, unceasingly beseech Thy majesty, that through these holy mysteries Thou mayest confirm us in holiness."
-    }
-  ],
-  "breviary_entries": [
-    {
-      "id": "2026-7-31_matins",
-      "dateCode": "07-31",
-      "year": 2026,
-      "month": 7,
-      "day": 31,
-      "hourId": "matins",
-      "title": "Matins - St. Ignatius of Loyola",
-      "latinTitle": "Ad Matutinum - S. Ignatii de Loyola",
-      "hymnLatin": "Somno refectis artubus, spretis chori cubilibus, nobis, Pater, canentibus adesto te poscentibus.",
-      "hymnEnglish": "Our limbs refreshed with slumber now, and slothful ease foresworn, Father, to Thee we humbly bow, and sing Thy praise at morn.",
-      "psalmsLatin": "Psalmus 1: Beatus vir qui non abiit in consilio impiorum... Psalmus 2: Quare fremuerunt gentes...",
-      "psalmsEnglish": "Psalm 1: Blessed is the man who hath not walked in the counsel of the ungodly... Psalm 2: Why have the Gentiles raged...",
-      "readingsLatin": "Lectio I: De libro Primo Regum. In diebus illis: Fuit vir unus de Ramathaim... Lectio II: De Sermone sancti Augustini Episcopi...",
-      "readingsEnglish": "Lesson I: From the First Book of Kings. In those days: There was a man of Ramathaim... Lesson II: From the Sermon of St. Augustine, Bishop...",
-      "oratioLatin": "Deus, qui ad maiorem tui nominis gloriam propagandam, novo per beatum Ignatium subsidio militantem Ecclesiam roborasti: concede; ut, eius auxilio et imitatione certantes in terris, coronari cum ipso mereamur in caelis. Per Dominum.",
-      "oratioEnglish": "O God, Who for the greater glory of Thy Name didst strengthen Thy Church militant with a new help through blessed Ignatius: grant that, fighting on earth with his help and after his example, we may deserve to be crowned with him in heaven. Through our Lord."
-    },
-    {
-      "id": "2026-7-31_lauds",
-      "dateCode": "07-31",
-      "year": 2026,
-      "month": 7,
-      "day": 31,
-      "hourId": "lauds",
-      "title": "Lauds - St. Ignatius of Loyola",
-      "latinTitle": "Ad Laudes - S. Ignatii de Loyola",
-      "hymnLatin": "Ecce iam noctis tenuatur umbra, Lucis aurora rutilans coruscat; Nisibus totis rogitemus omnes Cunctipotentem.",
-      "hymnEnglish": "Lo! the dim shadows of the night are waning, Lightsomely radiant dawn again is glowing; So let us seek Him with our best endeavors, God the Almighty.",
-      "psalmsLatin": "Psalmus 92: Dominus regnavit, decorem indutus est... Canticum: Benedictus Dominus Deus Israel...",
-      "psalmsEnglish": "Psalm 92: The Lord hath reigned, He is clothed with beauty... Canticle: Blessed be the Lord God of Israel...",
-      "readingsLatin": "Capitulum: 2 Tim 2:8-10. Memor esto Dominum Iesum Christum resurrexisse a mortuis ex semine David, secundum Evangelium meum.",
-      "readingsEnglish": "Chapter: 2 Tim 2:8-10. Remember that the Lord Jesus Christ is risen again from the dead, of the seed of David, according to my Gospel.",
-      "oratioLatin": "Deus, qui ad maiorem tui nominis gloriam propagandam, novo per beatum Ignatium subsidio militantem Ecclesiam roborasti: concede; ut, eius auxilio et imitatione certantes in terris, coronari cum ipso mereamur in caelis. Per Dominum.",
-      "oratioEnglish": "O God, Who for the greater glory of Thy Name didst strengthen Thy Church militant with a new help through blessed Ignatius: grant that, fighting on earth with his help and after his example, we may deserve to be crowned with him in heaven. Through our Lord."
-    },
-    {
-      "id": "2026-7-31_vespers",
-      "dateCode": "07-31",
-      "year": 2026,
-      "month": 7,
-      "day": 31,
-      "hourId": "vespers",
-      "title": "Vespers - St. Ignatius of Loyola",
-      "latinTitle": "Ad Vesperas - S. Ignatii de Loyola",
-      "hymnLatin": "Iste Confessor Domini, sacratus, Festa plebs cuius celebrat per orbem, Hodie laetus meruit secreta Scandere caeli.",
-      "hymnEnglish": "This the Confessor of the Lord, whose triumph Now all the faithful celebrate with gladness, On this day holy entered into glory, Joyful and blessed.",
-      "psalmsLatin": "Psalmus 109: Dixit Dominus Domino meo... Canticum: Magnificat anima mea Dominum...",
-      "psalmsEnglish": "Psalm 109: The Lord said to my Lord... Canticle: My soul doth magnify the Lord...",
-      "readingsLatin": "Capitulum: Eccli 31:8-9. Beatus vir, qui inventus est sine macula, et qui post aurum non abiit, nec speravit in pecunia et thesauris.",
-      "readingsEnglish": "Chapter: Ecclus 31:8-9. Blessed is the man that is found without blemish, and that hath not gone after gold, nor put his trust in money nor in treasures.",
-      "oratioLatin": "Deus, qui ad maiorem tui nominis gloriam propagandam, novo per beatum Ignatium subsidio militantem Ecclesiam roborasti: concede; ut, eius auxilio et imitatione certantes in terris, coronari cum ipso mereamur in caelis. Per Dominum.",
-      "oratioEnglish": "O God, Who for the greater glory of Thy Name didst strengthen Thy Church militant with a new help through blessed Ignatius: grant that, fighting on earth with his help and after his example, we may deserve to be crowned with him in heaven. Through our Lord."
-    },
-    {
-      "id": "2026-7-31_compline",
-      "dateCode": "07-31",
-      "year": 2026,
-      "month": 7,
-      "day": 31,
-      "hourId": "compline",
-      "title": "Compline - St. Ignatius of Loyola",
-      "latinTitle": "Ad Completorium - S. Ignatii de Loyola",
-      "hymnLatin": "Te lucis ante terminum, Rerum Creator, poscimus, Ut pro tua clementia Sis praesul et custodia.",
-      "hymnEnglish": "Before the ending of the day, Creator of the world, we pray That with Thy wonted favor Thou Wouldst be our Guard and Keeper now.",
-      "psalmsLatin": "Psalmus 4: Cum invocarem exaudivit me Deus iustitiae meae... Psalmus 90: Qui habitat in adiutorio Altissimi... Psalmus 133: Ecce nunc benedicite Dominum...",
-      "psalmsEnglish": "Psalm 4: When I called upon Him, the God of my justice heard me... Psalm 90: He that dwelleth in the aid of the Most High... Psalm 133: Behold now bless ye the Lord...",
-      "readingsLatin": "Lectio Brevis: Jer 14:9. Tu autem in nobis es, Domine, et nomen sanctum tuum invocatum est super nos: ne derelinquas nos, Domine Deus noster.",
-      "readingsEnglish": "Short Lesson: Jer 14:9. But Thou, O Lord, art among us, and Thy holy Name is called upon us: forsake us not, O Lord our God.",
-      "oratioLatin": "Visita, quaesumus, Domine, habitationem istam, et omnes insidias inimici ab ea longe repelle: Angeli tui sancti habitent in ea, qui nos in pace custodiant; et benedictio tua sit super nos semper. Per Dominum.",
-      "oratioEnglish": "Visit, we beseech Thee, O Lord, this dwelling, and drive far from it all snares of the enemy: let Thy holy Angels dwell herein, to preserve us in peace; and let Thy blessing be always upon us. Through our Lord."
+      "notes": "Traditional concluding Marian antiphon."
     }
   ]
 }

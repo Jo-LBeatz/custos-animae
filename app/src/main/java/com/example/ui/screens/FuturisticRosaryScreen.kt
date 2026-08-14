@@ -14,6 +14,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -69,8 +71,8 @@ fun FuturisticRosaryScreen(
     // Auto mystery calculation based on day of week
     val cal = Calendar.getInstance()
     val initialSetIndex = when (cal.get(Calendar.DAY_OF_WEEK)) {
-        Calendar.SUNDAY, Calendar.WEDNESDAY -> 2 // Glorious
-        Calendar.MONDAY, Calendar.SATURDAY -> 0 // Joyful
+        Calendar.SUNDAY, Calendar.WEDNESDAY, Calendar.SATURDAY -> 2 // Glorious
+        Calendar.MONDAY, Calendar.THURSDAY -> 0 // Joyful
         Calendar.TUESDAY, Calendar.FRIDAY -> 1 // Sorrowful
         else -> 0
     }
@@ -302,6 +304,8 @@ fun FuturisticRosaryScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = 640.dp)
         ) {
             // TOP BAR WITH LEFT EXIT BUTTON
             Row(
@@ -324,7 +328,7 @@ fun FuturisticRosaryScreen(
                     modifier = Modifier.testTag("exit_rosary_button")
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Exit Rosary",
                         tint = GoldBright,
                         modifier = Modifier.size(18.dp)
@@ -528,7 +532,7 @@ fun FuturisticRosaryScreen(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.testTag("rosary_prev_btn")
                     ) {
-                        Icon(Icons.Default.NavigateBefore, contentDescription = "Previous")
+                        Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = "Previous")
                         Text("Prev", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
 

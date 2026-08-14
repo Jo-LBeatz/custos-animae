@@ -137,32 +137,19 @@ class RuleOfLifeCallService : Service() {
     }
 
     private fun launchCallActivity(call: PendingCall) {
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as android.app.KeyguardManager
-        val isScreenInteractive = powerManager.isInteractive
-        val isKeyguardLocked = keyguardManager.isKeyguardLocked
-
-        val canDrawOverlays = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            android.provider.Settings.canDrawOverlays(this)
-        } else {
-            true
+        val directCallIntent = Intent(this, IncomingCallActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION)
+            addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra("EXTRA_NOTIFICATION_ID", call.notificationId)
+            putExtra("EXTRA_CALL_TITLE", call.title)
+            putExtra("EXTRA_CALL_MESSAGE", call.message)
         }
-
-        if (isScreenInteractive && !isKeyguardLocked && canDrawOverlays) {
-            val directCallIntent = Intent(this, IncomingCallActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION)
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                putExtra("EXTRA_NOTIFICATION_ID", call.notificationId)
-                putExtra("EXTRA_CALL_TITLE", call.title)
-                putExtra("EXTRA_CALL_MESSAGE", call.message)
-            }
-            try {
-                startActivity(directCallIntent)
-            } catch (e: Exception) {
-                Log.e("RuleOfLifeCallService", "Failed to force startActivity", e)
-            }
+        try {
+            startActivity(directCallIntent)
+        } catch (e: Exception) {
+            Log.e("RuleOfLifeCallService", "Failed to force startActivity", e)
         }
     }
 
@@ -171,7 +158,7 @@ class RuleOfLifeCallService : Service() {
 
         val soundUri = Uri.parse("android.resource://" + packageName + "/" + R.raw.church_bell)
 
-        // PendingIntent for Answer Call
+        // PendingIntent for Answer Call Action Button
         val answerIntent = Intent(this, CallActionReceiver::class.java).apply {
             action = CallActionReceiver.ACTION_ANSWER_CALL
             putExtra("EXTRA_NOTIFICATION_ID", notificationId)
@@ -185,7 +172,7 @@ class RuleOfLifeCallService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // PendingIntent for Decline Call
+        // PendingIntent for Decline Call Action Button
         val declineIntent = Intent(this, CallActionReceiver::class.java).apply {
             action = CallActionReceiver.ACTION_DECLINE_CALL
             putExtra("EXTRA_NOTIFICATION_ID", notificationId)
@@ -199,24 +186,9 @@ class RuleOfLifeCallService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Main Tap Intent (Opens app and connects call)
-        val mainIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            action = CallActionReceiver.ACTION_ANSWER_CALL
-            putExtra("EXTRA_CALL_TITLE", title)
-            putExtra("EXTRA_CALL_MESSAGE", message)
-            putExtra("EXTRA_NOTIFICATION_ID", notificationId)
-        }
-        val contentPendingIntent = PendingIntent.getActivity(
-            this,
-            notificationId,
-            mainIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Full-Screen Intent launching IncomingCallActivity
+        // Full-Screen Intent launching IncomingCallActivity with Pick Up / Decline buttons
         val fullScreenIntent = Intent(this, IncomingCallActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("EXTRA_NOTIFICATION_ID", notificationId)
             putExtra("EXTRA_CALL_TITLE", title)
             putExtra("EXTRA_CALL_MESSAGE", message)
@@ -231,15 +203,15 @@ class RuleOfLifeCallService : Service() {
         return NotificationCompat.Builder(this, NotificationHelper.CHANNEL_CALLS)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Incoming Prayer Call: $title")
-            .setContentText("$message (Tap Answer to connect)")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$message\n\n📞 Tap Answer to connect and listen."))
+            .setContentText("$message (Tap to open call screen)")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$message\n\n📞 Tap to open call screen with Answer & Decline controls."))
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setSound(soundUri, android.media.AudioManager.STREAM_ALARM)
             .setVibrate(longArrayOf(0, 500, 200, 500, 200, 1000))
             .setFullScreenIntent(fullScreenPendingIntent, true)
-            .setContentIntent(contentPendingIntent)
+            .setContentIntent(fullScreenPendingIntent)
             .setAutoCancel(true)
             .setOngoing(true)
             .addAction(android.R.drawable.ic_menu_call, "Answer Call", answerPendingIntent)
@@ -253,7 +225,12 @@ class RuleOfLifeCallService : Service() {
         WakeLockManager.releaseWakeLock()
         callQueue.clear()
         currentCall = null
-        stopForeground(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         stopSelf()
     }
 

@@ -1,5 +1,6 @@
 package com.example.notifications
 
+import android.app.KeyguardManager
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -41,6 +42,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -77,58 +81,147 @@ open class CallOverlayActivity : ComponentActivity() {
         val title = intent.getStringExtra("EXTRA_CALL_TITLE") ?: intent.getStringExtra("EXTRA_TITLE") ?: "Rule of Life Reminder"
         val message = intent.getStringExtra("EXTRA_CALL_MESSAGE") ?: intent.getStringExtra("EXTRA_MESSAGE") ?: "Time for your scheduled spiritual duty."
         val notificationId = intent.getIntExtra("EXTRA_NOTIFICATION_ID", 1001)
+        val showRescheduleOnly = intent.getBooleanExtra("SHOW_RESCHEDULE_ONLY", false)
 
-        startRinging()
+        if (!showRescheduleOnly) {
+            startRinging()
+        }
 
         val sharedPrefs = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
         val savedTheme = sharedPrefs.getString("app_theme", "CATHEDRAL_DARK") ?: "CATHEDRAL_DARK"
 
         setContent {
             MyApplicationTheme(themeId = savedTheme) {
-                CallOverlayScreen(
-                    title = title,
-                    message = message,
-                    onAccept = {
-                        stopRinging()
-                        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                        manager?.cancel(notificationId)
+                var showReschedulePanel by remember { mutableStateOf(showRescheduleOnly) }
 
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            try {
-                                com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
-                                    .logCall(title, message, "ANSWERED")
-                            } catch (e: Exception) {
-                                e.printStackTrace()
+                if (!showReschedulePanel) {
+                    CallOverlayScreen(
+                        title = title,
+                        message = message,
+                        onAccept = {
+                            stopRinging()
+                            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                            manager?.cancel(notificationId)
+
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                try {
+                                    com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
+                                        .logCall(title, message, "ANSWERED")
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+
+                            val mainIntent = Intent(this, MainActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                action = CallActionReceiver.ACTION_ANSWER_CALL
+                                putExtra("EXTRA_CALL_TITLE", title)
+                                putExtra("EXTRA_CALL_MESSAGE", message)
+                                putExtra("OPEN_PRAYER_DISPLAY", true)
+                            }
+
+                            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+                            if (keyguardManager != null && keyguardManager.isKeyguardLocked) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    keyguardManager.requestDismissKeyguard(this@CallOverlayActivity, object : KeyguardManager.KeyguardDismissCallback() {
+                                        override fun onDismissSucceeded() {
+                                            startActivity(mainIntent)
+                                            finish()
+                                        }
+
+                                        override fun onDismissError() {
+                                            startActivity(mainIntent)
+                                            finish()
+                                        }
+
+                                        override fun onDismissCancelled() {
+                                            startActivity(mainIntent)
+                                            finish()
+                                        }
+                                    })
+                                } else {
+                                    startActivity(mainIntent)
+                                    finish()
+                                }
+                            } else {
+                                startActivity(mainIntent)
+                                finish()
+                            }
+                        },
+                        onDismiss = {
+                            stopRinging()
+                            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                            manager?.cancel(notificationId)
+
+                            // Check if this belongs to a spiritual duty (1001 to 6999)
+                            val isSpiritualDuty = notificationId >= 1000 && notificationId < 7000
+                            if (isSpiritualDuty) {
+                                showReschedulePanel = true
+                            } else {
+                                lifecycleScope.launch(Dispatchers.IO) {
+                                    try {
+                                        com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
+                                            .logCall(title, message, "DECLINED")
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                }
+                                finish()
                             }
                         }
+                    )
+                } else {
+                    val dutyId = notificationId - 1000
+                    RescheduleOverlayPanel(
+                        title = title,
+                        dutyId = dutyId,
+                        onDeclineConfirmed = {
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                try {
+                                    com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
+                                        .logCall(title, message, "DECLINED")
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                            finish()
+                        },
+                        onRescheduled = { selectedTime ->
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                try {
+                                    val db = com.example.data.AppDatabase.getDatabase(this@CallOverlayActivity)
+                                    val duty = db.appDao().getDutyById(dutyId)
+                                    if (duty != null) {
+                                        val today = RescheduleManager.getTodayDateString()
+                                        RescheduleManager.setReschedule(this@CallOverlayActivity, dutyId, today, selectedTime)
 
-                        val mainIntent = Intent(this, MainActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                            action = CallActionReceiver.ACTION_ANSWER_CALL
-                            putExtra("EXTRA_CALL_TITLE", title)
-                            putExtra("EXTRA_CALL_MESSAGE", message)
-                            putExtra("OPEN_PRAYER_DISPLAY", true)
-                        }
-                        startActivity(mainIntent)
-                        finish()
-                    },
-                    onDismiss = {
-                        stopRinging()
-                        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                        manager?.cancel(notificationId)
+                                        val alarmManager = getSystemService(Context.ALARM_SERVICE) as? android.app.AlarmManager
+                                        if (alarmManager != null) {
+                                            NotificationScheduler.scheduleDutyNotification(this@CallOverlayActivity, alarmManager, duty)
+                                        }
 
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            try {
-                                com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
-                                    .logCall(title, message, "DECLINED")
-                            } catch (e: Exception) {
-                                e.printStackTrace()
+                                        com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
+                                            .logCall(title, "Rescheduled to $selectedTime today: $message", "RESCHEDULED")
+
+                                        launch(Dispatchers.Main) {
+                                            android.widget.Toast.makeText(
+                                                this@CallOverlayActivity,
+                                                "Rescheduled '$title' to $selectedTime for today only.",
+                                                android.widget.Toast.LENGTH_LONG
+                                            ).show()
+                                            finish()
+                                        }
+                                    } else {
+                                        launch(Dispatchers.Main) { finish() }
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    launch(Dispatchers.Main) { finish() }
+                                }
                             }
                         }
-
-                        finish()
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -138,17 +231,17 @@ open class CallOverlayActivity : ComponentActivity() {
     }
 
     open fun stopRinging() {
-        val notificationId = intent?.getIntExtra("EXTRA_NOTIFICATION_ID", 1001) ?: 1001
-        val serviceIntent = Intent(this, RuleOfLifeCallService::class.java).apply {
-            action = RuleOfLifeCallService.ACTION_STOP_CALL
-            putExtra("EXTRA_NOTIFICATION_ID", notificationId)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent)
-        } else {
-            startService(serviceIntent)
-        }
         CallRingerManager.stopRinging()
+        val notificationId = intent?.getIntExtra("EXTRA_NOTIFICATION_ID", 1001) ?: 1001
+        try {
+            val serviceIntent = Intent(this, RuleOfLifeCallService::class.java).apply {
+                action = RuleOfLifeCallService.ACTION_STOP_CALL
+                putExtra("EXTRA_NOTIFICATION_ID", notificationId)
+            }
+            stopService(serviceIntent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun onDestroy() {
@@ -261,35 +354,36 @@ fun CallOverlayScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(modifier = Modifier.height(36.dp))
-
-            // Caller Details & Circular Contact Placeholder (Slide down + Fade in)
+            // Adaptive Top/Middle Content Area (Title + Description + Contact Avatar)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .offset(y = headerOffset)
-                    .graphicsLayer(alpha = headerAlpha)
+                    .fillMaxWidth()
+                    .weight(1f, fill = false)
             ) {
                 Text(
                     text = "INCOMING PRAYER CALL",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        letterSpacing = 2.5.sp,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        letterSpacing = 2.sp,
                         fontWeight = FontWeight.Bold
                     ),
                     color = GoldBright
                 )
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Circular Contact Image Placeholder with Metallic Gold Border and Pulsing Aura
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(136.dp)
+                        .size(108.dp)
                         .scale(scale)
                         .clip(CircleShape)
                         .background(
@@ -297,78 +391,97 @@ fun CallOverlayScreen(
                                 colors = listOf(CrimsonBurgundy, DarkCathedralSurface)
                             )
                         )
-                        .border(3.dp, GoldBright, CircleShape)
+                        .border(2.5.dp, GoldBright, CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Church,
                         contentDescription = "Spiritual Caller Contact Icon",
                         tint = GoldBright,
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(52.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
+                // Title adaptively cut down in UI with maxLines and Ellipsis
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.headlineMedium.copy(
+                    style = MaterialTheme.typography.titleLarge.copy(
                         fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 26.sp
                     ),
                     color = GoldBright,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset(y = headerOffset)
+                        .graphicsLayer(alpha = headerAlpha)
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = "Rule of Life • Canonical Hours Prayer Call",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = ParchmentLight
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight.copy(alpha = 0.8f)
                 )
-            }
 
-            // Message Preview Card (Slide up + Fade in)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-                    .offset(y = cardOffset)
-                    .graphicsLayer(alpha = cardAlpha),
-                colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
-                border = BorderStroke(1.dp, DarkCathedralCardBorder),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = FontFamily.Serif,
-                        lineHeight = 22.sp
-                    ),
-                    color = ParchmentLight,
-                    textAlign = TextAlign.Center,
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Message Preview Card adaptively cut down & scrollable in UI
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
-                )
+                        .heightIn(max = 170.dp)
+                        .offset(y = cardOffset)
+                        .graphicsLayer(alpha = cardAlpha),
+                    colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+                    border = BorderStroke(1.dp, DarkCathedralCardBorder),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontFamily = FontFamily.Serif,
+                                lineHeight = 20.sp
+                            ),
+                            color = ParchmentLight,
+                            textAlign = TextAlign.Center,
+                            maxLines = 6,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
 
-            // High Visibility Accept & Dismiss Buttons Row (Slide up + Fade in)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // High Visibility Accept & Dismiss Buttons Row - GUARANTEED ALWAYS VISIBLE AT BOTTOM
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 36.dp)
+                    .padding(bottom = 12.dp)
                     .offset(y = buttonsOffset)
                     .graphicsLayer(alpha = buttonsAlpha),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Dismiss Button
+                // Decline / Dismiss Button
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Button(
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(76.dp)
+                            .size(72.dp)
                             .testTag("dismiss_call_button"),
                         shape = CircleShape,
                         colors = ButtonDefaults.buttonColors(
@@ -378,24 +491,24 @@ fun CallOverlayScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CallEnd,
-                            contentDescription = "Dismiss Call",
-                            modifier = Modifier.size(38.dp)
+                            contentDescription = "Decline Call",
+                            modifier = Modifier.size(36.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Dismiss", style = MaterialTheme.typography.labelMedium, color = ParchmentLight)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("Decline", style = MaterialTheme.typography.labelMedium, color = ParchmentLight)
                 }
 
-                // Accept Button with Outer Glow and Scale Pulse
+                // Pick Up / Accept Button with Outer Glow and Scale Pulse
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(96.dp)
+                        modifier = Modifier.size(92.dp)
                     ) {
                         // Soft glowing outer pulse ring
                         Box(
                             modifier = Modifier
-                                .size(96.dp)
+                                .size(92.dp)
                                 .scale(acceptButtonGlowScale)
                                 .background(
                                     color = Color(0xFF2E7D32).copy(alpha = 0.25f),
@@ -406,7 +519,7 @@ fun CallOverlayScreen(
                         Button(
                             onClick = onAccept,
                             modifier = Modifier
-                                .size(76.dp)
+                                .size(72.dp)
                                 .scale(acceptButtonScale)
                                 .testTag("accept_call_button"),
                             shape = CircleShape,
@@ -417,14 +530,239 @@ fun CallOverlayScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Call,
-                                contentDescription = "Accept Call",
-                                modifier = Modifier.size(38.dp)
+                                contentDescription = "Pick Up Call",
+                                modifier = Modifier.size(36.dp)
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Accept", style = MaterialTheme.typography.labelMedium, color = GoldBright, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("Pick Up", style = MaterialTheme.typography.labelMedium, color = GoldBright, fontWeight = FontWeight.Bold)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun RescheduleOverlayPanel(
+    title: String,
+    dutyId: Int,
+    onDeclineConfirmed: () -> Unit,
+    onRescheduled: (timeStr: String) -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var selectedCustomTime by remember { mutableStateOf<String?>(null) }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("reschedule_overlay_panel"),
+        color = DarkCathedralBackground
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Elegant Monastic Icon
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(CrimsonBurgundy, DarkCathedralSurface)
+                        )
+                    )
+                    .border(2.dp, GoldBright, CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Church,
+                    contentDescription = "Monastic Bell",
+                    tint = GoldBright,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Main Prompt
+            Text(
+                text = "Are you busy?",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = GoldBright,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Would you like to reschedule '${title}' to another time today?",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontFamily = FontFamily.Serif,
+                    lineHeight = 24.sp
+                ),
+                color = ParchmentLight,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Your regular rule of life schedule will resume normally tomorrow.",
+                style = MaterialTheme.typography.bodySmall,
+                color = ParchmentLight.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Quick Postpone Choices Grid
+            Text(
+                text = "QUICK SNOOZE / POSTPONE FOR TODAY",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    letterSpacing = 1.5.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = GoldBright.copy(alpha = 0.8f)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                val buttonModifier = Modifier.weight(1f).height(48.dp)
+                Button(
+                    onClick = {
+                        val cal = java.util.Calendar.getInstance().apply {
+                            add(java.util.Calendar.MINUTE, 15)
+                        }
+                        val formatted = String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+                        onRescheduled(formatted)
+                    },
+                    modifier = buttonModifier,
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
+                    border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                ) {
+                    Text("+15m", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                }
+
+                Button(
+                    onClick = {
+                        val cal = java.util.Calendar.getInstance().apply {
+                            add(java.util.Calendar.MINUTE, 30)
+                        }
+                        val formatted = String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+                        onRescheduled(formatted)
+                    },
+                    modifier = buttonModifier,
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
+                    border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                ) {
+                    Text("+30m", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                val buttonModifier = Modifier.weight(1f).height(48.dp)
+                Button(
+                    onClick = {
+                        val cal = java.util.Calendar.getInstance().apply {
+                            add(java.util.Calendar.HOUR_OF_DAY, 1)
+                        }
+                        val formatted = String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+                        onRescheduled(formatted)
+                    },
+                    modifier = buttonModifier,
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
+                    border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                ) {
+                    Text("+1 hr", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                }
+
+                Button(
+                    onClick = {
+                        val cal = java.util.Calendar.getInstance().apply {
+                            add(java.util.Calendar.HOUR_OF_DAY, 2)
+                        }
+                        val formatted = String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+                        onRescheduled(formatted)
+                    },
+                    modifier = buttonModifier,
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
+                    border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                ) {
+                    Text("+2 hrs", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Custom Time Picker Button
+            Button(
+                onClick = {
+                    val cal = java.util.Calendar.getInstance()
+                    val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+                    val minute = cal.get(java.util.Calendar.MINUTE)
+                    val picker = android.app.TimePickerDialog(
+                        context,
+                        { _, selectedHour, selectedMinute ->
+                            val formatted = String.format(java.util.Locale.US, "%02d:%02d", selectedHour, selectedMinute)
+                            onRescheduled(formatted)
+                        },
+                        hour,
+                        minute,
+                        false
+                    )
+                    picker.show()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                border = BorderStroke(1.dp, GoldBright)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Call,
+                    contentDescription = "Set Custom Time",
+                    tint = GoldBright,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Select Custom Time...", color = GoldBright, fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Decline Completely button
+            TextButton(
+                onClick = onDeclineConfirmed,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "No, Just Decline",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = ParchmentLight.copy(alpha = 0.6f)
+                )
             }
         }
     }

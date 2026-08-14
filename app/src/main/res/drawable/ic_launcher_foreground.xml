@@ -3,7 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/guardian_angel_icon_fg_1785322447638"
+        android:drawable="@drawable/custos_launcher_icon_1786704257308"
         android:gravity="center" />
 </layer-list>
-

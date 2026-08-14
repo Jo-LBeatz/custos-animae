@@ -28,6 +28,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import com.example.ui.components.TrackLazyListScroll
+import com.example.ui.components.TrackScrollState
+import com.example.ui.components.fullScreenToggleOnTap
+import com.example.ui.components.rememberDirectionalScrollConnection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -38,6 +43,8 @@ import com.example.ui.MainViewModel
 import com.example.ui.components.GothicHeader
 import com.example.ui.components.IlluminatedDivider
 import com.example.ui.theme.*
+import com.example.util.AppLanguage
+import com.example.util.AppTranslationHelper
 
 data class TraditionalFault(
     val id: String,
@@ -78,7 +85,8 @@ fun ExaminationScreen(
 ) {
     val context = LocalContext.current
     val today = remember { viewModel.getTodayLiturgicalInfo().dateString }
-    val recentExams by viewModel.recentExaminations.collectAsState()
+    val recentExams by viewModel.recentExaminations.collectAsStateWithLifecycle()
+    val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
 
     var dutiesFulfilled by remember { mutableStateOf(false) }
     var prayerText by remember { mutableStateOf("") }
@@ -130,56 +138,18 @@ fun ExaminationScreen(
         onDispose {
             viewModel.setReadingProgress(0f)
             viewModel.setBottomNavVisible(true)
+            viewModel.setTopHeaderVisible(true)
         }
     }
 
     if (showHistory) {
-        LaunchedEffect(historyListState.firstVisibleItemIndex, historyListState.firstVisibleItemScrollOffset) {
-            val currentIndex = historyListState.firstVisibleItemIndex
-            val currentOffset = historyListState.firstVisibleItemScrollOffset
-
-            if (currentIndex == 0 && currentOffset <= 10) {
-                viewModel.setBottomNavVisible(true)
-                viewModel.setTopHeaderVisible(true)
-            } else if (currentIndex > 0 || currentOffset > 30) {
-                viewModel.setBottomNavVisible(false)
-                viewModel.setTopHeaderVisible(false)
-            }
-
-            val layoutInfo = historyListState.layoutInfo
-            val totalItemsCount = layoutInfo.totalItemsCount
-            if (totalItemsCount > 1) {
-                val firstVisibleItem = layoutInfo.visibleItemsInfo.firstOrNull()
-                if (firstVisibleItem != null) {
-                    val itemSize = firstVisibleItem.size
-                    val fraction = if (itemSize > 0) currentOffset.toFloat() / itemSize else 0f
-                    val currentPosition = currentIndex + fraction
-                    val progress = (currentPosition / (totalItemsCount - 1).coerceAtLeast(1)).coerceIn(0f, 1f)
-                    viewModel.setReadingProgress(progress)
-                }
-            } else {
-                viewModel.setReadingProgress(0f)
-            }
-        }
+        TrackLazyListScroll(listState = historyListState, viewModel = viewModel)
     } else {
-        LaunchedEffect(scrollState.value, scrollState.maxValue) {
-            val currentScroll = scrollState.value
-            val maxScroll = scrollState.maxValue
-            
-            if (currentScroll <= 10) {
-                viewModel.setBottomNavVisible(true)
-                viewModel.setTopHeaderVisible(true)
-            } else if (currentScroll > 30) {
-                viewModel.setBottomNavVisible(false)
-                viewModel.setTopHeaderVisible(false)
-            }
-            
-            val progress = if (maxScroll > 0) currentScroll.toFloat() / maxScroll.toFloat() else 0f
-            viewModel.setReadingProgress(progress)
-        }
+        TrackScrollState(scrollState = scrollState, viewModel = viewModel)
     }
 
     val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
+    val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
 
     Column(
         modifier = Modifier
@@ -188,6 +158,8 @@ fun ExaminationScreen(
             .wrapContentWidth(Alignment.CenterHorizontally)
             .widthIn(max = 600.dp)
             .padding(horizontal = 16.dp)
+            .fullScreenToggleOnTap(viewModel)
+            .nestedScroll(directionalScrollConnection)
     ) {
         androidx.compose.animation.AnimatedVisibility(
             visible = isTopHeaderVisible,
@@ -196,9 +168,9 @@ fun ExaminationScreen(
         ) {
             Column {
                 GothicHeader(
-                    title = "EXAMINATION OF CONSCIENCE",
-                    subtitle = "Nightly Self-Examination & Concrete Resolution",
-                    badgeText = "Daily Examination"
+                    title = AppTranslationHelper.translate("EXAMINATION OF CONSCIENCE", appLanguage),
+                    subtitle = AppTranslationHelper.translate("Nightly Self-Examination & Concrete Resolution", appLanguage),
+                    badgeText = AppTranslationHelper.translate("Daily Examination", appLanguage)
                 )
 
                 Row(
@@ -212,7 +184,7 @@ fun ExaminationScreen(
                     ) {
                         Icon(imageVector = Icons.Default.History, contentDescription = null, tint = GoldBright)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = if (showHistory) "Conduct" else "History Logs", color = GoldBright)
+                        Text(text = AppTranslationHelper.translate(if (showHistory) "Conduct" else "History Logs", appLanguage), color = GoldBright)
                     }
 
                     var showLedgerAuthDialog by remember { mutableStateOf(false) }
@@ -227,7 +199,7 @@ fun ExaminationScreen(
                     ) {
                         Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = GoldBright, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Confession Prep 🔒", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
+                        Text(text = AppTranslationHelper.translate("Confession Prep 🔒", appLanguage), style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
                     }
 
                     if (showLedgerAuthDialog) {
@@ -299,7 +271,7 @@ fun ExaminationScreen(
                     LazyColumn(
                         state = historyListState,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(bottom = 90.dp)
+                        contentPadding = PaddingValues(bottom = 120.dp)
                     ) {
                     items(recentExams, key = { it.date }) { exam ->
                         Card(
@@ -539,7 +511,7 @@ fun ExaminationScreen(
                             val groupedFaults = TRADITIONAL_FAULTS.groupBy { it.groupName }
                             groupedFaults.forEach { (group, faultsInGroup) ->
                                 Text(
-                                    text = group.uppercase(),
+                                    text = AppTranslationHelper.translate(group, appLanguage).uppercase(),
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
                                     color = GoldDark,
                                     modifier = Modifier.padding(vertical = 4.dp)
@@ -571,7 +543,7 @@ fun ExaminationScreen(
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = fault.description,
+                                            text = AppTranslationHelper.translate(fault.description, appLanguage),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = ParchmentLight
                                         )
@@ -1024,7 +996,7 @@ fun ConfessionPrepLedgerDialog(
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                     )
                 }
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(120.dp))
             }
         }
     }

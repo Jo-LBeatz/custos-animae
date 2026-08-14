@@ -446,9 +446,24 @@ object SaintData {
             )
         }
 
-        // Beautifully-tailored procedural generator for other days
+        // Determine the actual saint of the day, filtering out generic/octave placeholders
+        val isPrimaryGeneric = name.isBlank() ||
+                name.contains("Octave", ignoreCase = true) ||
+                name.contains("The Holy Season", ignoreCase = true) ||
+                name.contains("Eve", ignoreCase = true) ||
+                name.contains("Feria", ignoreCase = true) ||
+                name.contains("Vigil", ignoreCase = true) ||
+                name.contains("Holy Week", ignoreCase = true)
+
+        val saintOfTheDay = if (isPrimaryGeneric && comm.isNotBlank() && !comm.contains("Octave", ignoreCase = true)) {
+            val cleanComm = comm.split("&", ",").first().trim()
+            if (cleanComm.startsWith("St.") || cleanComm.startsWith("SS.")) cleanComm else comm
+        } else {
+            name
+        }
+
         val isMary = title.contains("Mary", ignoreCase = true) || title.contains("Virgin", ignoreCase = true) || title.contains("Immaculate", ignoreCase = true) || title.contains("Assumption", ignoreCase = true) || title.contains("Annunciation", ignoreCase = true) || title.contains("Visitation", ignoreCase = true) || title.contains("Rosary", ignoreCase = true) || title.contains("Queenship", ignoreCase = true) || title.contains("Sorrows", ignoreCase = true)
-        val isApostle = title.contains("Apostle", ignoreCase = true) || title.contains("Evangelist", ignoreCase = true) || name.contains("Peter", ignoreCase = true) || name.contains("Paul", ignoreCase = true) || name.contains("John", ignoreCase = true) || name.contains("Matthew", ignoreCase = true) || name.contains("Mark", ignoreCase = true) || name.contains("Luke", ignoreCase = true) || name.contains("Andrew", ignoreCase = true) || name.contains("Thomas", ignoreCase = true) || name.contains("James", ignoreCase = true) || name.contains("Philip", ignoreCase = true) || name.contains("Bartholomew", ignoreCase = true) || name.contains("Matthias", ignoreCase = true) || name.contains("Jude", ignoreCase = true) || name.contains("Simon", ignoreCase = true)
+        val isApostle = title.contains("Apostle", ignoreCase = true) || title.contains("Evangelist", ignoreCase = true) || saintOfTheDay.contains("Peter", ignoreCase = true) || saintOfTheDay.contains("Paul", ignoreCase = true) || saintOfTheDay.contains("John", ignoreCase = true) || saintOfTheDay.contains("Matthew", ignoreCase = true) || saintOfTheDay.contains("Mark", ignoreCase = true) || saintOfTheDay.contains("Luke", ignoreCase = true) || saintOfTheDay.contains("Andrew", ignoreCase = true) || saintOfTheDay.contains("Thomas", ignoreCase = true) || saintOfTheDay.contains("James", ignoreCase = true) || saintOfTheDay.contains("Philip", ignoreCase = true) || saintOfTheDay.contains("Bartholomew", ignoreCase = true) || saintOfTheDay.contains("Matthias", ignoreCase = true) || saintOfTheDay.contains("Jude", ignoreCase = true) || saintOfTheDay.contains("Simon", ignoreCase = true)
         val isMartyr = title.contains("Martyr", ignoreCase = true) || title.contains("Martyrs", ignoreCase = true)
         val isDoctor = title.contains("Doctor", ignoreCase = true)
         val isPopeBishopConfessor = title.contains("Pope", ignoreCase = true) || title.contains("Bishop", ignoreCase = true) || title.contains("Confessor", ignoreCase = true) || title.contains("Abbot", ignoreCase = true) || title.contains("Priest", ignoreCase = true)
@@ -459,21 +474,21 @@ object SaintData {
         
         val bioDetails = when {
             isMary -> "As the Blessed Virgin Mary, Mother of God, Our Lady is the perfect vessel of grace and the model of faith. Under this specific title of $title, the liturgy invites us to contemplate her unique role in the economy of salvation, her perfect cooperation with the Holy Ghost, and her maternal protection which constantly leads all believers to her Divine Son, Jesus Christ."
-            isApostle -> "Chosen directly by Our Lord as one of the foundation stones of the Church, $name followed the Master during His earthly ministry, witnessed the glory of the Resurrection, and was filled with apostolic fire at Pentecost. Leaving all things behind, $name traversed the ancient world to proclaim the Gospel of salvation, ultimately sealing their unwavering testimony with the crown of martyrdom."
-            isMartyr -> "The Holy Martyr, $name, filled with supernatural fortitude, chose to endure horrific torments and death rather than deny Christ or compromise the Catholic faith. In an age of hostility, their life stood as a powerful, public testament that Christ is the supreme Lord of all. By shedding their blood, they entered into the passion of their Savior and watered the seeds of the early Church."
-            isDoctor -> "The Holy Doctor of the Church, $name, was endowed by the Holy Ghost with extraordinary wisdom and intellectual clarity. They spent their earthly days defending the sacred deposit of faith against error, explaining the deepest mysteries of theology, and illuminating the paths of holiness for future generations. Their writings remain a perpetual beacon of truth."
-            isPopeBishopConfessor -> "Living a life of heroic virtue, $name served as a vigilant guardian of Christ's flock. As a holy shepherd, priest, or confessor, they offered the Holy Sacrifice of the Mass with deep reverence, administered the sacraments, and spent themselves in preaching and guidance. Their pastoral heart was a living reflection of the Good Shepherd, seeking out the lost and leading them to safe pastures."
-            isVirginHolyWoman -> "The Holy Virgin or Widow, $name, consecrated her entire heart and life to the Divine Bridegroom, Jesus Christ, choosing the better part that shall not be taken away. Living in virginal purity, deep humility, and continuous prayer, she showed the world that a soul detached from worldly vanity becomes a sanctuary of the Holy Trinity. Her quiet life of virtue remains a fragrant offering."
+            isApostle -> "Chosen directly by Our Lord as one of the foundation stones of the Church, $saintOfTheDay followed the Master during His earthly ministry, witnessed the glory of the Resurrection, and was filled with apostolic fire at Pentecost. Leaving all things behind, $saintOfTheDay traversed the ancient world to proclaim the Gospel of salvation, ultimately sealing their unwavering testimony with the crown of martyrdom."
+            isMartyr -> "The Holy Martyr, $saintOfTheDay, filled with supernatural fortitude, chose to endure horrific torments and death rather than deny Christ or compromise the Catholic faith. In an age of hostility, their life stood as a powerful, public testament that Christ is the supreme Lord of all. By shedding their blood, they entered into the passion of their Savior and watered the seeds of the early Church."
+            isDoctor -> "The Holy Doctor of the Church, $saintOfTheDay, was endowed by the Holy Ghost with extraordinary wisdom and intellectual clarity. They spent their earthly days defending the sacred deposit of faith against error, explaining the deepest mysteries of theology, and illuminating the paths of holiness for future generations. Their writings remain a perpetual beacon of truth."
+            isPopeBishopConfessor -> "Living a life of heroic virtue, $saintOfTheDay served as a vigilant guardian of Christ's flock. As a holy shepherd, priest, or confessor, they offered the Holy Sacrifice of the Mass with deep reverence, administered the sacraments, and spent themselves in preaching and guidance. Their pastoral heart was a living reflection of the Good Shepherd, seeking out the lost and leading them to safe pastures."
+            isVirginHolyWoman -> "The Holy Virgin or Widow, $saintOfTheDay, consecrated her entire heart and life to the Divine Bridegroom, Jesus Christ, choosing the better part that shall not be taken away. Living in virginal purity, deep humility, and continuous prayer, she showed the world that a soul detached from worldly vanity becomes a sanctuary of the Holy Trinity. Her quiet life of virtue remains a fragrant offering."
             isAngels -> "The Holy Archangel stands before the throne of God, executing His divine commands with perfect obedience. In the spiritual battles of this life, the holy Angels protect our souls, shield us from the malice of the devil, and guide us along the narrow path to the heavenly kingdom, reminding us that we are created for eternal adoration."
-            else -> if (name.isNotBlank() && name != "The Holy Season" && name != "Christmas Octave") {
-                "Our holy patron, $name, stands as a shining witness of the Gospel, demonstrating the beauty and power of grace. They aligned their daily life with the teachings of Christ, serving the Church with fidelity, humility, and unwavering dedication, offering an enduring example of Christian discipleship."
+            else -> if (saintOfTheDay.isNotBlank() && saintOfTheDay != "The Holy Season" && saintOfTheDay != "Christmas Octave") {
+                "Our holy patron, $saintOfTheDay, stands as a shining witness of the Gospel, demonstrating the beauty and power of grace. They aligned their daily life with the teachings of Christ, serving the Church with fidelity, humility, and unwavering dedication, offering an enduring example of Christian discipleship."
             } else {
                 "We unite ourselves with the universal prayer of the Church, meditating on the mysteries of Christ's life and the ongoing work of salvation. This liturgical celebration draws our hearts deeper into the sacred mysteries of our redemption, preparing us to celebrate the eternal feasts of heaven."
             }
         }
         
-        val bioConclusion = if (name.isNotBlank() && name != "The Holy Season" && name != "Christmas Octave") {
-            "The life of $name teaches us that holiness is the unique calling of every baptized Christian. By seeking their powerful intercession and imitating their heroic virtues—especially their outstanding humility, fidelity, and love of God—we are strengthened to carry our daily crosses and advance steadily on the narrow path of salvation."
+        val bioConclusion = if (saintOfTheDay.isNotBlank() && saintOfTheDay != "The Holy Season" && saintOfTheDay != "Christmas Octave") {
+            "The life of $saintOfTheDay teaches us that holiness is the unique calling of every baptized Christian. By seeking their powerful intercession and imitating their heroic virtues—especially their outstanding humility, fidelity, and love of God—we are strengthened to carry our daily crosses and advance steadily on the narrow path of salvation."
         } else {
             "May the sacred liturgy of this day fill our souls with divine light, renew our baptismal promises, and inspire us to live with greater faith, hope, and charity in our daily lives, as we journey toward our true heavenly homeland."
         }
@@ -490,7 +505,86 @@ object SaintData {
         }
 
         val quoteText = when {
-            // Feast Day Specific Quotes (Feasts of Our Lord, Our Lady, and Solemnities)
+            // Specific Saint of the Day Quotes (by Saint Name)
+            saintOfTheDay.contains("Ignatius", ignoreCase = true) && saintOfTheDay.contains("Antioch", ignoreCase = true) -> "I am the wheat of God, and let me be ground by the teeth of wild beasts, that I may be found the pure bread of Christ. — St. Ignatius of Antioch"
+            saintOfTheDay.contains("Ignatius", ignoreCase = true) -> "Receive, O Lord, all my liberty. Take my memory, my understanding, and my entire will. Do with me what You will. — St. Ignatius of Loyola"
+            saintOfTheDay.contains("Augustine", ignoreCase = true) -> "Our hearts are restless, O Lord, until they rest in Thee. — St. Augustine of Hippo"
+            saintOfTheDay.contains("Francis de Sales", ignoreCase = true) -> "An ounce of honey attracts more flies than a gallon of vinegar. — St. Francis de Sales"
+            saintOfTheDay.contains("Francis Xavier", ignoreCase = true) -> "What does it profit a man if he gain the whole world, yet suffer the loss of his soul? — St. Francis Xavier"
+            saintOfTheDay.contains("Francis", ignoreCase = true) -> "My God and my All! It is in giving that we receive. — St. Francis of Assisi"
+            saintOfTheDay.contains("Therese", ignoreCase = true) || saintOfTheDay.contains("Thérèse", ignoreCase = true) -> "My way is all confidence and love. I will spend my heaven doing good upon earth. — St. Thérèse of Lisieux"
+            saintOfTheDay.contains("Teresa", ignoreCase = true) -> "Let nothing disturb you, let nothing frighten you. All things are passing; God alone is sufficient. — St. Teresa of Avila"
+            saintOfTheDay.contains("Aquinas", ignoreCase = true) || (saintOfTheDay.contains("Thomas", ignoreCase = true) && title.contains("Doctor", ignoreCase = true)) -> "To one who has faith, no explanation is necessary. To one without faith, no explanation is possible. — St. Thomas Aquinas"
+            saintOfTheDay.contains("Thomas Becket", ignoreCase = true) -> "The Church of God must not be converted into a den of thieves or made subject to worldly rulers. — St. Thomas Becket"
+            saintOfTheDay.contains("Chrysostom", ignoreCase = true) -> "Preaching makes me well. As soon as I open my mouth, all tiredness is gone. — St. John Chrysostom"
+            saintOfTheDay.contains("Patrick", ignoreCase = true) -> "Christ be with me, Christ within me, Christ behind me, Christ before me. — St. Patrick of Ireland"
+            saintOfTheDay.contains("Benedict", ignoreCase = true) -> "Prefer nothing whatever to Christ, and may He bring us all together to everlasting life. — St. Benedict of Nursia"
+            saintOfTheDay.contains("Catherine", ignoreCase = true) -> "Be who God meant you to be and you will set the world on fire! — St. Catherine of Siena"
+            saintOfTheDay.contains("Monica", ignoreCase = true) -> "Nothing is far from God. Son of these tears, it is impossible that you should perish! — St. Monica"
+            saintOfTheDay.contains("Philip Neri", ignoreCase = true) -> "Cheerfulness strengthens the heart and makes us persevere in a good life. — St. Philip Neri"
+            saintOfTheDay.contains("Joseph", ignoreCase = true) && !title.contains("Joseph of Cupertino", ignoreCase = true) -> "He who was subject to Joseph on earth now refuses him nothing in heaven. — St. Teresa of Avila"
+            saintOfTheDay.contains("Polycarp", ignoreCase = true) -> "Eighty and six years have I served Him, and He never did me any injury. How then can I blaspheme my King and my Savior? — St. Polycarp"
+            saintOfTheDay.contains("Athanasius", ignoreCase = true) -> "The floor of hell is paved with the skulls of bishops... but the truth of Christ remains unshaken. — St. Athanasius"
+            saintOfTheDay.contains("Jerome", ignoreCase = true) -> "Ignorance of Scripture is ignorance of Christ. — St. Jerome"
+            saintOfTheDay.contains("Bonaventure", ignoreCase = true) -> "In all our deeds, let our intention be pure and directed to God alone. — St. Bonaventure"
+            saintOfTheDay.contains("Gregory", ignoreCase = true) -> "He who wishes to reach the heights must first descend to the depths. — St. Gregory the Great"
+            saintOfTheDay.contains("Bernadette", ignoreCase = true) -> "I do not promise to make you happy in this world, but in the next. — St. Bernadette Soubirous"
+            saintOfTheDay.contains("Lawrence", ignoreCase = true) -> "The treasures of the Church are the poor, whom Christ called blessed. — St. Lawrence"
+            saintOfTheDay.contains("Stephen", ignoreCase = true) -> "Love was Stephen's weapon by which he conquered the fury of his persecutors and won the crown of martyrdom. — St. Fulgentius of Ruspe"
+            saintOfTheDay.contains("John of the Cross", ignoreCase = true) -> "In the evening of life, we will be judged on love. — St. John of the Cross"
+            saintOfTheDay.contains("John Bosco", ignoreCase = true) -> "Fly from bad books and wicked companions; frequent the sacraments with devotion. — St. John Bosco"
+            saintOfTheDay.contains("John Vianney", ignoreCase = true) || saintOfTheDay.contains("Ars", ignoreCase = true) -> "If we knew the value of the Holy Mass, we would die of joy. — St. John Vianney"
+            saintOfTheDay.contains("John the Baptist", ignoreCase = true) -> "He must increase, but I must decrease. — St. John the Baptist"
+            saintOfTheDay.contains("John", ignoreCase = true) && title.contains("Apostle", ignoreCase = true) -> "Little children, love one another. — St. John the Apostle"
+            saintOfTheDay.contains("Pius", ignoreCase = true) -> "I was born poor, I have lived poor, and I wish to die poor. — Pope St. Pius X"
+            saintOfTheDay.contains("Alphonsus", ignoreCase = true) -> "He who prays is certain to be saved; he who prays not is certain to be damned. — St. Alphonsus Liguori"
+            saintOfTheDay.contains("Dominic", ignoreCase = true) -> "A man who governs his passions is master of the world. — St. Dominic"
+            saintOfTheDay.contains("Bernard", ignoreCase = true) -> "In dangers, in doubts, in difficulties, think of Mary, call upon Mary. — St. Bernard of Clairvaux"
+            saintOfTheDay.contains("Pio", ignoreCase = true) -> "Pray, hope, and don't worry. Worry is useless. — St. Padre Pio"
+            saintOfTheDay.contains("Elizabeth", ignoreCase = true) -> "My heart is overflowing with joy and peace, for I am the handmaid of the Lord. — St. Elizabeth"
+            saintOfTheDay.contains("Clare", ignoreCase = true) -> "Love Him totally who gave Himself totally for your love. — St. Clare of Assisi"
+            saintOfTheDay.contains("Mary Magdalene", ignoreCase = true) -> "I have seen the Lord! — St. Mary Magdalene"
+            saintOfTheDay.contains("Margaret Mary", ignoreCase = true) -> "Behold this Heart which has loved men so much. — St. Margaret Mary Alacoque"
+            saintOfTheDay.contains("Vincent de Paul", ignoreCase = true) -> "Extend mercy towards others, so that there can be no one in need whom you meet without helping. — St. Vincent de Paul"
+            saintOfTheDay.contains("Robert Bellarmine", ignoreCase = true) -> "The school of Christ is the school of charity. — St. Robert Bellarmine"
+            saintOfTheDay.contains("Albert", ignoreCase = true) -> "He who enters into the secret place of his heart finds God. — St. Albert the Great"
+            saintOfTheDay.contains("Lucy", ignoreCase = true) -> "To the clean soul, all things are clean. — St. Lucy"
+            saintOfTheDay.contains("Agnes", ignoreCase = true) -> "Christ is my Spouse; He has chosen me and I am His. — St. Agnes"
+            saintOfTheDay.contains("Cecilia", ignoreCase = true) -> "May my heart and my body be immaculate, that I may not be confounded. — St. Cecilia"
+            saintOfTheDay.contains("Gemma", ignoreCase = true) -> "O Jesus, let me suffer with love. — St. Gemma Galgani"
+            saintOfTheDay.contains("Rose of Lima", ignoreCase = true) -> "Apart from the Cross, there is no other ladder by which we may get to heaven. — St. Rose of Lima"
+            saintOfTheDay.contains("Anthony", ignoreCase = true) -> "Attribute to God every good that you have received. — St. Anthony of Padua"
+            saintOfTheDay.contains("Joan of Arc", ignoreCase = true) -> "I am not afraid; I was born to do this. Hold the cross high that I may see it through the flames! — St. Joan of Arc"
+            saintOfTheDay.contains("Louis", ignoreCase = true) -> "Fair son, have a tender, pitiful heart to the poor and all who suffer. — St. Louis IX"
+            saintOfTheDay.contains("Charles Borromeo", ignoreCase = true) -> "Be sure that you first preach by the way you live. — St. Charles Borromeo"
+            saintOfTheDay.contains("Martin", ignoreCase = true) -> "Lord, if Thy people still need me, I do not refuse the labor. Thy will be done. — St. Martin of Tours"
+            saintOfTheDay.contains("Nicholas", ignoreCase = true) -> "The giver of every good and perfect gift has called us to share His gifts with those in need. — St. Nicholas"
+            saintOfTheDay.contains("Ambrose", ignoreCase = true) -> "Where Peter is, there is the Church; and where the Church is, there is no death, but life eternal. — St. Ambrose"
+            saintOfTheDay.contains("Andrew", ignoreCase = true) -> "O good Cross, long desired and now prepared for my longing soul, receive me from among men and restore me to my Master! — St. Andrew"
+            saintOfTheDay.contains("Mark", ignoreCase = true) -> "The lion of Alexandria preached the uncompromised Gospel of Christ with apostolic zeal. — St. Mark"
+            saintOfTheDay.contains("Luke", ignoreCase = true) -> "My soul doth magnify the Lord, and my spirit hath rejoiced in God my Savior. — St. Luke"
+            saintOfTheDay.contains("Matthew", ignoreCase = true) -> "Follow Me. And he arose and followed Him. — St. Matthew"
+            saintOfTheDay.contains("James", ignoreCase = true) -> "Be ye doers of the word, and not hearers only, deceiving your own selves. — St. James"
+            saintOfTheDay.contains("Anne", ignoreCase = true) || saintOfTheDay.contains("Joachim", ignoreCase = true) -> "Praise the Lord for the holy root from which blossomed the Mother of God. — Sacred Liturgy"
+            saintOfTheDay.contains("Bridget", ignoreCase = true) -> "There is no sinner so wretched that God will not forgive him if he turns to Him with true sorrow. — St. Bridget of Sweden"
+            saintOfTheDay.contains("Gertrude", ignoreCase = true) -> "Thou hast made my heart Thy sanctuary of love, O divine Lord. — St. Gertrude the Great"
+            saintOfTheDay.contains("Aloysius", ignoreCase = true) -> "I am a piece of twisted iron, and have entered into religion in order to be straightened out. — St. Aloysius Gonzaga"
+            saintOfTheDay.contains("Camillus", ignoreCase = true) -> "More heart in those hands, my brothers! Perform every act of charity as unto Christ Himself. — St. Camillus de Lellis"
+            saintOfTheDay.contains("Justin", ignoreCase = true) -> "You can kill us, but you cannot hurt us! Truth is our weapon and our crown. — St. Justin Martyr"
+            saintOfTheDay.contains("Irenaeus", ignoreCase = true) -> "The glory of God is man fully alive, and the life of man is the vision of God. — St. Irenaeus"
+            saintOfTheDay.contains("Cyril", ignoreCase = true) -> "The Holy Ghost comes gently and makes His presence known by His fragrance and sweetness. — St. Cyril of Jerusalem"
+            saintOfTheDay.contains("Anselm", ignoreCase = true) -> "I do not seek to understand in order that I may believe, but I believe in order that I may understand. — St. Anselm"
+            saintOfTheDay.contains("Leo", ignoreCase = true) -> "Christian, recognize your dignity! You have been made a partaker of the Divine Nature. — Pope St. Leo the Great"
+            saintOfTheDay.contains("John Damascene", ignoreCase = true) -> "What the book is to those who can read, the image is to those who cannot. — St. John Damascene"
+            saintOfTheDay.contains("Bede", ignoreCase = true) -> "I spent my whole life in the study of Sacred Scripture, in singing the Divine Office, and in teaching. — St. Venerable Bede"
+            saintOfTheDay.contains("Boniface", ignoreCase = true) -> "Let us stand fast in the battle on the day of the Lord, for days of affliction and distress have come upon us. — St. Boniface"
+            saintOfTheDay.contains("Peter Canisius", ignoreCase = true) -> "If you have too much to do, with the help of God you will find time to do it all. — St. Peter Canisius"
+            saintOfTheDay.contains("Rita", ignoreCase = true) -> "Nothing is impossible to God; trust in His infinite mercy and patience. — St. Rita of Cascia"
+            saintOfTheDay.contains("Stanislaus", ignoreCase = true) -> "I was born for higher things, and to live for them is my joy. — St. Stanislaus Kostka"
+            saintOfTheDay.contains("Paul", ignoreCase = true) -> "I have fought a good fight, I have finished my course, I have kept the faith. — 2 St. Timothy 4:7"
+            saintOfTheDay.contains("Peter", ignoreCase = true) -> "Lord, to whom shall we go? Thou hast the words of eternal life. — St. John 6:68"
+
+            // Pure Feast Day/Season Quotes (only used when saintOfTheDay is generic or the day represents a pure feast/season with no specific saint)
             title.contains("Circumcision", ignoreCase = true) -> "And when eight days were accomplished for the circumcising of the Child, His name was called JESUS. — St. Luke 2:21"
             title.contains("Epiphany", ignoreCase = true) -> "We have seen His star in the East, and are come with gifts to adore the Lord. — St. Matthew 2:2"
             title.contains("Candlemas", ignoreCase = true) || title.contains("Purification", ignoreCase = true) -> "A light to the revelation of the Gentiles, and the glory of Thy people Israel. — St. Luke 2:32"
@@ -512,100 +606,21 @@ object SaintData {
             title.contains("Chair of St. Peter", ignoreCase = true) || title.contains("Chair of Peter", ignoreCase = true) -> "Where Peter is, there is the Church; and where the Church is, there is no death, but life eternal. — St. Ambrose"
             title.contains("Seven Sorrows", ignoreCase = true) || title.contains("Compassion of Mary", ignoreCase = true) -> "O all ye that pass by the way, attend, and see if there be any sorrow like unto my sorrow. — Lamentations 1:12"
 
-            // Saint of the Day Quotes (by Saint Name)
-            name.contains("Ignatius", ignoreCase = true) && name.contains("Antioch", ignoreCase = true) -> "I am the wheat of God, and let me be ground by the teeth of wild beasts, that I may be found the pure bread of Christ. — St. Ignatius of Antioch"
-            name.contains("Ignatius", ignoreCase = true) -> "Receive, O Lord, all my liberty. Take my memory, my understanding, and my entire will. Do with me what You will. — St. Ignatius of Loyola"
-            name.contains("Augustine", ignoreCase = true) -> "Our hearts are restless, O Lord, until they rest in Thee. — St. Augustine of Hippo"
-            name.contains("Francis de Sales", ignoreCase = true) -> "An ounce of honey attracts more flies than a gallon of vinegar. — St. Francis de Sales"
-            name.contains("Francis Xavier", ignoreCase = true) -> "What does it profit a man if he gain the whole world, yet suffer the loss of his soul? — St. Francis Xavier"
-            name.contains("Francis", ignoreCase = true) -> "My God and my All! It is in giving that we receive. — St. Francis of Assisi"
-            name.contains("Therese", ignoreCase = true) || name.contains("Thérèse", ignoreCase = true) -> "My way is all confidence and love. I will spend my heaven doing good upon earth. — St. Thérèse of Lisieux"
-            name.contains("Teresa", ignoreCase = true) -> "Let nothing disturb you, let nothing frighten you. All things are passing; God alone is sufficient. — St. Teresa of Avila"
-            name.contains("Aquinas", ignoreCase = true) || (name.contains("Thomas", ignoreCase = true) && title.contains("Doctor", ignoreCase = true)) -> "To one who has faith, no explanation is necessary. To one without faith, no explanation is possible. — St. Thomas Aquinas"
-            name.contains("Thomas Becket", ignoreCase = true) -> "The Church of God must not be converted into a den of thieves or made subject to worldly rulers. — St. Thomas Becket"
-            name.contains("Chrysostom", ignoreCase = true) -> "Preaching makes me well. As soon as I open my mouth, all tiredness is gone. — St. John Chrysostom"
-            name.contains("Patrick", ignoreCase = true) -> "Christ be with me, Christ within me, Christ behind me, Christ before me. — St. Patrick of Ireland"
-            name.contains("Benedict", ignoreCase = true) -> "Prefer nothing whatever to Christ, and may He bring us all together to everlasting life. — St. Benedict of Nursia"
-            name.contains("Catherine", ignoreCase = true) -> "Be who God meant you to be and you will set the world on fire! — St. Catherine of Siena"
-            name.contains("Monica", ignoreCase = true) -> "Nothing is far from God. Son of these tears, it is impossible that you should perish! — St. Monica"
-            name.contains("Philip Neri", ignoreCase = true) -> "Cheerfulness strengthens the heart and makes us persevere in a good life. — St. Philip Neri"
-            name.contains("Joseph", ignoreCase = true) -> "He who was subject to Joseph on earth now refuses him nothing in heaven. — St. Teresa of Avila"
-            name.contains("Polycarp", ignoreCase = true) -> "Eighty and six years have I served Him, and He never did me any injury. How then can I blaspheme my King and my Savior? — St. Polycarp"
-            name.contains("Athanasius", ignoreCase = true) -> "The floor of hell is paved with the skulls of bishops... but the truth of Christ remains unshaken. — St. Athanasius"
-            name.contains("Jerome", ignoreCase = true) -> "Ignorance of Scripture is ignorance of Christ. — St. Jerome"
-            name.contains("Bonaventure", ignoreCase = true) -> "In all our deeds, let our intention be pure and directed to God alone. — St. Bonaventure"
-            name.contains("Gregory", ignoreCase = true) -> "He who wishes to reach the heights must first descend to the depths. — St. Gregory the Great"
-            name.contains("Bernadette", ignoreCase = true) -> "I do not promise to make you happy in this world, but in the next. — St. Bernadette Soubirous"
-            name.contains("Lawrence", ignoreCase = true) -> "The treasures of the Church are the poor, whom Christ called blessed. — St. Lawrence"
-            name.contains("Stephen", ignoreCase = true) -> "Love was Stephen's weapon by which he conquered the fury of his persecutors and won the crown of martyrdom. — St. Fulgentius of Ruspe"
-            name.contains("John of the Cross", ignoreCase = true) -> "In the evening of life, we will be judged on love. — St. John of the Cross"
-            name.contains("John Bosco", ignoreCase = true) -> "Fly from bad books and wicked companions; frequent the sacraments with devotion. — St. John Bosco"
-            name.contains("John Vianney", ignoreCase = true) || name.contains("Ars", ignoreCase = true) -> "If we knew the value of the Holy Mass, we would die of joy. — St. John Vianney"
-            name.contains("John the Baptist", ignoreCase = true) -> "He must increase, but I must decrease. — St. John the Baptist"
-            name.contains("John", ignoreCase = true) && title.contains("Apostle", ignoreCase = true) -> "Little children, love one another. — St. John the Apostle"
-            name.contains("Pius", ignoreCase = true) -> "I was born poor, I have lived poor, and I wish to die poor. — Pope St. Pius X"
-            name.contains("Alphonsus", ignoreCase = true) -> "He who prays is certain to be saved; he who prays not is certain to be damned. — St. Alphonsus Liguori"
-            name.contains("Dominic", ignoreCase = true) -> "A man who governs his passions is master of the world. — St. Dominic"
-            name.contains("Bernard", ignoreCase = true) -> "In dangers, in doubts, in difficulties, think of Mary, call upon Mary. — St. Bernard of Clairvaux"
-            name.contains("Pio", ignoreCase = true) -> "Pray, hope, and don't worry. Worry is useless. — St. Padre Pio"
-            name.contains("Elizabeth", ignoreCase = true) -> "My heart is overflowing with joy and peace, for I am the handmaid of the Lord. — St. Elizabeth"
-            name.contains("Clare", ignoreCase = true) -> "Love Him totally who gave Himself totally for your love. — St. Clare of Assisi"
-            name.contains("Mary Magdalene", ignoreCase = true) -> "I have seen the Lord! — St. Mary Magdalene"
-            name.contains("Margaret Mary", ignoreCase = true) -> "Behold this Heart which has loved men so much. — St. Margaret Mary Alacoque"
-            name.contains("Vincent de Paul", ignoreCase = true) -> "Extend mercy towards others, so that there can be no one in need whom you meet without helping. — St. Vincent de Paul"
-            name.contains("Robert Bellarmine", ignoreCase = true) -> "The school of Christ is the school of charity. — St. Robert Bellarmine"
-            name.contains("Albert", ignoreCase = true) -> "He who enters into the secret place of his heart finds God. — St. Albert the Great"
-            name.contains("Lucy", ignoreCase = true) -> "To the clean soul, all things are clean. — St. Lucy"
-            name.contains("Agnes", ignoreCase = true) -> "Christ is my Spouse; He has chosen me and I am His. — St. Agnes"
-            name.contains("Cecilia", ignoreCase = true) -> "May my heart and my body be immaculate, that I may not be confounded. — St. Cecilia"
-            name.contains("Gemma", ignoreCase = true) -> "O Jesus, let me suffer with love. — St. Gemma Galgani"
-            name.contains("Rose of Lima", ignoreCase = true) -> "Apart from the Cross, there is no other ladder by which we may get to heaven. — St. Rose of Lima"
-            name.contains("Anthony", ignoreCase = true) -> "Attribute to God every good that you have received. — St. Anthony of Padua"
-            name.contains("Joan of Arc", ignoreCase = true) -> "I am not afraid; I was born to do this. Hold the cross high that I may see it through the flames! — St. Joan of Arc"
-            name.contains("Louis", ignoreCase = true) -> "Fair son, have a tender, pitiful heart to the poor and all who suffer. — St. Louis IX"
-            name.contains("Charles Borromeo", ignoreCase = true) -> "Be sure that you first preach by the way you live. — St. Charles Borromeo"
-            name.contains("Martin", ignoreCase = true) -> "Lord, if Thy people still need me, I do not refuse the labor. Thy will be done. — St. Martin of Tours"
-            name.contains("Nicholas", ignoreCase = true) -> "The giver of every good and perfect gift has called us to share His gifts with those in need. — St. Nicholas"
-            name.contains("Ambrose", ignoreCase = true) -> "Where Peter is, there is the Church; and where the Church is, there is no death, but life eternal. — St. Ambrose"
-            name.contains("Andrew", ignoreCase = true) -> "O good Cross, long desired and now prepared for my longing soul, receive me from among men and restore me to my Master! — St. Andrew"
-            name.contains("Mark", ignoreCase = true) -> "The lion of Alexandria preached the uncompromised Gospel of Christ with apostolic zeal. — St. Mark"
-            name.contains("Luke", ignoreCase = true) -> "My soul doth magnify the Lord, and my spirit hath rejoiced in God my Savior. — St. Luke"
-            name.contains("Matthew", ignoreCase = true) -> "Follow Me. And he arose and followed Him. — St. Matthew"
-            name.contains("James", ignoreCase = true) -> "Be ye doers of the word, and not hearers only, deceiving your own selves. — St. James"
-            name.contains("Anne", ignoreCase = true) || name.contains("Joachim", ignoreCase = true) -> "Praise the Lord for the holy root from which blossomed the Mother of God. — Sacred Liturgy"
-            name.contains("Bridget", ignoreCase = true) -> "There is no sinner so wretched that God will not forgive him if he turns to Him with true sorrow. — St. Bridget of Sweden"
-            name.contains("Gertrude", ignoreCase = true) -> "Thou hast made my heart Thy sanctuary of love, O divine Lord. — St. Gertrude the Great"
-            name.contains("Aloysius", ignoreCase = true) -> "I am a piece of twisted iron, and have entered into religion in order to be straightened out. — St. Aloysius Gonzaga"
-            name.contains("Camillus", ignoreCase = true) -> "More heart in those hands, my brothers! Perform every act of charity as unto Christ Himself. — St. Camillus de Lellis"
-            name.contains("Justin", ignoreCase = true) -> "You can kill us, but you cannot hurt us! Truth is our weapon and our crown. — St. Justin Martyr"
-            name.contains("Irenaeus", ignoreCase = true) -> "The glory of God is man fully alive, and the life of man is the vision of God. — St. Irenaeus"
-            name.contains("Cyril", ignoreCase = true) -> "The Holy Ghost comes gently and makes His presence known by His fragrance and sweetness. — St. Cyril of Jerusalem"
-            name.contains("Anselm", ignoreCase = true) -> "I do not seek to understand in order that I may believe, but I believe in order that I may understand. — St. Anselm"
-            name.contains("Leo", ignoreCase = true) -> "Christian, recognize your dignity! You have been made a partaker of the Divine Nature. — Pope St. Leo the Great"
-            name.contains("John Damascene", ignoreCase = true) -> "What the book is to those who can read, the image is to those who cannot. — St. John Damascene"
-            name.contains("Bede", ignoreCase = true) -> "I spent my whole life in the study of Sacred Scripture, in singing the Divine Office, and in teaching. — St. Venerable Bede"
-            name.contains("Boniface", ignoreCase = true) -> "Let us stand fast in the battle on the day of the Lord, for days of affliction and distress have come upon us. — St. Boniface"
-            name.contains("Peter Canisius", ignoreCase = true) -> "If you have too much to do, with the help of God you will find time to do it all. — St. Peter Canisius"
-            name.contains("Rita", ignoreCase = true) -> "Nothing is impossible to God; trust in His infinite mercy and patience. — St. Rita of Cascia"
-            name.contains("Stanislaus", ignoreCase = true) -> "I was born for higher things, and to live for them is my joy. — St. Stanislaus Kostka"
-            name.contains("Paul", ignoreCase = true) -> "I have fought a good fight, I have finished my course, I have kept the faith. — 2 St. Timothy 4:7"
-            name.contains("Peter", ignoreCase = true) -> "Lord, to whom shall we go? Thou hast the words of eternal life. — St. John 6:68"
-
-            // Fallback by Category
-            isMary -> "In dangers, in doubts, in difficulties, think of Mary, call upon Mary. — St. Bernard of Clairvaux"
-            isApostle -> "You have not chosen Me, but I have chosen you and appointed you, that you should go and bring forth fruit. — St. John 15:16"
-            isMartyr -> "I am the wheat of God, and let me be ground by the teeth of wild beasts, that I may be found the pure bread of Christ. — St. Ignatius of Antioch"
-            isDoctor -> "To one who has faith, no explanation is necessary. To one without faith, no explanation is possible. — St. Thomas Aquinas"
-            isPopeBishopConfessor -> "Living a life of heroic virtue, let us seek not our own glory, but the greater glory of God in all things. — St. Ignatius of Loyola"
-            isVirginHolyWoman -> "The soul that walks in love neither tires others nor grows tired. — St. John of the Cross"
-            isAngels -> "Beside each believer stands an angel as a protector and shepherd, leading him to life. — St. Basil the Great"
+            // Fallbacks for specific categories of Saints using the traditional Liturgy of the Feast (Common from the 1954 Roman Missal)
+            isMary -> "He that shall find me, shall find life, and shall have salvation from the Lord. — Proverbs 8:35 (From the Mass of the Blessed Virgin Mary)"
+            isApostle -> "Their sound hath gone forth into all the earth: and their words unto the ends of the world. — Psalm 18:5 (Gradual of the Common of Apostles)"
+            isMartyr -> "He that hateth his life in this world, keepeth it unto life eternal. — St. John 12:25 (From the Mass of the Common of a Martyr)"
+            isDoctor -> "Preach the word; be instant in season, out of season; reprove, entreat, rebuke in all patience and doctrine. — 2 St. Timothy 4:2 (Epistle of the Common of Doctors)"
+            isPopeBishopConfessor -> "Behold a great priest, who in his days pleased God, and was found just. — Ecclesiasticus 44:16-17 (Common of a Confessor Bishop)"
+            isVirginHolyWoman -> "The kingdom of heaven is like unto a merchant man seeking goodly pearls: who, when he had found one pearl of great price, went and sold all that he had, and bought it. — St. Matthew 13:45-46 (Gospel of the Common of Virgins)"
+            isAngels -> "In the sight of the Angels I will sing praise to Thee; I will adore before Thy holy temple, and give glory to Thy Name. — Psalm 137:1-2 (Gradual of the Common of Holy Angels)"
             else -> "In all our deeds, let our intention be pure and directed to God alone. — St. Bonaventure"
         }
 
         val meditationText = "Meditation on the feast of $title:\n\n" +
                 "Let us reflect on how the grace of God works diversely in every member of His Mystical Body. " +
-                (if (name.isNotBlank() && name != "The Holy Season" && name != "Christmas Octave") {
-                    "Our holy patron, $name, responded to the divine call with complete generosity, keeping their eyes fixed on Jesus Christ and the eternal rewards of heaven. In a world full of noise, distraction, and temptation, their heart was entirely anchored in the will of God. "
+                (if (saintOfTheDay.isNotBlank() && saintOfTheDay != "The Holy Season" && saintOfTheDay != "Christmas Octave") {
+                    "Our holy patron, $saintOfTheDay, responded to the divine call with complete generosity, keeping their eyes fixed on Jesus Christ and the eternal rewards of heaven. In a world full of noise, distraction, and temptation, their heart was entirely anchored in the will of God. "
                 } else {
                     "The sacred liturgy of the Church invites us to pause, contemplate, and receive the specific graces of this day. "
                 }) +
@@ -622,18 +637,42 @@ object SaintData {
         }
 
         val prayerText = when {
-            isMary -> "O Almighty and Eternal God, who by the cooperation of the Holy Ghost didst prepare the body and soul of the glorious Virgin Mother Mary to become a worthy dwelling for Thy Son; grant that as we rejoice in her feast under the title of $title, we may be delivered from all present evils and from everlasting death by her loving maternal intercession. Through Christ our Lord. Amen."
-            isApostle -> "O Almighty God, who hast built Thy Church upon the foundation of the Apostles and Prophets, Jesus Christ Himself being the chief cornerstone; grant that we may be so joined together in unity of spirit by their doctrine, that we may be made an holy temple acceptable unto Thee, through the intercession of Thy blessed Apostle $name. Through Christ our Lord. Amen."
-            isMartyr -> "O Eternal Shepherd, look mercifully upon Thy flock, and guard it with perpetual protection through the blessed intercession of Thy Martyr $name, whom Thou didst call to witness to the faith with the shedding of their blood. Grant that we may be strengthened by their heroic witness. Through Christ our Lord. Amen."
-            isDoctor -> "O God, who didst give blessed $name to Thy people as a minister of eternal salvation; grant, we beseech Thee, that we may deserve to have him as our intercessor in heaven, whom we have had as our teacher of life upon earth, that we may always walk in the light of Thy truth. Through Christ our Lord. Amen."
-            isPopeBishopConfessor -> "O Lord, hear our prayers which we offer on this solemnity of Thy blessed Confessor and Shepherd $name; and by the intercession of him who worthily served Thee, deliver us from all our sins and protect us from all spiritual adversaries. Through Christ our Lord. Amen."
-            isVirginHolyWoman -> "Hear us, O God of our salvation; that as we rejoice in the feast of Thy blessed Virgin $name, so we may be instructed in the love of pious devotion and holy purity, and be protected by her intercession. Through Christ our Lord. Amen."
-            isAngels -> "O God, who in a wonderful order hast ordained the services of Angels and men; mercifully grant, that as Thy holy Angels, especially the Archangel $name, always do Thee service in heaven, so by Thy appointment they may succor, defend, and protect us on earth. Through Christ our Lord. Amen."
-            else -> "O Almighty and Eternal God, who didst glorify Thy Church with the holy feast of $title, grant that we may be guided by the example of $name and assisted by their intercessory prayers, that we may walk worthily in Thy sight. Through Christ our Lord. Amen."
+            // Feasts of Our Lady (isMary)
+            isMary -> "O God, who didst deign to choose the virginal womb of the Blessed Virgin Mary for Thy dwelling: grant, we beseech Thee, that shielded by her protection, we may with joy assist at her festival, especially under the title of $title. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Feasts of Apostles (isApostle)
+            isApostle -> "O Almighty God, who hast built Thy Church upon the foundation of the Apostles and Prophets, Jesus Christ Himself being the chief cornerstone; grant that we may be so joined together in unity of spirit by their doctrine, that we may be made an holy temple acceptable unto Thee, through the intercession of Thy blessed Apostle $saintOfTheDay. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Feasts of Holy Angels (isAngels)
+            isAngels -> "O God, who in a wonderful order hast ordained the services of Angels and men: mercifully grant, that as Thy holy Angels always do Thee service in heaven, so by Thy appointment they may succor, defend, and protect us on earth, through the intercession of blessed Archangel $saintOfTheDay. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Feasts of Pope/Bishop/Sovereign Pontiff (isPopeBishopConfessor)
+            isPopeBishopConfessor && (title.contains("Pope", ignoreCase = true) || title.contains("Pontiff", ignoreCase = true)) -> "O Eternal Shepherd, look mercifully upon Thy flock, and guard it with perpetual protection through the blessed intercession of Thy Sovereign Pontiff and Martyr, $saintOfTheDay, whom Thou didst appoint to be chief shepherd of Thy Church. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Feasts of Bishop/Shepherd (isPopeBishopConfessor)
+            isPopeBishopConfessor && title.contains("Bishop", ignoreCase = true) -> "Grant, we beseech Thee, Almighty God: that the solemnity of blessed $saintOfTheDay, Thy Confessor and Bishop, may both increase our devotion and promote our salvation. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Feasts of Doctor (isDoctor)
+            isDoctor -> "O God, who didst give blessed $saintOfTheDay to Thy people as a minister of eternal salvation: grant, we beseech Thee, that we may deserve to have him as our intercessor in heaven, whom we have had as our teacher of life upon earth. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Feasts of Confessor non-Bishop (isPopeBishopConfessor / other confessors)
+            isPopeBishopConfessor || title.contains("Confessor", ignoreCase = true) || title.contains("Abbot", ignoreCase = true) || title.contains("Priest", ignoreCase = true) -> "O God, who dost gladden us by the yearly festival of blessed $saintOfTheDay, Thy Confessor: grant, we beseech Thee, that as we celebrate his birthday, we may also imitate his deeds. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Feasts of Martyr (isMartyr)
+            isMartyr -> "Grant, we beseech Thee, Almighty God, that we who celebrate the festival of blessed $saintOfTheDay, Thy Martyr, may by his intercession be strengthened in the love of Thy Name. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Feasts of Virgins (isVirginHolyWoman)
+            isVirginHolyWoman && title.contains("Virgin", ignoreCase = true) -> "Hear us, O God of our salvation: that as we rejoice in the festival of blessed $saintOfTheDay, Thy Virgin, so we may be instructed in the love of pious devotion. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Feasts of Holy Women (isVirginHolyWoman / other holy women)
+            isVirginHolyWoman -> "Hear us, O God of our salvation: that as we rejoice in the solemnity of blessed $saintOfTheDay, we may be instructed in the affection of pious devotion. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
+            
+            // Default Fallback (pure feasts of Our Lord, Sundays, Ferias without saint commemoration)
+            else -> "O Lord, we beseech Thee, mercifully to hear our prayers, and stretch forth the right hand of Thy Majesty to protect us against all our spiritual enemies, on this celebration of $title. Through Our Lord Jesus Christ Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. Amen. (Traditional Collect Prayer)"
         }
 
         val historicityText = when {
-            isMary -> "Historicity & Primary Sources: Marian feasts are documented in early Christian liturgical codices, including the Sacramentarium Gregorianum and early Roman Ordines. Council definitions (such as Ephesus in 431 A.D.) and papal decrees confirm the historical continuity of her feast in the 1954 Missal."
+            isMary -> "Historicity & Primary Sources: Marian feasts are documented in early Christian liturgical codices, including the Sacramentarium Gregorianum and early Roman Ordines. Council definitions (such as Ephesus in 431 A.D.) and papal decrees confirm the historical continuity of her feast in the traditional Catholic calendar."
             isApostle -> "Historicity & Primary Sources: Recorded in the New Testament (Acts of the Apostles) and patristic histories by Eusebius of Caesarea (Ecclesiastical History, c. 325 A.D.) and St. Jerome (De Viris Illustribus, c. 392 A.D.). Included in the ancient Canon of the Mass (Communicantes)."
             isMartyr -> "Historicity & Primary Sources: Recorded in the Martyrologium Hieronymianum (5th Century), the Roman Martyrology, and early liturgical sacramentaries. Archaeological evidence (such as catacomb inscriptions and early basilicas) confirms historical veneration from antiquity."
             isDoctor -> "Historicity & Primary Sources: Documented through surviving original manuscripts, patristic compilations, and formal papal declarations granting the title 'Doctor Ecclesiae'. Their writings were cited extensively at major Church councils (e.g., Nicaea, Chalcedon, Trent)."

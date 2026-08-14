@@ -16,15 +16,18 @@ class CallActionReceiver : BroadcastReceiver() {
         val notificationId = intent.getIntExtra("EXTRA_NOTIFICATION_ID", 1001)
         val title = intent.getStringExtra("EXTRA_CALL_TITLE") ?: "Rule of Life Call"
         val message = intent.getStringExtra("EXTRA_CALL_MESSAGE") ?: "Spiritual Rule Reminder"
-        
-        val serviceIntent = Intent(context, RuleOfLifeCallService::class.java).apply {
-            setAction(RuleOfLifeCallService.ACTION_STOP_CALL)
-            putExtra("EXTRA_NOTIFICATION_ID", notificationId)
-        }
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+
+        // Stop ringer audio immediately
+        CallRingerManager.stopRinging()
+
+        try {
+            val serviceIntent = Intent(context, RuleOfLifeCallService::class.java).apply {
+                setAction(RuleOfLifeCallService.ACTION_STOP_CALL)
+                putExtra("EXTRA_NOTIFICATION_ID", notificationId)
+            }
+            context.stopService(serviceIntent)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -39,7 +42,7 @@ class CallActionReceiver : BroadcastReceiver() {
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                pendingResult.finish()
+                try { pendingResult.finish() } catch (_: Exception) {}
             }
         }
 
@@ -49,13 +52,23 @@ class CallActionReceiver : BroadcastReceiver() {
                 setAction(ACTION_ANSWER_CALL)
                 putExtra("EXTRA_CALL_TITLE", title)
                 putExtra("EXTRA_CALL_MESSAGE", message)
+                putExtra("EXTRA_NOTIFICATION_ID", notificationId)
             }
             context.startActivity(mainIntent)
+        } else if (action == ACTION_DECLINE_CALL && notificationId >= 1000 && notificationId < 7000) {
+            val rescheduleIntent = Intent(context, IncomingCallActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("SHOW_RESCHEDULE_ONLY", true)
+                putExtra("EXTRA_NOTIFICATION_ID", notificationId)
+                putExtra("EXTRA_CALL_TITLE", title)
+                putExtra("EXTRA_CALL_MESSAGE", message)
+            }
+            context.startActivity(rescheduleIntent)
         }
     }
 
     companion object {
-        const val ACTION_ANSWER_CALL = "com.example.ACTION_ANSWER_CALL"
-        const val ACTION_DECLINE_CALL = "com.example.ACTION_DECLINE_CALL"
+        const val ACTION_ANSWER_CALL = "com.example.notifications.CallActionReceiver.ACTION_ANSWER_CALL"
+        const val ACTION_DECLINE_CALL = "com.example.notifications.CallActionReceiver.ACTION_DECLINE_CALL"
     }
 }

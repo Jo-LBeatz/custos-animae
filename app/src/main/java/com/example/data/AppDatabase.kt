@@ -15,12 +15,10 @@ import androidx.room.RoomDatabase
         CalendarEntry::class,
         PrayerEntity::class,
         BreviaryEntryEntity::class,
-        CatechismArticle::class,
-        CatechismArticleFts::class,
         SaintQuoteEntity::class,
         CallLog::class
     ],
-    version = 27,
+    version = 28,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

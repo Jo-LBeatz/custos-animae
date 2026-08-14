@@ -83,10 +83,20 @@ object NotificationHelper {
             putExtra("EXTRA_CALL_TITLE", title)
             putExtra("EXTRA_CALL_MESSAGE", message)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            try {
+                context.startService(serviceIntent)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                showNotification(context, "Incoming Prayer Call: $title", message, notificationId)
+            }
         }
     }
 

@@ -172,40 +172,6 @@ data class BreviaryEntryEntity(
 )
 
 @Entity(
-    tableName = "catechism_articles",
-    indices = [
-        Index(value = ["section"]),
-        Index(value = ["title"]),
-        Index(value = ["articleNumber"])
-    ]
-)
-data class CatechismArticle(
-    @PrimaryKey val id: String,
-    val section: String,
-    val articleNumber: String,
-    val title: String,
-    val question: String,
-    val answerText: String,
-    val citations: String = "",
-    val keywords: String = "",
-    val isBookmarked: Boolean = false
-)
-
-@Entity(tableName = "catechism_articles_fts")
-@Fts4
-data class CatechismArticleFts(
-    @PrimaryKey @ColumnInfo(name = "rowid")
-    val rowid: Int = 0,
-    val articleId: String,
-    val title: String,
-    val question: String,
-    val answerText: String,
-    val keywords: String,
-    val section: String,
-    val citations: String
-)
-
-@Entity(
     tableName = "saint_quotes",
     indices = [Index(value = ["saintId"])]
 )
@@ -229,6 +195,15 @@ data class CallLog(
     val status: String, // "ANSWERED", "MISSED", "DECLINED"
     val timestamp: Long = System.currentTimeMillis(),
     val date: String = "" // YYYY-MM-DD
+)
+
+data class RelapseLog(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val timestamp: Long = System.currentTimeMillis(),
+    val streakDays: Int = 0,
+    val streakHours: Int = 0,
+    val triggerNote: String = "",
+    val resolutionNote: String = ""
 )
 
 

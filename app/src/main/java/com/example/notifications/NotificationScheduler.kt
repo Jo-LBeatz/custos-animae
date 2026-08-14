@@ -314,6 +314,21 @@ object NotificationScheduler {
                 e.printStackTrace()
             }
         }
+
+        // Dismiss active notification if any
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+        notificationManager?.cancel(1000 + dutyId)
+
+        // Stop ringing active call for this specific duty ID
+        val stopCallIntent = Intent(context, RuleOfLifeCallService::class.java).apply {
+            action = RuleOfLifeCallService.ACTION_STOP_CALL
+            putExtra("EXTRA_NOTIFICATION_ID", 1000 + dutyId)
+        }
+        try {
+            context.startService(stopCallIntent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun mapDayOfWeekToCalendar(dayStr: String): Int {
@@ -330,8 +345,30 @@ object NotificationScheduler {
         }
     }
 
-    fun calculateNextTriggerTime(duty: SpiritualDuty, fromTimeMs: Long = System.currentTimeMillis()): Long {
-        val (hour, minute) = parseHourAndMinute(duty.reminderTime)
+    fun calculateNextTriggerTime(context: Context?, duty: SpiritualDuty, fromTimeMs: Long = System.currentTimeMillis()): Long {
+        var targetTime = duty.reminderTime
+
+        if (context != null) {
+            val rescheduledTime = RescheduleManager.getRescheduledTimeForToday(context, duty.id)
+            if (rescheduledTime != null) {
+                val (rHour, rMinute) = parseHourAndMinute(rescheduledTime)
+                val rCal = Calendar.getInstance().apply {
+                    timeInMillis = fromTimeMs
+                    set(Calendar.HOUR_OF_DAY, rHour)
+                    set(Calendar.MINUTE, rMinute)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                if (rCal.timeInMillis > fromTimeMs) {
+                    return rCal.timeInMillis
+                } else {
+                    // Rescheduled time for today has already passed, clear it so next days run normally.
+                    RescheduleManager.clearReschedule(context, duty.id)
+                }
+            }
+        }
+
+        val (hour, minute) = parseHourAndMinute(targetTime)
         val freq = duty.frequency.uppercase(Locale.ROOT)
 
         val cal = Calendar.getInstance().apply {
@@ -516,42 +553,56 @@ object NotificationScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val nextTriggerMs = calculateNextTriggerTime(duty)
-        setAlarm(alarmManager, nextTriggerMs, pendingIntent)
+        val nextTriggerMs = calculateNextTriggerTime(context, duty)
+        setAlarm(context, alarmManager, nextTriggerMs, pendingIntent)
     }
 
-    private fun setAlarm(alarmManager: AlarmManager, triggerAtMs: Long, pendingIntent: PendingIntent) {
+    private fun setAlarm(context: Context, alarmManager: AlarmManager, triggerAtMs: Long, pendingIntent: PendingIntent) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerAtMs,
-                        pendingIntent
-                    )
+            val showIntent = Intent(context, com.example.MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val showPendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                showIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerAtMs, showPendingIntent)
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+        } catch (e: Exception) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                        alarmManager.setAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            triggerAtMs,
+                            pendingIntent
+                        )
+                    } else {
+                        alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            triggerAtMs,
+                            pendingIntent
+                        )
+                    }
                 } else {
-                    alarmManager.setExactAndAllowWhileIdle(
+                    alarmManager.set(
                         AlarmManager.RTC_WAKEUP,
                         triggerAtMs,
                         pendingIntent
                     )
                 }
-            } else {
-                alarmManager.set(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerAtMs,
-                    pendingIntent
-                )
-            }
-        } catch (e: Exception) {
-            try {
-                alarmManager.setAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerAtMs,
-                    pendingIntent
-                )
             } catch (ex: Exception) {
-                ex.printStackTrace()
+                try {
+                    alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerAtMs,
+                        pendingIntent
+                    )
+                } catch (inner: Exception) {
+                    inner.printStackTrace()
+                }
             }
         }
     }

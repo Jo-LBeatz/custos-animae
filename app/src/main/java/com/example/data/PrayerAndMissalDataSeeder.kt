@@ -183,7 +183,7 @@ R. Ut digni efficiamur promissionibus Christi."""
             )
         )
 
-        // Appendix Prayers from Catechism Library
+        // Appendix Traditional Prayers
         list.addAll(AppendixPrayersSeeder.getAppendixPrayers())
 
         return list

@@ -49,13 +49,17 @@ class RuleOfLifeCallScreeningService : CallScreeningService() {
         val phoneNumber = callDetails.handle?.schemeSpecificPart ?: "Rule of Life Call"
 
         // Respond to telecom call with full allow response
-        val response = CallResponse.Builder()
+        val builder = CallResponse.Builder()
             .setDisallowCall(false)
             .setRejectCall(false)
-            .setSilenceCall(false)
             .setSkipCallLog(false)
             .setSkipNotification(false)
-            .build()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            builder.setSilenceCall(false)
+        }
+
+        val response = builder.build()
 
         respondToCall(callDetails, response)
 
