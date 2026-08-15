@@ -6,10 +6,18 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import com.example.R
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -26,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -75,6 +84,23 @@ fun RegulaVitaeScreen(
 
     val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
     val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
+
+    // Meditative Fade-In Entrance Animation for Sacred Hearts Devotional Medallion
+    val devotionalEntranceAlpha = remember { Animatable(0f) }
+    val devotionalEntranceScale = remember { Animatable(0.92f) }
+
+    LaunchedEffect(Unit) {
+        devotionalEntranceAlpha.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 1100, easing = FastOutSlowInEasing)
+        )
+    }
+    LaunchedEffect(Unit) {
+        devotionalEntranceScale.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 1100, easing = FastOutSlowInEasing)
+        )
+    }
 
     val socialLinks = listOf(
         SocialLinkItem(
@@ -148,6 +174,104 @@ fun RegulaVitaeScreen(
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
+            }
+        }
+
+        // Central Devotional Branding Element: Sacred Heart & Immaculate Heart Logo
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+                .testTag("regulavitae_sacred_hearts_branding_card"),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(
+                1.5.dp,
+                Brush.linearGradient(
+                    listOf(GoldBright, GoldSacred, CrimsonBurgundy, GoldBright)
+                )
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 18.dp, horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .padding(bottom = 12.dp)
+                        .graphicsLayer {
+                            alpha = devotionalEntranceAlpha.value
+                            scaleX = devotionalEntranceScale.value
+                            scaleY = devotionalEntranceScale.value
+                        }
+                ) {
+                    // Outer Radiant Ring
+                    Box(
+                        modifier = Modifier
+                            .size(136.dp)
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(
+                                        GoldBright.copy(alpha = 0.35f),
+                                        CrimsonBurgundy.copy(alpha = 0.2f),
+                                        Color.Transparent
+                                    )
+                                ),
+                                CircleShape
+                            )
+                    )
+
+                    // Devotional Image Medallion
+                    Surface(
+                        modifier = Modifier
+                            .size(118.dp)
+                            .testTag("regulavitae_sacred_hearts_logo"),
+                        shape = CircleShape,
+                        color = DarkCathedralSurfaceVariant,
+                        shadowElevation = 8.dp,
+                        border = BorderStroke(
+                            2.5.dp,
+                            Brush.sweepGradient(
+                                listOf(GoldBright, GoldSacred, CrimsonBurgundy, GoldSacred, GoldBright)
+                            )
+                        )
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.hd_hearts_circular_optimized_1786718265000_1786718287109),
+                            contentDescription = "Sacred Heart of Jesus and Immaculate Heart of Mary Devotional Logo",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                        )
+                    }
+                }
+
+                Text(
+                    text = "CUSTOS ANIMAE",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
+                    ),
+                    color = GoldBright
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = "Iesu et Maria, Custodes Animarum Nostrarum",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = FontFamily.Serif,
+                        fontStyle = FontStyle.Italic,
+                        fontSize = 11.5.sp
+                    ),
+                    color = TextMutedParchment,
+                    textAlign = TextAlign.Center
+                )
             }
         }
 
@@ -353,7 +477,7 @@ YouTube: https://www.youtube.com/@regulavitae"""
                         .testTag("share_app_btn"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = CrimsonBurgundy,
-                        contentColor = ParchmentLight
+                        contentColor = StaticGoldBright
                     ),
                     border = BorderStroke(1.dp, GoldSacred),
                     shape = RoundedCornerShape(10.dp)

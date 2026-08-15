@@ -83,6 +83,8 @@ fun PermissionsSetupScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkCathedralBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .wrapContentWidth(Alignment.CenterHorizontally)
             .widthIn(max = 640.dp)
             .padding(20.dp)
@@ -293,8 +295,8 @@ fun checkNotificationPermission(context: Context): Boolean {
 
 fun checkExactAlarmPermission(context: Context): Boolean {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        alarmManager.canScheduleExactAlarms()
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+        alarmManager?.canScheduleExactAlarms() ?: true
     } else {
         true
     }

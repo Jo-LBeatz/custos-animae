@@ -209,9 +209,9 @@ fun PageViewPreferenceDialog(
                     onModeSelected(selectedMode)
                     onDismiss(dontAskOnLaunch)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = GoldBright)
+                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright)
             ) {
-                Text("Apply Preference To All Pages")
+                Text("Apply Preference To All Pages", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

@@ -7,4 +7,16 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="heart_red">#B71C1C</color>
+    <color name="heart_gold">#FFD700</color>
+    <color name="heart_silver">#E0E0E0</color>
+    <color name="heart_dark">#212121</color>
+    <color name="heart_red_dark">#8E0000</color>
+    <color name="heart_red_light">#E53935</color>
+    <color name="heart_gold_dark">#B8860B</color>
+    <color name="heart_gold_light">#FFF176</color>
+    <color name="heart_red_shadow">#4E0000</color>
+    <color name="heart_wound">#2C0000</color>
+    <color name="thorns_brown">#3E2723</color>
+    <color name="roses_white">#F5F5F5</color>
 </resources>

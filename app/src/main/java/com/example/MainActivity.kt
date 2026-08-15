@@ -17,6 +17,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.example.notifications.NotificationHelper
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -56,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -63,15 +65,7 @@ import com.example.ui.MainViewModel
 import com.example.ui.screens.*
 import com.example.ui.screens.checkNotificationPermission
 import com.example.ui.screens.checkExactAlarmPermission
-import com.example.ui.theme.CrimsonBurgundy
-import com.example.ui.theme.DarkCathedralBackground
-import com.example.ui.theme.DarkCathedralCardBorder
-import com.example.ui.theme.DarkCathedralSurface
-import com.example.ui.theme.GoldBright
-import com.example.ui.theme.GoldDark
-import com.example.ui.theme.GoldSacred
-import com.example.ui.theme.MyApplicationTheme
-import com.example.ui.theme.TextMutedParchment
+import com.example.ui.theme.*
 
 data class ActiveCallState(val title: String, val message: String)
 
@@ -171,7 +165,19 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
-            MyApplicationTheme(themeId = appTheme) {
+            val darkModePreference by viewModel.darkModePreference.collectAsStateWithLifecycle()
+            val systemIsDark = isSystemInDarkTheme()
+            val isDark = when (darkModePreference) {
+                "DARK" -> true
+                "LIGHT" -> false
+                "SYSTEM" -> systemIsDark
+                else -> when (appTheme) {
+                    "CATHEDRAL_LIGHT" -> false
+                    else -> true
+                }
+            }
+
+            MyApplicationTheme(themeId = appTheme, darkTheme = isDark) {
                 val profile by viewModel.userProfile.collectAsStateWithLifecycle()
                 val duties by viewModel.allDuties.collectAsStateWithLifecycle()
                 val currentTab by viewModel.currentTab.collectAsStateWithLifecycle()
@@ -335,10 +341,10 @@ fun BackgroundPermissionDialog(
                     onRequestPermission()
                     onDismiss()
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                 border = BorderStroke(1.dp, GoldSacred)
             ) {
-                Text("Allow Background Execution", color = GoldBright)
+                Text("Allow Background Execution", color = StaticGoldBright, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

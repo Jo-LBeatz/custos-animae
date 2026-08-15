@@ -17,10 +17,12 @@ import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -61,6 +63,7 @@ open class CallOverlayActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         // Turn screen on and show over lock screen
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -89,9 +92,24 @@ open class CallOverlayActivity : ComponentActivity() {
 
         val sharedPrefs = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
         val savedTheme = sharedPrefs.getString("app_theme", "CATHEDRAL_DARK") ?: "CATHEDRAL_DARK"
+        val savedDarkModePref = sharedPrefs.getString(
+            "dark_mode_preference",
+            if (savedTheme == "CATHEDRAL_LIGHT") "LIGHT" else "DARK"
+        ) ?: "DARK"
 
         setContent {
-            MyApplicationTheme(themeId = savedTheme) {
+            val systemIsDark = isSystemInDarkTheme()
+            val isDark = when (savedDarkModePref) {
+                "DARK" -> true
+                "LIGHT" -> false
+                "SYSTEM" -> systemIsDark
+                else -> when (savedTheme) {
+                    "CATHEDRAL_LIGHT" -> false
+                    else -> true
+                }
+            }
+
+            MyApplicationTheme(themeId = savedTheme, darkTheme = isDark) {
                 var showReschedulePanel by remember { mutableStateOf(showRescheduleOnly) }
 
                 if (!showReschedulePanel) {
@@ -735,17 +753,17 @@ fun RescheduleOverlayPanel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
-                border = BorderStroke(1.dp, GoldBright)
+                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
+                border = BorderStroke(1.dp, StaticGoldBright)
             ) {
                 Icon(
                     imageVector = Icons.Default.Call,
                     contentDescription = "Set Custom Time",
-                    tint = GoldBright,
+                    tint = StaticGoldBright,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Select Custom Time...", color = GoldBright, fontWeight = FontWeight.Bold)
+                Text("Select Custom Time...", color = StaticGoldBright, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(40.dp))

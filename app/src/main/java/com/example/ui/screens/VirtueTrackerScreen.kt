@@ -52,14 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.RelapseLog
 import com.example.ui.MainViewModel
-import com.example.ui.theme.CrimsonBurgundy
-import com.example.ui.theme.DarkCathedralBackground
-import com.example.ui.theme.DarkCathedralSurface
-import com.example.ui.theme.DarkCathedralSurfaceVariant
-import com.example.ui.theme.GoldBright
-import com.example.ui.theme.GoldSacred
-import com.example.ui.theme.ParchmentLight
-import com.example.ui.theme.TextMutedParchment
+import com.example.ui.theme.*
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
@@ -223,7 +216,7 @@ fun VirtueTrackerScreen(
             ) {
                 Button(
                     onClick = { showResetDialog = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = ParchmentLight),
+                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp)
@@ -233,11 +226,13 @@ fun VirtueTrackerScreen(
                     Icon(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = "Reset Timer",
+                        tint = StaticGoldBright,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "I Relapsed / Reset",
+                        color = StaticGoldBright,
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
                     )
                 }
@@ -965,10 +960,10 @@ private fun LogFallDialog(
         confirmButton = {
             Button(
                 onClick = { onProceedToConfirm(triggerNote, resolutionNote) },
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                 modifier = Modifier.testTag("log_fall_proceed_button")
             ) {
-                Text("Proceed to Confirmation", color = ParchmentLight)
+                Text("Proceed to Confirmation", color = StaticGoldBright, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -1066,11 +1061,13 @@ private fun ResetConfirmationModal(
                 enabled = acknowledged,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = CrimsonBurgundy,
-                    disabledContainerColor = CrimsonBurgundy.copy(alpha = 0.3f)
+                    contentColor = StaticGoldBright,
+                    disabledContainerColor = CrimsonBurgundy.copy(alpha = 0.3f),
+                    disabledContentColor = TextMutedParchment
                 ),
                 modifier = Modifier.testTag("confirm_reset_final_button")
             ) {
-                Text("Yes, Reset Counter to 0", color = if (acknowledged) ParchmentLight else TextMutedParchment)
+                Text("Yes, Reset Counter to 0", color = if (acknowledged) StaticGoldBright else TextMutedParchment, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

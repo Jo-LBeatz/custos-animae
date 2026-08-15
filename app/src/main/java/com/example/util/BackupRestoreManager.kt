@@ -1,4 +1,4 @@
-package com.example.utils
+package com.example.util
 
 import android.content.Context
 import android.util.Base64
@@ -156,6 +156,19 @@ object BackupRestoreManager {
             ledgerObj.put("ledger_security_q", ledgerSecurityQ)
             ledgerObj.put("ledger_security_a", ledgerSecurityA)
             innerJson.put("ledgerPrefs", ledgerObj)
+
+            // User Preferences (Virtue Counter, Streaks, Relapse Logs, UI Preferences)
+            val userPrefs = context.getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+            val prefsObj = JSONObject()
+            prefsObj.put("virtue_clean_since_timestamp", userPrefs.getLong("virtue_clean_since_timestamp", 0L))
+            prefsObj.put("virtue_longest_streak_days", userPrefs.getInt("virtue_longest_streak_days", 0))
+            prefsObj.put("virtue_relapse_logs_json", userPrefs.getString("virtue_relapse_logs_json", "[]"))
+            prefsObj.put("reading_text_size", userPrefs.getFloat("reading_text_size", 14f).toDouble())
+            prefsObj.put("page_view_mode", userPrefs.getString("page_view_mode", "DYNAMIC_AUTO_HIDE"))
+            prefsObj.put("app_theme", userPrefs.getString("app_theme", "CATHEDRAL_DARK"))
+            prefsObj.put("dark_mode_preference", userPrefs.getString("dark_mode_preference", "DARK"))
+            prefsObj.put("manual_devotional_intention", userPrefs.getString("manual_devotional_intention", ""))
+            innerJson.put("userPreferences", prefsObj)
 
             val innerBytes = innerJson.toString().toByteArray(Charsets.UTF_8)
 
@@ -383,6 +396,39 @@ object BackupRestoreManager {
                 if (q.isNotEmpty()) editor.putString("ledger_security_q", q)
                 if (a.isNotEmpty()) editor.putString("ledger_security_a", a)
                 editor.apply()
+            }
+
+            // Restore User Preferences (Virtue Counter, Streaks, Relapse Logs, UI Preferences)
+            if (innerJson.has("userPreferences")) {
+                val prefsObj = innerJson.getJSONObject("userPreferences")
+                val userPrefs = context.getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+                val userEditor = userPrefs.edit()
+
+                if (prefsObj.has("virtue_clean_since_timestamp")) {
+                    userEditor.putLong("virtue_clean_since_timestamp", prefsObj.getLong("virtue_clean_since_timestamp"))
+                }
+                if (prefsObj.has("virtue_longest_streak_days")) {
+                    userEditor.putInt("virtue_longest_streak_days", prefsObj.getInt("virtue_longest_streak_days"))
+                }
+                if (prefsObj.has("virtue_relapse_logs_json")) {
+                    userEditor.putString("virtue_relapse_logs_json", prefsObj.getString("virtue_relapse_logs_json"))
+                }
+                if (prefsObj.has("reading_text_size")) {
+                    userEditor.putFloat("reading_text_size", prefsObj.getDouble("reading_text_size").toFloat())
+                }
+                if (prefsObj.has("page_view_mode")) {
+                    userEditor.putString("page_view_mode", prefsObj.getString("page_view_mode"))
+                }
+                if (prefsObj.has("app_theme")) {
+                    userEditor.putString("app_theme", prefsObj.getString("app_theme"))
+                }
+                if (prefsObj.has("dark_mode_preference")) {
+                    userEditor.putString("dark_mode_preference", prefsObj.getString("dark_mode_preference"))
+                }
+                if (prefsObj.has("manual_devotional_intention")) {
+                    userEditor.putString("manual_devotional_intention", prefsObj.getString("manual_devotional_intention"))
+                }
+                userEditor.apply()
             }
 
             val summaryText = "Restored: $examCount Examen entries, $saintCount reflections, $dutyCount duties, $logCount logs, and settings."

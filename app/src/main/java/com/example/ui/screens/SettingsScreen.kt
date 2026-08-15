@@ -33,6 +33,10 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.example.ui.PageViewMode
 import com.example.util.AppLanguage
 import com.example.util.AppTranslationHelper
@@ -45,6 +49,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -59,8 +64,8 @@ import com.example.ui.MainViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.GothicHeader
 import com.example.ui.theme.*
-import com.example.utils.CalendarSyncHelper
-import com.example.utils.PhoneCalendar
+import com.example.util.CalendarSyncHelper
+import com.example.util.PhoneCalendar
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Calendar
@@ -116,10 +121,10 @@ fun SettingsScreen(
                     if (outputStream != null) {
                         val result = viewModel.exportEncryptedBackup(backupPasswordInput, outputStream)
                         when (result) {
-                            is com.example.utils.BackupResult.Success -> {
+                            is com.example.util.BackupResult.Success -> {
                                 Toast.makeText(context, "Backup Created Successfully!\n${result.summary}", Toast.LENGTH_LONG).show()
                             }
-                            is com.example.utils.BackupResult.Error -> {
+                            is com.example.util.BackupResult.Error -> {
                                 Toast.makeText(context, "Backup Error: ${result.message}", Toast.LENGTH_LONG).show()
                             }
                         }
@@ -1156,12 +1161,12 @@ fun SettingsScreen(
                             )
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                     border = BorderStroke(1.dp, GoldSacred),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                     modifier = Modifier.testTag("sync_calendar_btn")
                 ) {
-                    Text("Sync Now", fontSize = 11.sp, color = GoldBright, fontWeight = FontWeight.Bold)
+                    Text("Sync Now", fontSize = 11.sp, color = StaticGoldBright, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -1304,8 +1309,20 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        // App Theme Selector Card
+        // App Theme & Appearance Mode Card
         val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
+        val darkModePreference by viewModel.darkModePreference.collectAsStateWithLifecycle()
+        val isSystemDark = isSystemInDarkTheme()
+        val isEffectiveDark = when (darkModePreference) {
+            "DARK" -> true
+            "LIGHT" -> false
+            "SYSTEM" -> isSystemDark
+            else -> when (appTheme) {
+                "CATHEDRAL_LIGHT" -> false
+                else -> true
+            }
+        }
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1323,7 +1340,7 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "App Theme & UI Colors",
+                        text = "Liturgical Theme & Dark Mode",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold
@@ -1333,26 +1350,109 @@ fun SettingsScreen(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Personalize your experience by selecting a liturgical theme corresponding to the season, dedication, or devotions.",
+                    text = "Personalize your appearance. Each liturgical theme features custom-tailored dark and light mode color harmonies.",
                     style = MaterialTheme.typography.bodySmall,
                     color = ParchmentLight
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val themeOptions = listOf(
-                    Triple("CATHEDRAL_DARK", "Cathedral Dark (Default)", listOf(Color(0xFF0E1116), Color(0xFFD4AF37), Color(0xFF800020))),
-                    Triple("CATHEDRAL_LIGHT", "Parchment Light (Ordinary)", listOf(Color(0xFFFBF8EE), Color(0xFF800020), Color(0xFF997A15))),
-                    Triple("ROSA_MYSTICA", "Rosa Mystica (Rose & Mint)", listOf(StaticBlushCream, StaticSoftRose, StaticMintFrost)),
-                    Triple("PENITENTIAL_VIOLET", "Penitential Violet (Lent & Advent)", listOf(Color(0xFF0F0B18), Color(0xFFAB47BC), Color(0xFFD4AF37))),
-                    Triple("MARIAN_BLUE", "Marian Blue (Feasts of Our Lady)", listOf(Color(0xFF080C16), Color(0xFF42A5F5), Color(0xFFD4AF37))),
-                    Triple("MARTYR_CRIMSON", "Martyrs Crimson (Feasts of Martyrs)", listOf(Color(0xFF13090B), Color(0xFFE53935), Color(0xFFD4AF37))),
-                    Triple("ORDINARY_GREEN", "Ordinary Green (Ordinary Time)", listOf(Color(0xFF09120B), Color(0xFF4CAF50), Color(0xFFD4AF37)))
+                // Appearance Mode Toggle (Dark / Light / System)
+                Text(
+                    text = "APPEARANCE MODE",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = GoldSacred
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                val modeOptions = listOf(
+                    Triple("DARK", "Dark Mode", Icons.Default.DarkMode),
+                    Triple("LIGHT", "Light Mode", Icons.Default.LightMode),
+                    Triple("SYSTEM", "System Auto", Icons.Default.BrightnessAuto)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    modeOptions.forEach { (modeId, label, icon) ->
+                        val isModeSelected = darkModePreference == modeId
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isModeSelected) CrimsonBurgundy.copy(alpha = 0.35f) else DarkCathedralSurfaceVariant,
+                            border = BorderStroke(
+                                width = if (isModeSelected) 2.dp else 1.dp,
+                                color = if (isModeSelected) GoldBright else DarkCathedralCardBorder
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { viewModel.updateDarkModePreference(modeId) }
+                                .testTag("dark_mode_option_$modeId")
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = if (isModeSelected) GoldBright else ParchmentLight,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = if (isModeSelected) FontWeight.Bold else FontWeight.Normal
+                                    ),
+                                    color = if (isModeSelected) GoldBright else ParchmentLight,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Theme Selection Header
+                Text(
+                    text = "LITURGICAL COLOR PALETTE",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = GoldSacred
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                val themeOptions = if (isEffectiveDark) {
+                    listOf(
+                        Triple("CATHEDRAL_DARK", "Cathedral Gothic (Sacred Gold & Burgundy)", listOf(Color(0xFF0E1116), Color(0xFFD4AF37), Color(0xFF800020))),
+                        Triple("ROSA_MYSTICA", "Rosa Mystica (Rose Velvet & Glowing Mint)", listOf(Color(0xFF140B10), Color(0xFFF09AB1), Color(0xFFA5DCBE))),
+                        Triple("PENITENTIAL_VIOLET", "Penitential Violet (Imperial Amethyst)", listOf(Color(0xFF0F0B18), Color(0xFFCE93D8), Color(0xFF4A148C))),
+                        Triple("MARIAN_BLUE", "Marian Blue (Celestial Starry Ultramarine)", listOf(Color(0xFF070D18), Color(0xFF64B5F6), Color(0xFF0D2D5E))),
+                        Triple("MARTYR_CRIMSON", "Martyrs Crimson (Obsidian Velvet Ruby)", listOf(Color(0xFF13080A), Color(0xFFEF5350), Color(0xFF5A0818))),
+                        Triple("ORDINARY_GREEN", "Ordinary Green (Abyssal Forest Emerald)", listOf(Color(0xFF071109), Color(0xFF66BB6A), Color(0xFF144D1E)))
+                    )
+                } else {
+                    listOf(
+                        Triple("CATHEDRAL_DARK", "Cathedral Gothic (Warm Ivory & Bronze)", listOf(Color(0xFFFAF7EE), Color(0xFF800020), Color(0xFF8A5A04))),
+                        Triple("ROSA_MYSTICA", "Rosa Mystica (Blush Cream & Mint Frost)", listOf(StaticBlushCream, StaticPastelRoseAccent, StaticMintFrost)),
+                        Triple("PENITENTIAL_VIOLET", "Penitential Violet (Lilac & Royal Violet)", listOf(Color(0xFFFAF6FC), Color(0xFF6A1B9A), Color(0xFF8A5A04))),
+                        Triple("MARIAN_BLUE", "Marian Blue (Azure Dawn & Royal Ultramarine)", listOf(Color(0xFFF4F8FD), Color(0xFF0D47A1), Color(0xFF8A5A04))),
+                        Triple("MARTYR_CRIMSON", "Martyrs Crimson (Alabaster & Cardinal Red)", listOf(Color(0xFFFDF6F6), Color(0xFF900C1E), Color(0xFF8A5A04))),
+                        Triple("ORDINARY_GREEN", "Ordinary Green (Meadow Ivory & Liturgical Green)", listOf(Color(0xFFF4F8F4), Color(0xFF1B5E20), Color(0xFF8A5A04)))
+                    )
+                }
 
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     themeOptions.forEach { (id, name, colors) ->
-                        val isSelected = appTheme == id
+                        val isSelected = appTheme == id || (id == "CATHEDRAL_DARK" && appTheme == "CATHEDRAL_LIGHT")
                         Surface(
                             shape = RoundedCornerShape(10.dp),
                             color = if (isSelected) CrimsonBurgundy.copy(alpha = 0.25f) else DarkCathedralSurfaceVariant,
@@ -1363,6 +1463,7 @@ fun SettingsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { viewModel.updateAppTheme(id) }
+                                .testTag("theme_option_$id")
                         ) {
                             Row(
                                 modifier = Modifier
@@ -1371,7 +1472,10 @@ fun SettingsScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     // Visual color preview spheres
                                     Box(modifier = Modifier.size(40.dp)) {
                                         // Background sphere
@@ -1495,13 +1599,13 @@ fun SettingsScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("restore_backup_btn"),
-                            colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = ParchmentLight),
+                            colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                             border = BorderStroke(1.dp, GoldSacred),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Download, contentDescription = null, tint = StaticGoldBright, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Restore Backup", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("Restore Backup", fontSize = 12.sp, color = StaticGoldBright, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -1691,7 +1795,7 @@ fun SettingsScreen(
                         .testTag("settings_view_regulavitae_page_btn"),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = CrimsonBurgundy,
-                        contentColor = ParchmentLight
+                        contentColor = StaticGoldBright
                     ),
                     border = BorderStroke(1.dp, GoldSacred),
                     shape = RoundedCornerShape(8.dp)
@@ -1943,10 +2047,10 @@ fun SettingsScreen(
                                 if (inputStream != null) {
                                     val result = viewModel.restoreEncryptedBackup(restorePwdText, inputStream)
                                     when (result) {
-                                        is com.example.utils.RestoreResult.Success -> {
+                                        is com.example.util.RestoreResult.Success -> {
                                             Toast.makeText(context, "Restore Completed!\n${result.restoredCountSummary}", Toast.LENGTH_LONG).show()
                                         }
-                                        is com.example.utils.RestoreResult.Error -> {
+                                        is com.example.util.RestoreResult.Error -> {
                                             Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
                                         }
                                     }
@@ -2012,7 +2116,7 @@ fun NotificationTimeRow(
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                     modifier = Modifier.testTag("${testTagPrefix}_test_btn")
                 ) {
-                    Text("Test", fontSize = 10.sp, color = ParchmentLight)
+                    Text("Test", fontSize = 10.sp, color = if (MaterialTheme.colorScheme.background.luminance() > 0.5f) StaticCrimsonBurgundy else StaticGoldBright, fontWeight = FontWeight.Bold)
                 }
             }
             OutlinedButton(

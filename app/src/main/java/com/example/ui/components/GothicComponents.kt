@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -237,12 +238,12 @@ fun GothicHeader(
                 modifier = Modifier
                     .size(34.dp)
                     .background(CrimsonBurgundy, CircleShape)
-                    .border(1.dp, GoldSacred, CircleShape),
+                    .border(1.dp, StaticGoldBright, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "☩",
-                    color = GoldBright,
+                    color = StaticGoldBright,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -422,10 +423,10 @@ fun LiturgicalBanner(info: LiturgicalDayInfo, appLanguage: AppLanguage = AppLang
                             onClick = {},
                             label = { com.example.ui.components.ResponsiveText(AppTranslationHelper.translate("Traditional Fast", appLanguage), fontSize = 11.sp, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
                             colors = AssistChipDefaults.assistChipColors(
-                                containerColor = CrimsonBurgundy.copy(alpha = 0.3f),
-                                labelColor = CrimsonLight
+                                containerColor = CrimsonBurgundy.copy(alpha = 0.35f),
+                                labelColor = if (MaterialTheme.colorScheme.background.luminance() > 0.5f) StaticGoldenBrown else StaticGoldBright
                             ),
-                            border = BorderStroke(0.5.dp, CrimsonBurgundy)
+                            border = BorderStroke(0.5.dp, if (MaterialTheme.colorScheme.background.luminance() > 0.5f) StaticWarmBronze else CrimsonBurgundy)
                         )
                     }
                     if (info.isAbstinenceDay) {
@@ -567,8 +568,8 @@ fun SpiritualDutyCard(
                     if (duty.streakCount > 0) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = CrimsonBurgundy.copy(alpha = 0.3f),
-                            border = BorderStroke(0.5.dp, GoldSacred)
+                            color = CrimsonBurgundy.copy(alpha = 0.35f),
+                            border = BorderStroke(0.5.dp, if (MaterialTheme.colorScheme.background.luminance() > 0.5f) StaticWarmBronze else GoldSacred)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -577,7 +578,7 @@ fun SpiritualDutyCard(
                                 Text(
                                     text = "🔥 ${duty.streakCount}",
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = GoldBright
+                                    color = if (MaterialTheme.colorScheme.background.luminance() > 0.5f) StaticGoldenBrown else StaticGoldBright
                                 )
                             }
                         }
@@ -795,7 +796,10 @@ fun ReflectionGuardDialog(
         confirmButton = {
             Button(
                 onClick = onConfirmKeep,
-                colors = ButtonDefaults.buttonColors(containerColor = GoldSacred, contentColor = Color.Black)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GoldSacred,
+                    contentColor = if (MaterialTheme.colorScheme.background.luminance() > 0.5f) Color.White else Color.Black
+                )
             ) {
                 Text("It Fulfills My Duty (Keep)", fontWeight = FontWeight.Bold)
             }

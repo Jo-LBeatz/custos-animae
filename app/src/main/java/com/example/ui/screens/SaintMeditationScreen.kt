@@ -580,19 +580,20 @@ fun SaintMeditationScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("export_director_digest_btn"),
-                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = ParchmentLight),
+                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                     shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.dp, GoldBright)
+                    border = BorderStroke(1.dp, StaticGoldBright)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = "Export digest icon",
-                        tint = GoldBright,
+                        tint = StaticGoldBright,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Share Spiritual Director Digest",
+                        color = StaticGoldBright,
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                     )
                 }

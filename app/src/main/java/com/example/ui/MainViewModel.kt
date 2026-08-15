@@ -142,10 +142,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _appTheme = MutableStateFlow(sharedPrefs.getString("app_theme", "CATHEDRAL_DARK") ?: "CATHEDRAL_DARK")
     val appTheme: StateFlow<String> = _appTheme.asStateFlow()
 
+    // Dark Mode Mode Preference ("DARK", "LIGHT", "SYSTEM")
+    private val _darkModePreference = MutableStateFlow(
+        sharedPrefs.getString(
+            "dark_mode_preference",
+            if (_appTheme.value == "CATHEDRAL_LIGHT") "LIGHT" else "DARK"
+        ) ?: "DARK"
+    )
+    val darkModePreference: StateFlow<String> = _darkModePreference.asStateFlow()
+
     fun updateAppTheme(newTheme: String) {
         viewModelScope.launch {
             _appTheme.value = newTheme
             sharedPrefs.edit().putString("app_theme", newTheme).apply()
+            // If switching explicitly to Cathedral Light, adjust default dark mode preference to LIGHT
+            if (newTheme == "CATHEDRAL_LIGHT" && _darkModePreference.value == "DARK") {
+                _darkModePreference.value = "LIGHT"
+                sharedPrefs.edit().putString("dark_mode_preference", "LIGHT").apply()
+            }
+        }
+    }
+
+    fun updateDarkModePreference(newMode: String) {
+        viewModelScope.launch {
+            _darkModePreference.value = newMode
+            sharedPrefs.edit().putString("dark_mode_preference", newMode).apply()
         }
     }
 
@@ -836,7 +857,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val duties = allDuties.value
             var successCount = 0
             duties.forEach { duty ->
-                val success = com.example.utils.CalendarSyncHelper.cloneDutyToCalendar(context, calendarId, duty)
+                val success = com.example.util.CalendarSyncHelper.cloneDutyToCalendar(context, calendarId, duty)
                 if (success) successCount++
             }
             triggerTestNotification(
@@ -851,9 +872,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun exportEncryptedBackup(
         password: String,
         outputStream: java.io.OutputStream
-    ): com.example.utils.BackupResult {
+    ): com.example.util.BackupResult {
         val appDao = AppDatabase.getDatabase(getApplication()).appDao()
-        return com.example.utils.BackupRestoreManager.createEncryptedBackup(
+        return com.example.util.BackupRestoreManager.createEncryptedBackup(
             context = getApplication(),
             appDao = appDao,
             password = password,
@@ -864,9 +885,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun restoreEncryptedBackup(
         password: String,
         inputStream: java.io.InputStream
-    ): com.example.utils.RestoreResult {
+    ): com.example.util.RestoreResult {
         val appDao = AppDatabase.getDatabase(getApplication()).appDao()
-        return com.example.utils.BackupRestoreManager.restoreEncryptedBackup(
+        return com.example.util.BackupRestoreManager.restoreEncryptedBackup(
             context = getApplication(),
             appDao = appDao,
             password = password,
@@ -880,7 +901,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     ): String {
         val appDao = AppDatabase.getDatabase(getApplication()).appDao()
         val examinations = appDao.getAllExaminationsSync()
-        return com.example.utils.PdfExportManager.exportExaminationsToPdf(
+        return com.example.util.PdfExportManager.exportExaminationsToPdf(
             context = getApplication(),
             examinations = examinations,
             password = password,

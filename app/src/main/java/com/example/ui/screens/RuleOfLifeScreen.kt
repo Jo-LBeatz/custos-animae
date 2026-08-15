@@ -643,7 +643,7 @@ fun DutyEditDialog(
                                                 .background(CrimsonBurgundy, RoundedCornerShape(8.dp))
                                                 .size(36.dp)
                                         ) {
-                                            Text("📅", fontSize = 16.sp, color = GoldBright)
+                                            Text("📅", fontSize = 16.sp, color = StaticGoldBright)
                                         }
                                     }
 
@@ -754,11 +754,11 @@ fun DutyEditDialog(
                                     val relRule = "${monthlyOrdinal}_${monthlyDayOfWeek}"
                                     scheduledDaysOfMonthList = listOf(relRule)
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
                                 modifier = Modifier.height(28.dp).align(Alignment.End)
                             ) {
-                                Text("Set Relative Day", fontSize = 10.sp, color = GoldBright)
+                                Text("Set Relative Day", fontSize = 10.sp, color = StaticGoldBright, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -867,7 +867,7 @@ fun DutyEditDialog(
                                                 .background(CrimsonBurgundy, RoundedCornerShape(8.dp))
                                                 .size(36.dp)
                                         ) {
-                                            Text("📅", fontSize = 16.sp, color = GoldBright)
+                                            Text("📅", fontSize = 16.sp, color = StaticGoldBright)
                                         }
                                     }
 
@@ -1014,11 +1014,11 @@ fun DutyEditDialog(
                                         val relYearlyRule = "${yearlyOrdinal}_${yearlyDayOfWeek}_${yearlyMonth}"
                                         scheduledDaysOfYearList = listOf(relYearlyRule)
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
                                     modifier = Modifier.height(28.dp)
                                 ) {
-                                    Text("Set Relative Day", fontSize = 10.sp, color = GoldBright)
+                                    Text("Set Relative Day", fontSize = 10.sp, color = StaticGoldBright, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

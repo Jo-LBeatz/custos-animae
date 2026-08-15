@@ -58,8 +58,8 @@ fun CalendarScreen(
     val screenBg = MaterialTheme.colorScheme.background
     val cardBg = if (isLightTheme) MaterialTheme.colorScheme.surface else DarkCathedralSurface
     val cardBorder = if (isLightTheme) MaterialTheme.colorScheme.outline.copy(alpha = 0.25f) else DarkCathedralCardBorder
-    val textMuted = if (isLightTheme) Color(0xFF44403C) else TextMutedParchment
-    val textNormal = if (isLightTheme) Color(0xFF1C1917) else ParchmentLight
+    val textMuted = if (isLightTheme) Color(0xFF292524) else TextMutedParchment
+    val textNormal = if (isLightTheme) Color(0xFF0C0A09) else ParchmentLight
     val goldAccent = if (isLightTheme) GoldDark else GoldBright
 
     var viewMode by remember { mutableStateOf(CalendarViewMode.MONTHLY) }
@@ -710,10 +710,10 @@ fun CalendarScreen(
                         viewModel.setTab(3) // Switch to Prayers tab
                         activePrayerForDialog = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                     border = BorderStroke(1.dp, GoldSacred)
                 ) {
-                    Text("Open in Library", color = goldAccent, fontSize = 12.sp)
+                    Text("Open in Library", color = StaticGoldBright, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -733,8 +733,8 @@ fun CalendarSearchResultItem(
     val isLightTheme = MaterialTheme.colorScheme.background.luminance() > 0.5f
     val cardBg = if (isLightTheme) MaterialTheme.colorScheme.surface else DarkCathedralSurface
     val cardBorder = if (isLightTheme) MaterialTheme.colorScheme.outline.copy(alpha = 0.25f) else DarkCathedralCardBorder
-    val textNormal = if (isLightTheme) Color(0xFF1C1917) else ParchmentLight
-    val textMuted = if (isLightTheme) Color(0xFF44403C) else TextMutedParchment
+    val textNormal = if (isLightTheme) Color(0xFF0C0A09) else ParchmentLight
+    val textMuted = if (isLightTheme) Color(0xFF292524) else TextMutedParchment
     val goldAccent = if (isLightTheme) GoldDark else GoldBright
 
     Card(
@@ -810,16 +810,34 @@ fun CalendarSearchResultItem(
 
 @Composable
 fun BadgeTag(text: String, color: Color) {
+    val isLightTheme = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val isRed = color == Color(0xFFD32F2F) || color == Color(0xFFE53935) || color == CrimsonBurgundy || color == CrimsonLight
+    val badgeBg = if (isLightTheme) {
+        if (isRed) StaticCrimsonBurgundy else color.copy(alpha = 0.15f)
+    } else {
+        if (isRed) color.copy(alpha = 0.35f) else color.copy(alpha = 0.2f)
+    }
+    val badgeContentColor = if (isLightTheme) {
+        if (isRed) StaticLightGold else if (color == Color(0xFFE65100)) Color(0xFF8A3B00) else color
+    } else {
+        if (isRed) StaticGoldBright else color
+    }
+    val badgeBorder = if (isLightTheme) {
+        if (isRed) BorderStroke(1.dp, StaticWarmBronze) else BorderStroke(1.dp, color.copy(alpha = 0.6f))
+    } else {
+        BorderStroke(1.dp, if (isRed) GoldSacred.copy(alpha = 0.8f) else color.copy(alpha = 0.6f))
+    }
     Surface(
-        color = color.copy(alpha = 0.2f),
-        contentColor = color,
+        color = badgeBg,
+        contentColor = badgeContentColor,
         shape = RoundedCornerShape(4.dp),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.6f))
+        border = badgeBorder
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold),
+            color = badgeContentColor
         )
     }
 }
@@ -828,7 +846,7 @@ fun BadgeTag(text: String, color: Color) {
 fun DetailRow(label: String, value: String) {
     val isLightTheme = MaterialTheme.colorScheme.background.luminance() > 0.5f
     val labelColor = if (isLightTheme) Color(0xFF55504A) else TextMutedParchment
-    val valueColor = if (isLightTheme) Color(0xFF1C1917) else ParchmentLight
+    val valueColor = if (isLightTheme) Color(0xFF0C0A09) else ParchmentLight
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1056,7 +1074,7 @@ fun getRecommendedPrayers(
 @Composable
 fun LegendItem(color: Color, label: String) {
     val isLightTheme = MaterialTheme.colorScheme.background.luminance() > 0.5f
-    val labelColor = if (isLightTheme) Color(0xFF1C1917) else ParchmentLight
+    val labelColor = if (isLightTheme) Color(0xFF0C0A09) else ParchmentLight
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(modifier = Modifier.size(8.dp).background(color, androidx.compose.foundation.shape.CircleShape))
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = labelColor)

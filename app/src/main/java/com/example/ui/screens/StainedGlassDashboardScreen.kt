@@ -1243,7 +1243,7 @@ fun RegulaVitaeDashboardCard(
                     .testTag("open_regulavitae_page_btn"),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = CrimsonBurgundy,
-                    contentColor = ParchmentLight
+                    contentColor = StaticGoldBright
                 ),
                 border = BorderStroke(1.dp, GoldSacred),
                 shape = RoundedCornerShape(8.dp)

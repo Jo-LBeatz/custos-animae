@@ -192,14 +192,18 @@ fun ExaminationScreen(
 
                     Button(
                         onClick = { showLedgerAuthDialog = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = GoldBright),
+                        colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, GoldSacred),
                         modifier = Modifier.testTag("confession_prep_btn").weight(1.5f)
                     ) {
-                        Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = GoldBright, modifier = Modifier.size(16.dp))
+                        Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = StaticGoldBright, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = AppTranslationHelper.translate("Confession Prep 🔒", appLanguage), style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
+                        Text(
+                            text = AppTranslationHelper.translate("Confession Prep 🔒", appLanguage),
+                            color = StaticGoldBright,
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                        )
                     }
 
                     if (showLedgerAuthDialog) {

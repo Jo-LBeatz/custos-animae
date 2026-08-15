@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -79,7 +80,7 @@ fun LatinAudioPlayerController(
                         Icon(
                             imageVector = if (isPlayingThis) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (isPlayingThis) "Pause Audio" else if (isLatin) "Listen to Latin Pronunciation" else "Listen to English Prayer",
-                            tint = if (isPlayingThis) ParchmentLight else Color.Black,
+                            tint = if (isPlayingThis) StaticGoldBright else (if (MaterialTheme.colorScheme.background.luminance() > 0.5f) Color.White else Color.Black),
                             modifier = Modifier.size(20.dp)
                         )
                     }

@@ -1,4 +1,4 @@
-package com.example.utils
+package com.example.util
 
 import android.content.ContentValues
 import android.content.Context

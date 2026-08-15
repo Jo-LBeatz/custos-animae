@@ -52,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -60,13 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.MainViewModel
-import com.example.ui.theme.CrimsonBurgundy
-import com.example.ui.theme.DarkCathedralBackground
-import com.example.ui.theme.DarkCathedralSurface
-import com.example.ui.theme.GoldBright
-import com.example.ui.theme.GoldSacred
-import com.example.ui.theme.ParchmentLight
-import com.example.ui.theme.TextMutedParchment
+import com.example.ui.theme.*
 import kotlinx.coroutines.launch
 
 import androidx.compose.animation.AnimatedVisibility
@@ -218,7 +213,7 @@ fun DeceptionScreen(
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://youtu.be/tjGnf_NMPQg?si=mqSfd1N40Dxz930q"))
                                     context.startActivity(intent)
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -227,20 +222,20 @@ fun DeceptionScreen(
                                 Icon(
                                     imageVector = Icons.Default.SmartDisplay,
                                     contentDescription = null,
-                                    tint = GoldBright,
+                                    tint = StaticGoldBright,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "Song 1: Vatican II Exposing Anthem",
                                     style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                    color = GoldBright
+                                    color = StaticGoldBright
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                                     contentDescription = null,
-                                    tint = GoldBright,
+                                    tint = StaticGoldBright,
                                     modifier = Modifier.size(14.dp)
                                 )
                             }
@@ -366,12 +361,13 @@ fun DeceptionScreen(
                     }
                 },
                 containerColor = CrimsonBurgundy,
-                contentColor = GoldBright,
+                contentColor = StaticGoldBright,
                 shape = CircleShape
             ) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = "Scroll to top"
+                    contentDescription = "Scroll to top",
+                    tint = StaticGoldBright
                 )
             }
         }
@@ -737,7 +733,7 @@ fun ChannelCard(
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(ytUrl))
                         context.startActivity(intent)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy),
+                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
@@ -745,10 +741,10 @@ fun ChannelCard(
                         imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = GoldBright
+                        tint = StaticGoldBright
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("YouTube", style = MaterialTheme.typography.labelMedium, color = GoldBright)
+                    Text("YouTube", style = MaterialTheme.typography.labelMedium, color = StaticGoldBright, fontWeight = FontWeight.Bold)
                 }
 
                 Button(
@@ -891,15 +887,16 @@ fun MatrixRowCard(item: MatrixItem) {
                         color = CrimsonBurgundy
                     )
                     Spacer(modifier = Modifier.height(6.dp))
+                    val isLightTheme = MaterialTheme.colorScheme.background.luminance() > 0.5f
                     Surface(
-                        color = Color(0xFF2A151A),
+                        color = if (isLightTheme) StaticCrimsonBurgundy else Color(0xFF2A151A),
                         shape = RoundedCornerShape(6.dp),
-                        border = BorderStroke(1.dp, CrimsonBurgundy.copy(alpha = 0.5f))
+                        border = BorderStroke(1.dp, if (isLightTheme) StaticWarmBronze else CrimsonBurgundy.copy(alpha = 0.5f))
                     ) {
                         Text(
                             text = "Critical Note: ${item.analysis}",
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = GoldBright,
+                            color = if (isLightTheme) StaticLightGold else GoldBright,
                             modifier = Modifier.padding(8.dp)
                         )
                     }

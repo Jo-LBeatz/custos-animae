@@ -10,27 +10,31 @@ val StaticGoldSacred = Color(0xFFD4AF37)
 val StaticGoldBright = Color(0xFFFFD700)
 val StaticGoldLight = Color(0xFFF9E79F)
 val StaticGoldDark = Color(0xFF997A15)
+val StaticGoldenBrown = Color(0xFF704D1A)
+val StaticWarmBronze = Color(0xFF8A5A04)
+val StaticLightGold = Color(0xFFFFF4C7)
+val StaticDeepBrownGold = Color(0xFF5C3805)
 
 val StaticCrimsonBurgundy = Color(0xFF800020)
 val StaticCrimsonDeep = Color(0xFF4A0012)
 val StaticCrimsonLight = Color(0xFFB03A2E)
 
 val StaticDarkCathedralBackground = Color(0xFF0E1116)
-val StaticDarkCathedralSurface = Color(0xFF181E26)
-val StaticDarkCathedralSurfaceVariant = Color(0xFF222A36)
-val StaticDarkCathedralCardBorder = Color(0xFF384353)
+val StaticDarkCathedralSurface = Color(0xFF1D242E)
+val StaticDarkCathedralSurfaceVariant = Color(0xFF2A3441)
+val StaticDarkCathedralCardBorder = Color(0xFF5A6B82)
 
-val StaticParchmentLight = Color(0xFFFBF8EE)
+val StaticParchmentLight = Color(0xFFFFFFFF)
 val StaticParchmentCard = Color(0xFFF3EFE0)
 val StaticTextGoldHighlight = Color(0xFFFFE082)
-val StaticTextMutedParchment = Color(0xFF9EA8B6)
+val StaticTextMutedParchment = Color(0xFFD1D8E0)
 
 // Image Palette Colors: Sacred Rose & Mint Frost (Exact Hex Values)
 val StaticBlushCream = Color(0xFFFDEEF1)   // #FDEEF1
 val StaticSoftRose = Color(0xFFF7D9E0)     // #F7D9E0
 val StaticMintFrost = Color(0xFFD6E9DC)    // #D6E9DC
 val StaticVanillaWhip = Color(0xFFFFF9F4)   // #FFF9F4
-val StaticLavenderMist = Color(0xFFC6B7CC)  // #C6B7CC
+val StaticLavenderMist = Color(0xFFD8CDE0)  // #C6B7CC
 
 // Pastel Accent & Legibility Colors for Rosa Mystica (No dark red, green, or purple)
 val StaticPastelRoseAccent = Color(0xFFD98A9F)     // Soft Pastel Rose Accent
@@ -52,10 +56,10 @@ val StaticDarkTextCharcoal = Color(0xFF23161B)
 val StaticMutedTextRose = Color(0xFF5E424B)
 
 // Liturgical Season Colors
-val LiturgicalViolet = Color(0xFF8E24AA)
+val LiturgicalViolet = Color(0xFFAB47BC)
 val LiturgicalWhiteGold = Color(0xFFFFD700)
-val LiturgicalRed = Color(0xFFC62828)
-val LiturgicalGreen = Color(0xFF2E7D32)
+val LiturgicalRed = Color(0xFFE53935)
+val LiturgicalGreen = Color(0xFF4CAF50)
 val LiturgicalRose = Color(0xFFEC407A)
 val LiturgicalBlack = Color(0xFF212121)
 

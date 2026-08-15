@@ -47,6 +47,8 @@ fun OnboardingGenderScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkCathedralBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .wrapContentWidth(Alignment.CenterHorizontally)
             .widthIn(max = 640.dp)
             .padding(20.dp)
@@ -230,13 +232,8 @@ fun OnboardingGenderScreen(
 
     // 1. Welcome Dialog based on Man or Woman choice
     if (showWelcomeDialog) {
-        val isMale = selectedGender == "MALE"
-        val welcomeTitle = if (isMale) "Welcome, Brother in Christ" else "Welcome, Sister in Christ"
-        val welcomeMessage = if (isMale) {
-            "Welcome to Custos Animae, dear brother in Christ. You have chosen the traditional Rule of St. Benedict (Regula Benedicti). By embracing this life of spiritual discipline and true faith, you are now joined in full siblinghood with Christ, my Lord. May your discipline, prayer, and labor bear abundant spiritual fruit."
-        } else {
-            "Welcome to Custos Animae, dear sister in Christ. You have chosen the traditional Regula Donati. By embracing this life of spiritual discipline and true faith, you are now joined in full siblinghood with Christ, my Lord. May your devotion, charity, and discipline bear abundant spiritual fruit."
-        }
+        val welcomeTitle = "Welcome"
+        val welcomeMessage = "Use CUSTOS ANIMAE to help you become spiritually disciplined into the traditional Catholic faith. If not Catholic, please convert to the Catholic faith. Visit www.vaticancatholic.com for more information on how to convert to the true faith"
 
         AlertDialog(
             onDismissRequest = {},
