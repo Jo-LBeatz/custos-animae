@@ -134,17 +134,6 @@ class MainActivity : ComponentActivity() {
         viewModel.resetExpiredDuties()
     }
 
-    @Suppress("DEPRECATION")
-    override fun onTrimMemory(level: Int) {
-        super.onTrimMemory(level)
-        // Explicitly handle system-level memory trimming to proactively free graphics and ashmem buffers
-        // as recommended by the OS warning: "Pinning is deprecated since Android Q. Please use trim or other methods."
-        if (level >= TRIM_MEMORY_BACKGROUND || level == TRIM_MEMORY_RUNNING_LOW) {
-            // Encourage the runtime to garbage collect and release unused shared memory allocations
-            System.gc()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         com.example.util.AppTranslationHelper.init(applicationContext)
