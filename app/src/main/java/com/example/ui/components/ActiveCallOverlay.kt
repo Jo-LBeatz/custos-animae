@@ -151,7 +151,7 @@ fun ActiveCallOverlay(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Title adaptively cut down in UI with maxLines and Ellipsis
-                Text(
+                ResponsiveText(
                     text = title,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontFamily = FontFamily.Serif,
@@ -160,8 +160,7 @@ fun ActiveCallOverlay(
                     ),
                     color = GoldBright,
                     textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                    maxLines = Int.MAX_VALUE,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -179,7 +178,7 @@ fun ActiveCallOverlay(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 200.dp),
+                        .heightIn(max = 240.dp),
                     colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
                     border = BorderStroke(1.dp, DarkCathedralCardBorder),
                     shape = RoundedCornerShape(16.dp)
@@ -206,8 +205,7 @@ fun ActiveCallOverlay(
                             ),
                             color = ParchmentLight,
                             textAlign = TextAlign.Center,
-                            maxLines = 8,
-                            overflow = TextOverflow.Ellipsis,
+                            softWrap = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

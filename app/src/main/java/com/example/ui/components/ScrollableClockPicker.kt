@@ -416,7 +416,7 @@ fun ScrollableWheelColumn(
                 .fillMaxWidth()
                 .height(itemHeight * visibleItemsCount)
         ) {
-            items(items.size) { index ->
+            items(items.size, key = { index -> items[index] }) { index ->
                 val isSelected = index == currentCenteredIndex
                 val text = items[index]
 

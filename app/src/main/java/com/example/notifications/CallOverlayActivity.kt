@@ -422,7 +422,7 @@ fun CallOverlayScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Title adaptively cut down in UI with maxLines and Ellipsis
-                Text(
+                com.example.ui.components.ResponsiveText(
                     text = title,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontFamily = FontFamily.Serif,
@@ -431,8 +431,7 @@ fun CallOverlayScreen(
                     ),
                     color = GoldBright,
                     textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                    maxLines = Int.MAX_VALUE,
                     modifier = Modifier
                         .fillMaxWidth()
                         .offset(y = headerOffset)
@@ -453,7 +452,7 @@ fun CallOverlayScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 170.dp)
+                        .heightIn(max = 220.dp)
                         .offset(y = cardOffset)
                         .graphicsLayer(alpha = cardAlpha),
                     colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
@@ -474,8 +473,7 @@ fun CallOverlayScreen(
                             ),
                             color = ParchmentLight,
                             textAlign = TextAlign.Center,
-                            maxLines = 6,
-                            overflow = TextOverflow.Ellipsis,
+                            softWrap = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

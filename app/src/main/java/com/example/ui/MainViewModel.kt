@@ -54,6 +54,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val allCalendarEntries: StateFlow<List<CalendarEntry>>
     val recentExaminations: StateFlow<List<DailyExamination>>
     val todaySaintQuotes: StateFlow<List<com.example.data.SaintQuoteEntity>>
+    val allNovenasFromDb: StateFlow<List<com.example.data.NovenaEntity>>
+    val allNovenaProgressLogs: StateFlow<List<com.example.data.NovenaProgressEntity>>
 
     // Selected Tab
     private val _currentTab = MutableStateFlow(0) // 0: Rule, 1: Saint, 2: Prayers, 3: Examination, 4: Calendar
@@ -70,6 +72,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Central Reading Progress Indicator (0.0f to 1.0f)
     private val _readingProgress = MutableStateFlow(0f)
     val readingProgress: StateFlow<Float> = _readingProgress.asStateFlow()
+
+    // Selected Novena Dialog
+    private val _selectedNovenaForDialog = MutableStateFlow<com.example.data.novena.NovenaDefinition?>(null)
+    val selectedNovenaForDialog: StateFlow<com.example.data.novena.NovenaDefinition?> = _selectedNovenaForDialog.asStateFlow()
+
+    fun openNovenaDialog(novenaId: String) {
+        val found = com.example.data.novena.NovenaData.allNovenas.find { it.id == novenaId }
+            ?: com.example.data.novena.NovenaData.getMovableNovenasForYear(java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)).find { it.id == novenaId }
+            ?: com.example.data.novena.NovenaData.allNovenas.firstOrNull()
+        _selectedNovenaForDialog.value = found
+    }
+
+    fun openNovenaDialogByDefinition(novena: com.example.data.novena.NovenaDefinition) {
+        _selectedNovenaForDialog.value = novena
+    }
+
+    fun closeNovenaDialog() {
+        _selectedNovenaForDialog.value = null
+    }
+
+    fun markNovenaDayPrayed(novenaId: String, dayNumber: Int, notes: String = "") {
+        viewModelScope.launch {
+            repository.recordNovenaDayPrayed(novenaId, dayNumber, notes)
+        }
+    }
 
     // Reading View Text Size Preference (Persists across sessions)
     private val sharedPrefs = application.getSharedPreferences("user_preferences", android.content.Context.MODE_PRIVATE)
@@ -410,10 +437,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val calendarSearchResults: StateFlow<List<CalendarEntry>>
 
-    // Prayer Library Local Search (100% Offline Room DB)
+    // Prayer Library Local Search & Bookmarks (100% Offline Room DB)
     private val _prayerSearchQuery = MutableStateFlow("")
     val prayerSearchQuery: StateFlow<String> = _prayerSearchQuery.asStateFlow()
     val prayerSearchResults: StateFlow<List<PrayerEntity>>
+    val bookmarkedPrayers: StateFlow<List<PrayerEntity>>
 
     // Reflection Guard Dialog State
     private val _pendingReflectionDuty = MutableStateFlow<SpiritualDuty?>(null)
@@ -430,10 +458,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Load initial translation locale settings to audio player
         latinAudioPlayer.setLanguageLocale(_appLanguage.value.locale)
 
-        // Seed 1954 Roman Calendar and Prayers into local Room storage
+        // Seed 1954 Roman Calendar, Novenas, and Prayers into local Room storage
         viewModelScope.launch {
             repository.ensureCalendarSeeded()
             repository.ensurePrayersSeeded()
+            repository.ensureNovenasSeeded()
             repository.resetExpiredDuties()
             repository.hardRefreshForDate(_selectedCalendarDate.value)
             
@@ -463,6 +492,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         recentExaminations = repository.recentExaminations.stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+
+        allNovenasFromDb = repository.allNovenas.stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+
+        allNovenaProgressLogs = repository.allNovenaLogs.stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
         )
 
@@ -496,6 +533,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prayerSearchResults = _prayerSearchQuery.flatMapLatest { query ->
             repository.searchPrayers(query)
         }.stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+
+        bookmarkedPrayers = repository.bookmarkedPrayers.stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
         )
 
@@ -538,7 +579,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         sacredHeartEnabled: Boolean = true,
         immaculateHeartTime: String = "08:00",
         immaculateHeartEnabled: Boolean = true,
-        liturgicalSeasonEnabled: Boolean = true
+        liturgicalSeasonEnabled: Boolean = true,
+        novenaNotificationsEnabled: Boolean = true,
+        novenaNotificationTime: String = "08:00"
     ) {
         viewModelScope.launch {
             val current = userProfile.value ?: com.example.data.UserProfile()
@@ -555,7 +598,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 sacredHeartEnabled = sacredHeartEnabled,
                 immaculateHeartTime = immaculateHeartTime,
                 immaculateHeartEnabled = immaculateHeartEnabled,
-                liturgicalSeasonNotificationsEnabled = liturgicalSeasonEnabled
+                liturgicalSeasonNotificationsEnabled = liturgicalSeasonEnabled,
+                novenaNotificationsEnabled = novenaNotificationsEnabled,
+                novenaNotificationTime = novenaNotificationTime
             )
             repository.saveUserProfile(updated)
             com.example.notifications.NotificationScheduler.scheduleAll(
@@ -565,6 +610,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 updated
             )
         }
+    }
+
+    fun triggerTestNovenaNotification() {
+        val intent = android.content.Intent(getApplication(), com.example.notifications.NotificationReceiver::class.java).apply {
+            putExtra("EXTRA_TYPE", "TEST_NOVENA_START")
+        }
+        getApplication<android.app.Application>().sendBroadcast(intent)
     }
 
     fun updateDutyReminderTime(dutyId: Int, newTime: String) {
@@ -662,6 +714,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setPrayerSearchQuery(query: String) {
         _prayerSearchQuery.value = query
+    }
+
+    fun togglePrayerBookmark(prayerId: String, currentStatus: Boolean) {
+        viewModelScope.launch {
+            repository.togglePrayerBookmark(prayerId, currentStatus)
+        }
     }
 
     fun setCalendarDate(calendar: Calendar) {

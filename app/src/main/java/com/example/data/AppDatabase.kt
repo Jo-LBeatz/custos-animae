@@ -16,9 +16,11 @@ import androidx.room.RoomDatabase
         PrayerEntity::class,
         BreviaryEntryEntity::class,
         SaintQuoteEntity::class,
-        CallLog::class
+        CallLog::class,
+        NovenaEntity::class,
+        NovenaProgressEntity::class
     ],
-    version = 28,
+    version = 31,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

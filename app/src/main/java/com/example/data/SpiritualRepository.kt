@@ -97,11 +97,28 @@ class SpiritualRepository(
 
 
 
+    val bookmarkedPrayers: Flow<List<PrayerEntity>> = appDao.getBookmarkedPrayers()
+
     fun searchPrayers(query: String): Flow<List<PrayerEntity>> {
         return if (query.isBlank()) {
             appDao.getAllPrayers()
         } else {
             appDao.searchPrayers(query.trim())
+        }
+    }
+
+    suspend fun togglePrayerBookmark(prayerId: String, currentStatus: Boolean) {
+        val existing = appDao.getPrayerById(prayerId)
+        val newStatus = !currentStatus
+        if (existing != null) {
+            appDao.updatePrayerBookmark(prayerId, newStatus)
+        } else {
+            val allInitial = PrayerAndMissalDataSeeder.getInitialPrayers()
+            val found = allInitial.find { it.id == prayerId }
+            if (found != null) {
+                appDao.insertPrayers(listOf(found.copy(isBookmarked = newStatus)))
+                appDao.updatePrayerBookmark(prayerId, newStatus)
+            }
         }
     }
 
@@ -492,5 +509,57 @@ class SpiritualRepository(
         sb.append("========================================================\n")
         
         return sb.toString()
+    }
+
+    // Novenas Room Local Storage & Seeding
+    val allNovenas: Flow<List<NovenaEntity>> = appDao.getAllNovenas()
+    val allNovenaLogs: Flow<List<NovenaProgressEntity>> = appDao.getAllNovenaProgressLogs()
+
+    suspend fun ensureNovenasSeeded() {
+        try {
+            val count = appDao.getNovenasCount()
+            if (count == 0) {
+                val defaultDefs = com.example.data.novena.NovenaData.allNovenas
+                val entities = defaultDefs.map { def ->
+                    NovenaEntity(
+                        id = def.id,
+                        feastTitle = def.feastTitle,
+                        novenaTitle = def.novenaTitle,
+                        fixedStartMonth = def.fixedStartMonth,
+                        fixedStartDay = def.fixedStartDay,
+                        fixedFeastMonth = def.fixedFeastMonth,
+                        fixedFeastDay = def.fixedFeastDay,
+                        category = def.category,
+                        summary = def.summary,
+                        intention = def.intention,
+                        englishPrayer = def.englishPrayer,
+                        latinPrayer = def.latinPrayer,
+                        isMovable = def.isMovable,
+                        movableType = def.movableType
+                    )
+                }
+                appDao.insertNovenas(entities)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun recordNovenaDayPrayed(novenaId: String, dayNumber: Int, notes: String = "") {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val currentDate = dateFormat.format(Date())
+        val progressLog = NovenaProgressEntity(
+            novenaId = novenaId,
+            dayNumber = dayNumber,
+            datePrayed = currentDate,
+            notes = notes,
+            timestamp = System.currentTimeMillis()
+        )
+        appDao.insertNovenaProgress(progressLog)
+        appDao.updateNovenaLastPrayed(novenaId, dayNumber, currentDate)
+    }
+
+    fun getNovenaProgressLogs(novenaId: String): Flow<List<NovenaProgressEntity>> {
+        return appDao.getNovenaProgressLogs(novenaId)
     }
 }

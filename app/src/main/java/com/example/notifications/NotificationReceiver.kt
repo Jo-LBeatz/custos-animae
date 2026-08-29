@@ -92,6 +92,17 @@ class NotificationReceiver : BroadcastReceiver() {
                 val message = "Today begins the ${todayInfo.season.displayName}. Vestment color: ${todayInfo.vestmentColor}."
                 dispatchReminder(context, title, message, 7103)
             }
+        } else if (type == "NOVENA_START") {
+            val today = Calendar.getInstance()
+            val novenasStartingToday = com.example.data.novena.NovenaData.getNovenasStartingOnDate(today)
+            if (novenasStartingToday.isNotEmpty()) {
+                novenasStartingToday.forEachIndexed { index, novena ->
+                    NotificationHelper.showNovenaStartBannerNotification(context, novena, notificationId = 8000 + index)
+                }
+            }
+        } else if (type == "TEST_NOVENA_START") {
+            val sampleNovena = com.example.data.novena.NovenaData.allNovenas.firstOrNull() ?: com.example.data.novena.NovenaData.sampleNovena
+            NotificationHelper.showNovenaStartBannerNotification(context, sampleNovena, notificationId = 8999)
         } else if (type == "TEST") {
             val title = intent.getStringExtra("EXTRA_TITLE") ?: "Test Rule Reminder"
             val message = intent.getStringExtra("EXTRA_MESSAGE") ?: "This is a test Rule of Life reminder."

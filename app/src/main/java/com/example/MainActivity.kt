@@ -126,6 +126,11 @@ class MainActivity : ComponentActivity() {
                     keyguardManager.requestDismissKeyguard(this, null)
                 }
             }
+        } else if (intent != null && intent.action == "ACTION_OPEN_NOVENA") {
+            val novenaId = intent.getStringExtra("EXTRA_NOVENA_ID")
+            if (novenaId != null) {
+                viewModel.openNovenaDialog(novenaId)
+            }
         }
     }
 
@@ -378,6 +383,26 @@ fun MainAppContent(
         )
     }
 
+    val selectedNovenaForDialog by viewModel.selectedNovenaForDialog.collectAsStateWithLifecycle()
+    val allNovenaProgressLogs by viewModel.allNovenaProgressLogs.collectAsStateWithLifecycle()
+
+    selectedNovenaForDialog?.let { novenaDef ->
+        val completedDaysForNovena = remember(allNovenaProgressLogs, novenaDef) {
+            allNovenaProgressLogs
+                .filter { it.novenaId == novenaDef.id }
+                .map { it.dayNumber }
+                .toSet()
+        }
+        com.example.ui.components.NovenaPrayerDialog(
+            novena = novenaDef,
+            onDismiss = { viewModel.closeNovenaDialog() },
+            initialCompletedDays = completedDaysForNovena,
+            onMarkDayPrayed = { novenaId, day ->
+                viewModel.markNovenaDayPrayed(novenaId, day)
+            }
+        )
+    }
+
     val navItems = listOf(
         NavItem("Home", Icons.Default.Home, "nav_home_tab"),
         NavItem("Rule", Icons.Default.Checklist, "nav_rule_tab"),
@@ -547,14 +572,15 @@ fun MainAppContent(
                                 )
                             },
                             text = {
-                                Text(
+                                com.example.ui.components.ResponsiveText(
                                     text = AppTranslationHelper.translate(item.title, appLanguage),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontSize = 10.sp,
                                         fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
                                     ),
                                     color = if (isSelected) GoldBright else TextMutedParchment,
-                                    maxLines = 1
+                                    maxLines = 2,
+                                    minFontSize = 8.sp
                                 )
                             },
                             modifier = Modifier.testTag(item.tag)

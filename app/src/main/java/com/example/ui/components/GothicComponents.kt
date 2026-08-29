@@ -285,12 +285,13 @@ fun GothicHeader(
                     color = badgeColor.copy(alpha = 0.2f),
                     border = BorderStroke(1.dp, badgeColor)
                 ) {
-                    Text(
+                    com.example.ui.components.ResponsiveText(
                         text = badgeText,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = badgeColor,
-                        maxLines = 1
+                        maxLines = 2,
+                        minFontSize = 8.sp
                     )
                 }
             }

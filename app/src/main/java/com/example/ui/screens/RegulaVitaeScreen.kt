@@ -115,17 +115,6 @@ fun RegulaVitaeScreen(
             testTag = "social_link_website"
         ),
         SocialLinkItem(
-            id = "whatsapp",
-            title = "WhatsApp Channel",
-            handleOrSubtitle = "RegulaVitae Community",
-            url = "https://whatsapp.com/channel/0029VbCj8TYKGGGDxtDcrc0h",
-            icon = Icons.Default.Notifications,
-            buttonLabel = "Join WhatsApp Channel 💬",
-            badge = "Daily Alerts",
-            accentColor = Color(0xFF25D366),
-            testTag = "social_link_whatsapp"
-        ),
-        SocialLinkItem(
             id = "instagram",
             title = "Instagram",
             handleOrSubtitle = "@regulavitae",
@@ -461,7 +450,6 @@ fun RegulaVitaeScreen(
                         val shareText = """Discover RegulaVitae & Custos Animae — Traditional Catholic Spiritual Rule of Life, 1954 Liturgical Calendar, Offline Prayers, and Monastic Discipline.
 
 Website: https://regulavitae.vercel.app/
-WhatsApp: https://whatsapp.com/channel/0029VbCj8TYKGGGDxtDcrc0h
 Instagram: https://www.instagram.com/regulavitae/#
 YouTube: https://www.youtube.com/@regulavitae"""
                         val sendIntent = Intent().apply {

@@ -246,7 +246,7 @@ fun CalendarScreen(
                 "FASTING" to "Fasting Days"
             )
 
-            items(filters) { (code, label) ->
+            items(filters, key = { it.first }) { (code, label) ->
                 val isSelected = activeFilter == code
                 FilterChip(
                     selected = isSelected,

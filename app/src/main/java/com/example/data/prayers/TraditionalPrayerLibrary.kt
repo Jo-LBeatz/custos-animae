@@ -29,49 +29,123 @@ object TraditionalPrayerLibrary {
 
     val morningPrayers = listOf(
         PrayerItem(
-            id = "m_offering",
-            title = "Morning Offering",
+            id = "m_sign_of_cross",
+            title = "Morning Adoration & Trinity Invocation",
             category = "Morning Prayers",
-            subtitle = "Consecrating the day to the Sacred Heart of Jesus through Mary",
-            englishText = """O Jesus, through the Immaculate Heart of Mary, I offer Thee my prayers, works, joys, and sufferings of this day, for all the intentions of Thy Sacred Heart, in union with the Holy Sacrifice of the Mass throughout the world, in reparation for my sins, for the intentions of all my relatives and friends, and in particular for the salvation of souls.""",
+            subtitle = "Opening the day in the Name of the Most Holy Trinity",
+            englishText = """In the name of the Father, and of the Son, and of the Holy Ghost. Amen.
+
+Blessed be the holy, undivided, and Most Sacred Trinity, now and forever, world without end. Amen.
+
+O Lord God Almighty, Who hast safely brought us to the beginning of this day: defend us in the same by Thy power; that during this day we may fall into no sin, but that all our words, thoughts, and works may be directed to the doing of Thy holy law. Through Our Lord Jesus Christ. Amen.""",
+            latinText = """In nomine Patris, et Filii, et Spiritus Sancti. Amen.
+
+Benedicta sit sancta et individua Trinitas, nunc et semper, et in saecula saeculorum. Amen.
+
+Domine Deus omnipotens, qui ad principium huius diei nos pervenire fecisti: tua nos hodie salva virtute; ut ad nullum declinemus peccatum, sed semper ad tuam iustitiam faciendam nostra procedant eloquia, dirigantur cogitationes et opera. Per Dominum nostrum Iesum Christum. Amen."""
+        ),
+        PrayerItem(
+            id = "m_offering",
+            title = "Morning Offering to the Sacred Heart",
+            category = "Morning Prayers",
+            subtitle = "Consecrating all prayers, works, joys, and sufferings of the day",
+            englishText = """O Jesus, through the Immaculate Heart of Mary, I offer Thee my prayers, works, joys, and sufferings of this day, for all the intentions of Thy Sacred Heart, in union with the Holy Sacrifice of the Mass throughout the world, in reparation for my sins, for the intentions of all my relatives and friends, and in particular for the salvation of souls. Amen.""",
             latinText = """O Iesu, per Immaculatum Cor Mariae, offero Tibi orationes, opera, gaudia et passiones huius diei, pro omnibus intentionibus Sacratissimi Cordis Tui, in unione cum Sancto Missae Sacrificio ubique terrarum celebrato, in reparationem peccatorum meorum, et pro intentionibus Sanctorum Pontificum. Amen."""
+        ),
+        PrayerItem(
+            id = "m_pater_ave_creed",
+            title = "Daily Morning Foundation (Pater, Ave, Credo)",
+            category = "Morning Prayers",
+            subtitle = "Our Father, Hail Mary, and Apostles' Creed",
+            englishText = """OUR FATHER, Who art in heaven, hallowed be Thy name; Thy kingdom come; Thy will be done on earth as it is in heaven. Give us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen.
+
+HAIL MARY, full of grace, the Lord is with thee; blessed art thou among women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.
+
+I BELIEVE in God, the Father Almighty, Creator of heaven and earth; and in Jesus Christ, His only Son, our Lord: Who was conceived by the Holy Ghost, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died, and was buried. He descended into hell; the third day He arose again from the dead; He ascended into heaven, sitteth at the right hand of God the Father Almighty; from thence He shall come to judge the living and the dead. I believe in the Holy Ghost, the Holy Catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.""",
+            latinText = """PATER NOSTER, qui es in caelis, sanctificetur nomen tuum. Adveniat regnum tuum. Fiat voluntas tua, sicut in caelo et in terra. Panem nostrum cotidianum da nobis hodie, et dimitte nobis debita nostra sicut et nos dimittimus debitoribus nostris. Et ne nos inducas in tentationem, sed libera nos a malo. Amen.
+
+AVE MARIA, gratia plena, Dominus tecum. Benedicta tu in mulieribus, et benedictus fructus ventris tui, Iesus. Sancta Maria, Mater Dei, ora pro nobis peccatoribus, nunc et in hora mortis nostrae. Amen.
+
+CREDO in Deum Patrem omnipotentem, Creatorem caeli et terrae. Et in Iesum Christum, Filium eius unicum, Dominum nostrum: qui conceptus est de Spiritu Sancto, natus ex Maria Virgine, passus sub Pontio Pilato, crucifixus, mortuus, et sepultus: descendit ad inferos; tertia die resurrexit a mortuis; ascendit ad caelos, sedet ad dexteram Dei Patris omnipotentis: inde venturus est iudicare vivos et mortuos. Credo in Spiritum Sanctum, sanctam Ecclesiam catholicam, Sanctorum communionem, remissionem peccatorum, carnis resurrectionem, vitam aeternam. Amen."""
         ),
         PrayerItem(
             id = "act_faith",
             title = "Act of Faith (Actus Fidei)",
             category = "Morning Prayers",
-            englishText = """O my God, I firmly believe that Thou art one God in three Divine Persons, Father, Son, and Holy Ghost. I believe that Thy Divine Son became man, and died for our sins, and that He will come to judge the living and the dead. I believe these and all the truths which the Holy Catholic Church teaches, because Thou hast revealed them, who canst neither deceive nor be deceived.""",
+            subtitle = "Firmly professing all revealed truths of the Catholic Church",
+            englishText = """O my God, I firmly believe that Thou art one God in three Divine Persons, Father, Son, and Holy Ghost. I believe that Thy Divine Son became man, and died for our sins, and that He will come to judge the living and the dead. I believe these and all the truths which the Holy Catholic Church teaches, because Thou hast revealed them, who canst neither deceive nor be deceived. Amen.""",
             latinText = """Domine Deus, firma fide credo et confiteor omnia et singula quae sancta Ecclesia Catholica credenda proponit, quia Tu, Deus, ea omnia revelasti, qui es aeterna veritas et sapientia quae nec falli nec fallere potest. In hac fide vivere et mori statuo. Amen."""
         ),
         PrayerItem(
             id = "act_hope",
             title = "Act of Hope (Actus Spei)",
             category = "Morning Prayers",
-            englishText = """O my God, relying on Thy almighty power and infinite mercy and promises, I hope to obtain pardon of my sins, the help of Thy grace, and life everlasting, through the merits of Jesus Christ, my Lord and Redeemer.""",
+            subtitle = "Trusting in God's promises of pardon, grace, and eternal life",
+            englishText = """O my God, relying on Thy almighty power and infinite mercy and promises, I hope to obtain pardon of my sins, the help of Thy grace, and life everlasting, through the merits of Jesus Christ, my Lord and Redeemer. Amen.""",
             latinText = """Domine Deus, spero per gratiam tuam remissionem omnium peccatorum, et post hanc vitam aeternam felicitatem me esse consecuturum: quia Tu promisisti, qui es praepotens, fidelissimus et misericors. In hac spe vivere et mori statuo. Amen."""
         ),
         PrayerItem(
             id = "act_charity",
             title = "Act of Charity (Actus Caritatis)",
             category = "Morning Prayers",
-            englishText = """O my God, I love Thee above all things, with my whole heart and soul, because Thou art all-good and worthy of all love. I love my neighbor as myself for the love of Thee. I forgive all who have injured me, and ask pardon of all whom I have injured.""",
+            subtitle = "Loving God above all things and neighbor for His sake",
+            englishText = """O my God, I love Thee above all things, with my whole heart and soul, because Thou art all-good and worthy of all love. I love my neighbor as myself for the love of Thee. I forgive all who have injured me, and ask pardon of all whom I have injured. Amen.""",
             latinText = """Domine Deus, amo Te super omnia et propter Te proximum meum sicut me ipsum, quia Tu es summum, infinitum, et perfectissimum bonum, omni dilectione dignum. In hac dilectione vivere et mori statuo. Amen."""
         ),
         PrayerItem(
             id = "guardian_angel",
             title = "Prayer to Guardian Angel (Angele Dei)",
             category = "Morning Prayers",
+            subtitle = "Petitioning guidance and protection for the day",
             englishText = """Angel of God, my guardian dear, to whom God's love commits me here, ever this day be at my side, to light and guard, to rule and guide. Amen.""",
             latinText = """Angele Dei, qui custos es mei, me, tibi commissum pietate superna, illumina, custodi, rege et guberna. Amen."""
+        ),
+        PrayerItem(
+            id = "m_st_joseph",
+            title = "Morning Prayer to Saint Joseph",
+            category = "Morning Prayers",
+            subtitle = "Patron of the Universal Church and Protector of Families",
+            englishText = """O Holy Joseph, guardian of the Virgin Mother of God and faithful defender of the Holy Family, extend thy protection over us this day. Obtain for us purity of heart, diligence in our duties, and final perseverance in the grace of God. Amen.""",
+            latinText = """O Sancte Ioseph, custos Virginis Matris Dei et fidelis defensor Sanctae Familiae, extende super nos hodie protectionem tuam. Impetra nobis puritatem cordis, diligentiam in officiis nostris, et finalem in gratia Dei perseverantiam. Amen."""
         )
     )
 
     val nightPrayers = listOf(
         PrayerItem(
-            id = "anima_christi",
-            title = "Anima Christi",
+            id = "n_examination",
+            title = "Evening Thanksgiving & Examination of Conscience",
             category = "Night Prayers",
-            subtitle = "Soul of Christ, sanctify me",
+            subtitle = "Reflecting on the graces and shortcomings of the day",
+            englishText = """In the name of the Father, and of the Son, and of the Holy Ghost. Amen.
+
+O my God, I thank Thee with all my heart for all the benefits Thou hast bestowed upon me, especially for creating me, preserving me during this day, and redeeming me through Thy Beloved Son.
+
+Grant me Thy divine light to see clearly the sins I have committed this day in thought, word, deed, or omission.
+
+(Pause for a quiet examination of conscience...)
+
+O Lord, forgive me my failings, purify my soul, and grant me true sorrow for having offended Thy infinite goodness. Amen.""",
+            latinText = """In nomine Patris, et Filii, et Spiritus Sancti. Amen.
+
+Gratias tibi ago, Domine Deus meus, ex toto corde meo, pro omnibus beneficiis tuis, praesertim quod me creasti, conservasti me hac die, et per Filium tuum me redemisti.
+
+Da mihi lumen divinum ut clare videam peccata quae hac die commisi cogitatione, verbo, opere et omissione.
+
+O Domine, dimitte mihi defectus meos, purifica animam meam, et da mihi veram contritionem quia offendi infinitam bonitatem tuam. Amen."""
+        ),
+        PrayerItem(
+            id = "act_contrition",
+            title = "Act of Contrition (Actus Contritionis)",
+            category = "Night Prayers",
+            subtitle = "Traditional formula of sincere sorrow and firm resolution",
+            englishText = """O my God, I am heartily sorry for having offended Thee, and I detest all my sins because of Thy just punishments, but most of all because they offend Thee, my God, who art all-good and deserving of all my love. I firmly resolve, with the help of Thy grace, to sin no more and to avoid the near occasions of sin. Amen.""",
+            latinText = """Deus meus, ex toto corde me poenitet omnium meorum peccatorum, eaque detestor, quia peccando, non solum poenas a Te iuste statutas promeritus sum, sed praesertim quia offendi Te, summum bonum, ac dignum qui super omnia ameris. Ideo firmiter propono, adiuvante gratia Tua, de cetero me non peccaturum peccandique occasiones proximas fugiturum. Amen."""
+        ),
+        PrayerItem(
+            id = "anima_christi",
+            title = "Anima Christi (Soul of Christ)",
+            category = "Night Prayers",
+            subtitle = "Traditional devotion of Eucharistic and Passion reflection",
             englishText = """Soul of Christ, sanctify me.
 Body of Christ, save me.
 Blood of Christ, inebriate me.
@@ -103,20 +177,53 @@ in saecula saeculorum. Amen."""
             id = "te_lucis",
             title = "Te Lucis Ante Terminum",
             category = "Night Prayers",
-            subtitle = "Traditional Night Hymn",
+            subtitle = "Traditional Compline Night Hymn",
             englishText = """To Thee before the close of day, Creator of the world, we pray, That, with Thy wonted favor, Thou Wouldst be our Guard and Keeper now.
+
 From all ill dreams defend our eyes, From nightly fears and fantasies; Tread under foot our ghostly foe, That no pollution we may know.
+
 O Father, that we ask be done, Through Jesus Christ, Thine only Son, Who, with the Holy Ghost and Thee, Doth live and reign eternally. Amen.""",
             latinText = """Te lucis ante terminum, Rerum Creator, poscimus, Ut pro tua clementia Sis praesul et custodia.
+
 Procul recedant somnia, Et noctium phantasmata; Hostemque nostrum comprime, Ne polluantur corpora.
+
 Praesta, Pater piissime, Patrique compar Unice, Cum Spiritu Paraclito Regnans per omne saeculum. Amen."""
         ),
         PrayerItem(
-            id = "act_contrition",
-            title = "Act of Contrition",
+            id = "n_visita_dwelling",
+            title = "Compline Collect for Home & Night Protection",
             category = "Night Prayers",
-            englishText = """O my God, I am heartily sorry for having offended Thee, and I detest all my sins because of Thy just punishments, but most of all because they offend Thee, my God, who art all-good and deserving of all my love. I firmly resolve, with the help of Thy grace, to sin no more and to avoid the near occasions of sin. Amen.""",
-            latinText = """Deus meus, ex toto corde me poenitet omnium meorum peccatorum, eaque detestor, quia peccando, non solum poenas a Te iuste statutas promeritus sum, sed praesertim quia offendi Te, summum bonum, ac dignum qui super omnia ameris. Ideo firmiter propono, adiuvante gratia Tua, de cetero me non peccaturum peccandique occasiones proximas fugiturum. Amen."""
+            subtitle = "Traditional prayer of the Church (Visita, Quaesumus, Domine)",
+            englishText = """Visit, we beseech Thee, O Lord, this dwelling, and drive far from it all snares of the enemy; let Thy holy Angels dwell herein to preserve us in peace; and let Thy blessing be always upon us. Through Our Lord Jesus Christ, Thy Son, Who liveth and reigneth with Thee in the unity of the Holy Ghost, God, world without end. Amen.""",
+            latinText = """Visita, quaesumus, Domine, habitationem istam, et omnes insidias inimici ab ea longe repelle: Angeli tui sancti habitent in ea, qui nos in pace custodiant; et benedictio tua sit super nos semper. Per Dominum nostrum Iesum Christum Filium tuum, qui tecum vivit et regnat in unitate Spiritus Sancti, Deus, per omnia saecula saeculorum. Amen."""
+        ),
+        PrayerItem(
+            id = "n_in_manus",
+            title = "Into Thy Hands (In Manus Tuas)",
+            category = "Night Prayers",
+            subtitle = "Nightly commendation of spirit to Christ",
+            englishText = """Into Thy hands, O Lord, I commend my spirit. Thou hast redeemed us, O Lord, God of truth.
+
+May the Almighty and merciful Lord, Father, Son, and Holy Ghost, bless us and keep us. May the divine assistance remain always with us, and may the souls of the faithful departed, through the mercy of God, rest in peace. Amen.""",
+            latinText = """In manus tuas, Domine, commendo spiritum meum. Redemisti nos, Domine, Deus veritatis.
+
+Benedicat et custodiat nos omnipotens et misericors Dominus, Pater, et Filius, et Spiritus Sanctus. Divinum auxilium maneat semper nobiscum, et fidelium animae per misericordiam Dei requiescant in pace. Amen."""
+        ),
+        PrayerItem(
+            id = "n_sub_tuum",
+            title = "Night Entrustment to Mary (Sub Tuum Praesidium)",
+            category = "Night Prayers",
+            subtitle = "The oldest known Marian prayer (3rd Century)",
+            englishText = """We fly to thy patronage, O holy Mother of God; despise not our petitions in our necessities, but deliver us always from all dangers, O glorious and blessed Virgin. Amen.""",
+            latinText = """Sub tuum praesidium confugimus, Sancta Dei Genetrix; nostras deprecationes ne despicias in necessitatibus, sed a periculis omnibus libera nos semper, Virgo gloriosa et benedicta. Amen."""
+        ),
+        PrayerItem(
+            id = "n_guardian_angel",
+            title = "Night Prayer to Guardian Angel",
+            category = "Night Prayers",
+            subtitle = "Commending sleep and body to heavenly protection",
+            englishText = """O Holy Angel, watching over my poor soul and life, abandon me not, a sinner, nor depart from me. Give no place to the evil spirit to overpower me. Shield me during the hours of darkness and present my prayers to the Almighty God. Amen.""",
+            latinText = """Sancte Angele, custos animae et corporis mei, ne derelinquas me peccatorem. Ne des locum spiritui maligno ut mihi dominetur. Protege me in horis nocturnis et praesenta orationes meas coram Altissimo Deo. Amen."""
         )
     )
 

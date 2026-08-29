@@ -24,10 +24,11 @@ fun ResponsiveText(
     color: Color = Color.Unspecified,
     fontSize: TextUnit = TextUnit.Unspecified,
     style: TextStyle = LocalTextStyle.current,
-    minFontSize: TextUnit = 8.sp,
-    maxLines: Int = 3,
+    minFontSize: TextUnit = 6.sp,
+    maxLines: Int = Int.MAX_VALUE,
     textAlign: TextAlign? = null,
-    fontWeight: FontWeight? = null
+    fontWeight: FontWeight? = null,
+    overflow: TextOverflow = TextOverflow.Clip
 ) {
     val targetFontSize = if (fontSize != TextUnit.Unspecified) fontSize else style.fontSize
     var currentFontSize by remember(text, targetFontSize) { mutableStateOf(targetFontSize) }
@@ -44,10 +45,10 @@ fun ResponsiveText(
         maxLines = maxLines,
         softWrap = true,
         textAlign = textAlign,
-        overflow = TextOverflow.Ellipsis,
+        overflow = overflow,
         onTextLayout = { textLayoutResult ->
             if ((textLayoutResult.didOverflowWidth || textLayoutResult.didOverflowHeight) && currentFontSize.value > minFontSize.value) {
-                currentFontSize *= 0.9f
+                currentFontSize *= 0.88f
             } else {
                 readyToDraw = true
             }

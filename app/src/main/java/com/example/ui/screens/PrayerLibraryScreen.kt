@@ -26,11 +26,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -94,8 +97,11 @@ fun PrayerLibraryScreen(
     }
 
     val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
+    val bookmarkedPrayers by viewModel.bookmarkedPrayers.collectAsStateWithLifecycle()
+    val bookmarkedIds = remember(bookmarkedPrayers) { bookmarkedPrayers.map { it.id }.toSet() }
 
     val categories = listOf(
+        "⭐ Favorites (${bookmarkedPrayers.size})",
         "Morning Prayers",
         "Night Prayers",
         "Holy Rosary",
@@ -103,7 +109,8 @@ fun PrayerLibraryScreen(
         "Protection & Saints",
         "Angelus & Regina",
         "Immaculate Heart",
-        "Sacred Heart"
+        "Sacred Heart",
+        "📿 Feast Novenas"
     )
 
     val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
@@ -230,14 +237,16 @@ fun PrayerLibraryScreen(
 
         if (searchQuery.isBlank()) {
             when (selectedCategoryIndex) {
-                0 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.morningPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
-                1 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.nightPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
-                2 -> InteractiveRosaryViewer(isLatin = isLatinMode, viewModel = viewModel, onLaunchFullRosary = { showFullRosaryScreen = true })
-                3 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.eucharisticDevotions, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
-                4 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.protectionAndSaints, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
-                5 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.angelusAndRegina, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
-                6 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsImmaculateHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
-                7 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsSacredHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) })
+                0 -> BookmarkedPrayersList(bookmarkedPrayers = bookmarkedPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention)
+                1 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.morningPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                2 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.nightPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                3 -> InteractiveRosaryViewer(isLatin = isLatinMode, viewModel = viewModel, onLaunchFullRosary = { showFullRosaryScreen = true })
+                4 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.eucharisticDevotions, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                5 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.protectionAndSaints, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                6 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.angelusAndRegina, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                7 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsImmaculateHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                8 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsSacredHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                9 -> NovenaCategoryList(viewModel = viewModel)
             }
         } else {
             // Room DB Search Results View
@@ -261,7 +270,7 @@ fun PrayerLibraryScreen(
                     contentPadding = PaddingValues(bottom = 120.dp)
                 ) {
                     items(searchResults, key = { it.id }) { prayerEntity ->
-                        PrayerEntityCard(prayer = prayerEntity, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention)
+                        PrayerEntityCard(prayer = prayerEntity, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, bookmarkedIds = bookmarkedIds)
                     }
                 }
             }
@@ -270,11 +279,86 @@ fun PrayerLibraryScreen(
 }
 
 @Composable
-fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainViewModel, manualIntention: String = "") {
+fun BookmarkedPrayersList(
+    bookmarkedPrayers: List<PrayerEntity>,
+    isLatin: Boolean,
+    viewModel: MainViewModel,
+    manualIntention: String
+) {
+    if (bookmarkedPrayers.isEmpty()) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldSacred.copy(alpha = 0.5f))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.BookmarkBorder,
+                    contentDescription = null,
+                    tint = GoldBright,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "No Bookmarked Prayers Yet",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = GoldBright
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Tap the bookmark icon (🔖) on any traditional prayer, litany, or devotion in the library to save it to your personal offline favorites.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextMutedParchment,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        }
+    } else {
+        val listState = remember(bookmarkedPrayers) { androidx.compose.foundation.lazy.LazyListState() }
+        TrackLazyListScroll(listState = listState, viewModel = viewModel)
+
+        LazyColumn(
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(bottom = 120.dp)
+        ) {
+            items(bookmarkedPrayers, key = { it.id }) { prayer ->
+                PrayerEntityCard(
+                    prayer = prayer,
+                    isLatin = isLatin,
+                    viewModel = viewModel,
+                    manualIntention = manualIntention,
+                    bookmarkedIds = bookmarkedPrayers.map { it.id }.toSet()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PrayerEntityCard(
+    prayer: PrayerEntity,
+    isLatin: Boolean,
+    viewModel: MainViewModel,
+    manualIntention: String = "",
+    bookmarkedIds: Set<String> = emptySet()
+) {
     val appLanguage by viewModel.appLanguage.collectAsStateWithLifecycle()
     val translatedTitle = if (!isLatin) AppTranslationHelper.translate(prayer.title, appLanguage) else prayer.title
     val translatedCategory = if (!isLatin) AppTranslationHelper.translate(prayer.category, appLanguage) else prayer.category
     val translatedSubtitle = if (!isLatin && prayer.subtitle.isNotBlank()) AppTranslationHelper.translate(prayer.subtitle, appLanguage) else prayer.subtitle
+    val isBookmarked = prayer.isBookmarked || bookmarkedIds.contains(prayer.id)
 
     Card(
         modifier = Modifier
@@ -285,28 +369,45 @@ fun PrayerEntityCard(prayer: PrayerEntity, isLatin: Boolean, viewModel: MainView
         border = BorderStroke(1.dp, GoldSacred.copy(alpha = 0.7f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = translatedTitle,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = GoldBright
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Surface(
-                    color = CrimsonBurgundy.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(6.dp),
-                    border = BorderStroke(1.dp, GoldSacred.copy(alpha = 0.5f))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = translatedTitle,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Surface(
+                        color = CrimsonBurgundy.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(6.dp),
+                        border = BorderStroke(1.dp, GoldSacred.copy(alpha = 0.5f))
+                    ) {
+                        com.example.ui.components.ResponsiveText(
+                            text = translatedCategory,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GoldLight,
+                            maxLines = 2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = { viewModel.togglePrayerBookmark(prayer.id, isBookmarked) },
+                    modifier = Modifier.testTag("bookmark_entity_btn_${prayer.id}")
                 ) {
-                    com.example.ui.components.ResponsiveText(
-                        text = translatedCategory,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = GoldLight,
-                        maxLines = 2,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    Icon(
+                        imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                        contentDescription = if (isBookmarked) "Remove Bookmark" else "Bookmark Prayer",
+                        tint = if (isBookmarked) GoldBright else TextMutedParchment
                     )
                 }
             }
@@ -397,7 +498,8 @@ fun PrayerCategoryList(
     isLatin: Boolean,
     viewModel: MainViewModel,
     manualIntention: String,
-    onManualIntentionChange: (String) -> Unit
+    onManualIntentionChange: (String) -> Unit,
+    bookmarkedIds: Set<String> = emptySet()
 ) {
     val subsections = remember(prayers) {
         val list = prayers.map { it.subsection }.filter { it.isNotBlank() }.distinct()
@@ -547,6 +649,18 @@ fun PrayerCategoryList(
                                 color = GoldBright,
                                 modifier = Modifier.weight(1f)
                             )
+
+                            val isBookmarked = bookmarkedIds.contains(prayer.id)
+                            IconButton(
+                                onClick = { viewModel.togglePrayerBookmark(prayer.id, isBookmarked) },
+                                modifier = Modifier.testTag("bookmark_btn_${prayer.id}")
+                            ) {
+                                Icon(
+                                    imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                                    contentDescription = if (isBookmarked) "Remove Bookmark" else "Bookmark Prayer",
+                                    tint = if (isBookmarked) GoldBright else TextMutedParchment
+                                )
+                            }
                         }
 
                         if (prayer.subsection.isNotBlank() && selectedSubsection == "All") {
@@ -1231,6 +1345,188 @@ fun InteractiveRosaryViewer(
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
                             Text("Restart Rosary ☩", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun NovenaCategoryList(viewModel: MainViewModel) {
+    val context = LocalContext.current
+    val currentYear = remember { java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) }
+    val novenas = remember(currentYear) {
+        com.example.data.novena.NovenaData.allNovenas + com.example.data.novena.NovenaData.getMovableNovenasForYear(currentYear)
+    }
+    val novenaProgressLogs by viewModel.allNovenaProgressLogs.collectAsStateWithLifecycle()
+
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(bottom = 120.dp)
+    ) {
+        item {
+            com.example.ui.components.NovenaBannerCard(
+                onOpenNovena = { novenaDef ->
+                    viewModel.openNovenaDialogByDefinition(novenaDef)
+                }
+            )
+        }
+
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "📿 ALL FEAST NOVENAS (${novenas.size})",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = GoldBright
+                )
+
+                Button(
+                    onClick = {
+                        viewModel.triggerTestNovenaNotification()
+                        android.widget.Toast.makeText(context, "Fired Special Novena Start Banner Notification!", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B2D0A), contentColor = GoldBright),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("🔔 Test Banner Alert", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        items(novenas, key = { it.id }) { novena ->
+            val prayedCount = remember(novenaProgressLogs, novena.id) {
+                novenaProgressLogs.filter { it.novenaId == novena.id }.map { it.dayNumber }.toSet().size
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, GoldDark, RoundedCornerShape(12.dp))
+                    .clickable { viewModel.openNovenaDialogByDefinition(novena) },
+                colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            color = Color(0xFF32144A),
+                            shape = RoundedCornerShape(4.dp),
+                            border = BorderStroke(1.dp, Color(0xFFA855F7))
+                        ) {
+                            Text(
+                                text = "📿 NOVENA",
+                                color = Color(0xFFE9D5FF),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+
+                        Text(
+                            text = novena.feastTitle,
+                            color = GoldBright,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = novena.novenaTitle,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Color.White
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    com.example.ui.components.ResponsiveText(
+                        text = novena.summary,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ParchmentLight,
+                        maxLines = 4,
+                        minFontSize = 9.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Progress Indicator Bar & Badge
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Surface(
+                            color = if (prayedCount >= 9) Color(0xFF14532D) else if (prayedCount > 0) Color(0xFF312E81) else Color(0xFF1C1917),
+                            shape = RoundedCornerShape(4.dp),
+                            border = BorderStroke(1.dp, if (prayedCount >= 9) Color(0xFF22C55E) else if (prayedCount > 0) Color(0xFF818CF8) else Color(0xFF44403C))
+                        ) {
+                            Text(
+                                text = when {
+                                    prayedCount >= 9 -> "🎉 COMPLETED (9/9 DAYS)"
+                                    prayedCount > 0 -> "PROGRESS: DAY $prayedCount OF 9"
+                                    else -> "PROGRESS: NOT STARTED (0/9 DAYS)"
+                                },
+                                color = if (prayedCount >= 9) Color(0xFF86EFAC) else if (prayedCount > 0) Color(0xFFC7D2FE) else Color(0xFFA1A1AA),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+
+                        if (prayedCount > 0) {
+                            LinearProgressIndicator(
+                                progress = { prayedCount / 9f },
+                                modifier = Modifier
+                                    .width(90.dp)
+                                    .height(6.dp),
+                                color = if (prayedCount >= 9) Color(0xFF22C55E) else GoldBright,
+                                trackColor = Color(0xFF292524)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Intention: ${novena.intention}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMutedParchment,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Button(
+                            onClick = { viewModel.openNovenaDialogByDefinition(novena) },
+                            colors = ButtonDefaults.buttonColors(containerColor = GoldSacred, contentColor = Color.Black),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("📿 Pray / View", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

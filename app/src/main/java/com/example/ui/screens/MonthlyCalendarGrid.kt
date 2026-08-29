@@ -146,7 +146,8 @@ fun CustomCalendarAdapter(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(days) { cell ->
+                items(days.size, key = { index -> days[index]?.info?.dateString ?: "empty_$index" }) { index ->
+                    val cell = days[index]
                     if (cell == null) {
                         Spacer(modifier = Modifier.aspectRatio(0.75f))
                     } else {

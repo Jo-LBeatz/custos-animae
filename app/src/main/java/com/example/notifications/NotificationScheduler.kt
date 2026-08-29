@@ -106,6 +106,16 @@ object NotificationScheduler {
                 enabled = profile?.liturgicalSeasonNotificationsEnabled == true && profile.notificationEnabled == true,
                 isDaily = true
             )
+
+            // Feast Novena Start Banner Notifications (Daily check at novenaNotificationTime)
+            scheduleDevotionReminder(
+                context,
+                "NOVENA_START",
+                profile?.novenaNotificationTime ?: "08:00",
+                intentId = 7104,
+                enabled = profile?.novenaNotificationsEnabled != false && profile?.notificationEnabled != false,
+                isDaily = true
+            )
         // 3. Schedule Task Notifications for Daily, Weekly, Monthly, Yearly duties
         duties.forEach { duty ->
             scheduleDutyNotification(context, alarmManager, duty)

@@ -715,7 +715,7 @@ fun DutyEditDialog(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
                             ) {
-                                items(ordinals) { (code, label) ->
+                                items(ordinals, key = { it.first }) { (code, label) ->
                                     FilterChip(
                                         selected = monthlyOrdinal == code,
                                         onClick = { monthlyOrdinal = code },
@@ -734,7 +734,7 @@ fun DutyEditDialog(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
                             ) {
-                                items(weekDays) { day ->
+                                items(weekDays, key = { it }) { day ->
                                     FilterChip(
                                         selected = monthlyDayOfWeek == day,
                                         onClick = { monthlyDayOfWeek = day },
@@ -770,7 +770,7 @@ fun DutyEditDialog(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                             ) {
-                                items(relativeDays) { relRule ->
+                                items(relativeDays, key = { it }) { relRule ->
                                     val parts = relRule.split("_")
                                     val ordinalsList = listOf("1ST" to "First", "2ND" to "Second", "3RD" to "Third", "4TH" to "Fourth", "LST" to "Last")
                                     val ordinalLabel = ordinalsList.find { it.first == parts.getOrNull(0) }?.second ?: parts.getOrNull(0)
@@ -945,7 +945,7 @@ fun DutyEditDialog(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
                             ) {
-                                items(ordinals) { (code, label) ->
+                                items(ordinals, key = { it.first }) { (code, label) ->
                                     FilterChip(
                                         selected = yearlyOrdinal == code,
                                         onClick = { yearlyOrdinal = code },
@@ -964,7 +964,7 @@ fun DutyEditDialog(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
                             ) {
-                                items(weekDays) { day ->
+                                items(weekDays, key = { it }) { day ->
                                     FilterChip(
                                         selected = yearlyDayOfWeek == day,
                                         onClick = { yearlyDayOfWeek = day },
@@ -1032,7 +1032,7 @@ fun DutyEditDialog(
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                             ) {
-                                items(scheduledDaysOfYearList) { dateStr ->
+                                items(scheduledDaysOfYearList, key = { it }) { dateStr ->
                                     val ordinals = listOf("1ST" to "First", "2ND" to "Second", "3RD" to "Third", "4TH" to "Fourth", "LST" to "Last")
                                     val monthNames = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
                                     val formattedDate = if (dateStr.contains("_")) {

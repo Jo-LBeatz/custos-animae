@@ -259,6 +259,14 @@ fun StainedGlassDashboardScreen(
 
                     Spacer(modifier = Modifier.height(2.dp))
 
+                    com.example.ui.components.NovenaBannerCard(
+                        onOpenNovena = { novenaDef ->
+                            viewModel.openNovenaDialogByDefinition(novenaDef)
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
                     RuleOfLifeProgressCard(
                         viewModel = viewModel,
                         duties = duties,
@@ -431,7 +439,7 @@ fun StainedGlassPaneContainer(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(horizontal = 2.dp)
             ) {
-                Text(
+                com.example.ui.components.ResponsiveText(
                     text = AppTranslationHelper.translate(pane.title, appLanguage),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontFamily = FontFamily.Serif,
@@ -441,17 +449,17 @@ fun StainedGlassPaneContainer(
                     ),
                     color = Color(0xFFFBF8EE),
                     textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 2,
+                    minFontSize = 9.sp
                 )
 
-                Text(
+                com.example.ui.components.ResponsiveText(
                     text = AppTranslationHelper.translate(pane.subtitle, appLanguage),
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.5.sp),
                     color = Color(0xFFCBD5E1),
                     textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 2,
+                    minFontSize = 7.5.sp
                 )
             }
 
@@ -462,7 +470,7 @@ fun StainedGlassPaneContainer(
                 border = BorderStroke(0.8.dp, GoldSacred.copy(alpha = 0.7f)),
                 modifier = Modifier.padding(bottom = 2.dp)
             ) {
-                Text(
+                com.example.ui.components.ResponsiveText(
                     text = AppTranslationHelper.translateDynamic(pane.liveBadge, appLanguage),
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                     style = MaterialTheme.typography.labelSmall.copy(
@@ -470,8 +478,8 @@ fun StainedGlassPaneContainer(
                         fontSize = 9.5.sp
                     ),
                     color = GoldBright,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 2,
+                    minFontSize = 7.5.sp,
                     textAlign = TextAlign.Center
                 )
             }
@@ -911,7 +919,7 @@ fun LiturgicalSeasonTrackerCard(
 
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        Text(
+                        com.example.ui.components.ResponsiveText(
                             text = info.shortName,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
@@ -919,11 +927,11 @@ fun LiturgicalSeasonTrackerCard(
                             ),
                             color = if (isCurrent) GoldBright else TextMutedParchment,
                             textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            maxLines = 2,
+                            minFontSize = 7.5.sp
                         )
 
-                        Text(
+                        com.example.ui.components.ResponsiveText(
                             text = info.latinName,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 8.sp,
@@ -931,7 +939,8 @@ fun LiturgicalSeasonTrackerCard(
                             ),
                             color = if (isCurrent) GoldLight.copy(alpha = 0.8f) else TextMutedParchment.copy(alpha = 0.5f),
                             textAlign = TextAlign.Center,
-                            maxLines = 1
+                            maxLines = 2,
+                            minFontSize = 6.5.sp
                         )
                     }
 
@@ -1189,20 +1198,6 @@ fun RegulaVitaeDashboardCard(
                     Icon(Icons.Default.Language, contentDescription = null, tint = GoldBright, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Website", fontSize = 11.sp, color = ParchmentLight)
-                }
-
-                OutlinedButton(
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://whatsapp.com/channel/0029VbCj8TYKGGGDxtDcrc0h"))
-                        context.startActivity(intent)
-                    },
-                    border = BorderStroke(1.dp, Color(0xFF25D366)),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(Icons.Default.Forum, contentDescription = null, tint = Color(0xFF25D366), modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("WhatsApp", fontSize = 11.sp, color = ParchmentLight)
                 }
 
                 OutlinedButton(

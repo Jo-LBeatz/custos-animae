@@ -230,6 +230,13 @@ fun SettingsScreen(
         mutableStateOf(profile?.liturgicalSeasonNotificationsEnabled ?: true)
     }
 
+    var novenaNotificationsEnabled by remember(profile?.novenaNotificationsEnabled) {
+        mutableStateOf(profile?.novenaNotificationsEnabled ?: true)
+    }
+    var novenaNotificationTimeInput by remember(profile?.novenaNotificationTime) {
+        mutableStateOf(profile?.novenaNotificationTime ?: "08:00")
+    }
+
     var isOptimizedIgnored by remember {
         mutableStateOf(isBatteryOptimizationIgnored(context))
     }
@@ -871,6 +878,93 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = ParchmentLight
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Feast Novena Banner Notifications Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("novena_notifications_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("📿 ", fontSize = 18.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Feast Novena Banner Notifications",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = GoldBright
+                        )
+                    }
+                    Switch(
+                        checked = novenaNotificationsEnabled,
+                        onCheckedChange = { enabled ->
+                            novenaNotificationsEnabled = enabled
+                            viewModel.updateNotificationPreferences(
+                                morningTimeInput,
+                                eveningTimeInput,
+                                saintTimeInput,
+                                notificationsEnabled,
+                                angelusMorningInput,
+                                angelusNoonInput,
+                                angelusEveningInput,
+                                angelusEnabled,
+                                sacredHeartTimeInput,
+                                sacredHeartEnabled,
+                                immaculateHeartTimeInput,
+                                immaculateHeartEnabled,
+                                liturgicalSeasonEnabled,
+                                enabled,
+                                novenaNotificationTimeInput
+                            )
+                            Toast.makeText(context, "Novena start notifications ${if (enabled) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = GoldBright, checkedTrackColor = CrimsonBurgundy),
+                        modifier = Modifier.testTag("novena_notifications_toggle")
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Differentiated high-priority banner notifications triggered automatically on the exact starting day (Day 1 of 9) of major Catholic feast novenas.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+
+                if (novenaNotificationsEnabled) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = DarkCathedralCardBorder)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    NotificationTimeRow(
+                        title = "Novena Start Notification Hour",
+                        subtitle = "Daily check for starting novenas",
+                        time = novenaNotificationTimeInput,
+                        onClick = {
+                            tempTimeValue = novenaNotificationTimeInput
+                            showTimeEditDialog = "NOVENA"
+                        },
+                        onTestClick = {
+                            viewModel.triggerTestNovenaNotification()
+                            Toast.makeText(context, "Fired Special Novena Start Banner Notification!", Toast.LENGTH_SHORT).show()
+                        },
+                        testTagPrefix = "novena_start"
+                    )
+                }
             }
         }
 
@@ -1740,21 +1834,6 @@ fun SettingsScreen(
                         Text("Official Website (regulavitae.vercel.app)", color = ParchmentLight, fontSize = 12.sp, modifier = Modifier.weight(1f))
                     }
 
-                    // WhatsApp
-                    OutlinedButton(
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://whatsapp.com/channel/0029VbCj8TYKGGGDxtDcrc0h"))
-                            context.startActivity(intent)
-                        },
-                        modifier = Modifier.fillMaxWidth().testTag("settings_social_whatsapp"),
-                        border = BorderStroke(1.dp, Color(0xFF25D366)),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF25D366), modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Join WhatsApp Channel", color = ParchmentLight, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                    }
-
                     // Instagram
                     OutlinedButton(
                         onClick = {
@@ -1880,6 +1959,7 @@ fun SettingsScreen(
                             "ANGELUS_EVENING" -> angelusEveningInput = cleanTime
                             "SACRED_HEART" -> sacredHeartTimeInput = cleanTime
                             "IMMACULATE_HEART" -> immaculateHeartTimeInput = cleanTime
+                            "NOVENA" -> novenaNotificationTimeInput = cleanTime
                         }
                         viewModel.updateNotificationPreferences(
                             morningTimeInput,
@@ -1893,7 +1973,11 @@ fun SettingsScreen(
                             sacredHeartTimeInput,
                             sacredHeartEnabled,
                             immaculateHeartTimeInput,
-                            immaculateHeartEnabled, liturgicalSeasonEnabled)
+                            immaculateHeartEnabled,
+                            liturgicalSeasonEnabled,
+                            novenaNotificationsEnabled,
+                            novenaNotificationTimeInput
+                        )
                         Toast.makeText(context, "System prayer notification time updated.", Toast.LENGTH_SHORT).show()
                         showTimeEditDialog = null
                     },

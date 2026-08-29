@@ -79,7 +79,9 @@ data class UserProfile(
     val sacredHeartTime: String = "08:00",
     val immaculateHeartEnabled: Boolean = true,
     val immaculateHeartTime: String = "08:00",
-    val liturgicalSeasonNotificationsEnabled: Boolean = true
+    val liturgicalSeasonNotificationsEnabled: Boolean = true,
+    val novenaNotificationsEnabled: Boolean = true,
+    val novenaNotificationTime: String = "08:00"
 )
 
 @Entity(
@@ -124,7 +126,8 @@ data class PrayerEntity(
     val subtitle: String = "",
     val englishText: String,
     val latinText: String = "",
-    val notes: String = ""
+    val notes: String = "",
+    val isBookmarked: Boolean = false
 )
 
 @Entity(
@@ -205,6 +208,45 @@ data class RelapseLog(
     val triggerNote: String = "",
     val resolutionNote: String = ""
 )
+
+@Entity(
+    tableName = "novenas",
+    indices = [Index(value = ["category"]), Index(value = ["fixedStartMonth", "fixedStartDay"])]
+)
+data class NovenaEntity(
+    @PrimaryKey val id: String,
+    val feastTitle: String,
+    val novenaTitle: String,
+    val fixedStartMonth: Int? = null,
+    val fixedStartDay: Int? = null,
+    val fixedFeastMonth: Int? = null,
+    val fixedFeastDay: Int? = null,
+    val category: String = "SAINT",
+    val summary: String = "",
+    val intention: String = "",
+    val englishPrayer: String = "",
+    val latinPrayer: String = "",
+    val isMovable: Boolean = false,
+    val movableType: String = "",
+    val isEnrolled: Boolean = true,
+    val lastPrayedDay: Int = 0,
+    val lastPrayedDate: String = "", // YYYY-MM-DD
+    val completedCount: Int = 0
+)
+
+@Entity(
+    tableName = "novena_progress_logs",
+    indices = [Index(value = ["novenaId"]), Index(value = ["datePrayed"])]
+)
+data class NovenaProgressEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val novenaId: String,
+    val dayNumber: Int, // 1..9
+    val datePrayed: String, // YYYY-MM-DD
+    val notes: String = "",
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 
 
 
