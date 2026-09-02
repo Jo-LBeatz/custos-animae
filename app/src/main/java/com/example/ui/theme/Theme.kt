@@ -34,24 +34,24 @@ private val DarkCathedralColorScheme = darkColorScheme(
 )
 
 private val LightCathedralColorScheme = lightColorScheme(
-    primary = StaticCrimsonBurgundy,        // Rich Burgundy Red (#800020)
-    onPrimary = StaticGoldBright,           // Radiant Gold (#FFD700) on red buttons/headers
-    primaryContainer = Color(0xFFF7EFE4),   // Soft Warm Golden Parchment
-    onPrimaryContainer = StaticGoldenBrown, // Deep Golden Brown (#704D1A)
-    secondary = StaticWarmBronze,           // Rich Bronze/Gold (#8A5A04)
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFFAF3E6), // Light Ivory Golden Tint
-    onSecondaryContainer = StaticGoldenBrown, // Rich Golden Brown
-    tertiary = StaticGoldenBrown,           // Deep Golden Brown
+    primary = StaticCrimsonBurgundy,        // Rich Missal Rubric Red (#800020)
+    onPrimary = StaticGoldBright,           // Radiant Illuminated Gold on red
+    primaryContainer = Color(0xFFF2EAD8),   // Soft Warm Aged Parchment Vellum
+    onPrimaryContainer = StaticGoldenBrown, // Deep Monastic Ink Brown
+    secondary = StaticWarmBronze,           // Antique Bronze Gold
+    onSecondary = StaticParchmentLight,
+    secondaryContainer = Color(0xFFECE2CB), // Muted Ivory Vellum Tint
+    onSecondaryContainer = StaticGoldenBrown, // Rich Golden Ink
+    tertiary = StaticGoldenBrown,           // Deep Monastic Ink Brown
     onTertiary = StaticLightGold,           // Light Gold
-    background = Color(0xFFFAF7EE),         // Classic Parchment Light
-    onBackground = Color(0xFF1C1917),       // Crisp Dark Charcoal text
-    surface = Color(0xFFFFFFFF),            // Clean White surface
-    onSurface = Color(0xFF1C1917),          // Crisp Dark Charcoal text
-    surfaceVariant = Color(0xFFF1EAE0),     // Parchment Card surface
-    onSurfaceVariant = Color(0xFF4A4035),   // Muted Warm Brown text
-    outline = StaticWarmBronze,             // Golden Bronze outline
-    outlineVariant = Color(0xFFD6C8AF)      // Subtle Parchment Card border
+    background = Color(0xFFFAF5EA),         // Authentic Muted Ancient Parchment Background
+    onBackground = Color(0xFF241C15),       // Deep Ancient Monastic Ink text
+    surface = Color(0xFFF4EEE0),            // Traditional Prayer Book Page Parchment Surface
+    onSurface = Color(0xFF241C15),          // Deep Ancient Monastic Ink text
+    surfaceVariant = Color(0xFFEAE2CE),     // Aged Prayer Book Card Vellum
+    onSurfaceVariant = Color(0xFF4A3D30),   // Muted Antique Warm Ink text
+    outline = StaticWarmBronze,             // Antique Bronze outline
+    outlineVariant = Color(0xFFD3C6AE)      // Aged Parchment Card border
 )
 
 // -------------------------------------------------------------
@@ -516,14 +516,14 @@ fun MyApplicationTheme(
                 LiturgicalTheme.crimsonBurgundy = StaticCrimsonBurgundy
                 LiturgicalTheme.crimsonDeep = StaticCrimsonDeep
                 LiturgicalTheme.crimsonLight = Color(0xFF9E1B32)
-                LiturgicalTheme.darkCathedralBackground = Color(0xFFFAF7EE)
-                LiturgicalTheme.darkCathedralSurface = Color(0xFFFFFFFF)
-                LiturgicalTheme.darkCathedralSurfaceVariant = Color(0xFFF1EAE0)
-                LiturgicalTheme.darkCathedralCardBorder = Color(0xFFD6C8AF)
-                LiturgicalTheme.parchmentLight = Color(0xFF1C1917)
-                LiturgicalTheme.parchmentCard = Color(0xFFF1EAE0)
+                LiturgicalTheme.darkCathedralBackground = Color(0xFFFAF5EA)
+                LiturgicalTheme.darkCathedralSurface = Color(0xFFF4EEE0)
+                LiturgicalTheme.darkCathedralSurfaceVariant = Color(0xFFEAE2CE)
+                LiturgicalTheme.darkCathedralCardBorder = Color(0xFFD3C6AE)
+                LiturgicalTheme.parchmentLight = Color(0xFF241C15)
+                LiturgicalTheme.parchmentCard = Color(0xFFEAE2CE)
                 LiturgicalTheme.textGoldHighlight = StaticGoldenBrown
-                LiturgicalTheme.textMutedParchment = Color(0xFF554A3E)
+                LiturgicalTheme.textMutedParchment = Color(0xFF4A3D30)
             }
         }
     }

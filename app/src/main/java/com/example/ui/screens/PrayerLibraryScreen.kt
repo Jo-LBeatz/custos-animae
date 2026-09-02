@@ -103,14 +103,14 @@ fun PrayerLibraryScreen(
     val categories = listOf(
         "⭐ Favorites (${bookmarkedPrayers.size})",
         "Morning Prayers",
+        "Leonine Prayers",
         "Night Prayers",
         "Holy Rosary",
         "Eucharistic",
         "Protection & Saints",
         "Angelus & Regina",
         "Immaculate Heart",
-        "Sacred Heart",
-        "📿 Feast Novenas"
+        "Sacred Heart"
     )
 
     val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
@@ -239,14 +239,14 @@ fun PrayerLibraryScreen(
             when (selectedCategoryIndex) {
                 0 -> BookmarkedPrayersList(bookmarkedPrayers = bookmarkedPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention)
                 1 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.morningPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                2 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.nightPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                3 -> InteractiveRosaryViewer(isLatin = isLatinMode, viewModel = viewModel, onLaunchFullRosary = { showFullRosaryScreen = true })
-                4 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.eucharisticDevotions, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                5 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.protectionAndSaints, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                6 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.angelusAndRegina, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                7 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsImmaculateHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                8 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsSacredHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                9 -> NovenaCategoryList(viewModel = viewModel)
+                2 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.leoninePrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                3 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.nightPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                4 -> InteractiveRosaryViewer(isLatin = isLatinMode, viewModel = viewModel, onLaunchFullRosary = { showFullRosaryScreen = true })
+                5 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.eucharisticDevotions, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                6 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.protectionAndSaints, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                7 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.angelusAndRegina, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                8 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsImmaculateHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                9 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsSacredHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
             }
         } else {
             // Room DB Search Results View
@@ -1345,188 +1345,6 @@ fun InteractiveRosaryViewer(
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
                             Text("Restart Rosary ☩", fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun NovenaCategoryList(viewModel: MainViewModel) {
-    val context = LocalContext.current
-    val currentYear = remember { java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) }
-    val novenas = remember(currentYear) {
-        com.example.data.novena.NovenaData.allNovenas + com.example.data.novena.NovenaData.getMovableNovenasForYear(currentYear)
-    }
-    val novenaProgressLogs by viewModel.allNovenaProgressLogs.collectAsStateWithLifecycle()
-
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(bottom = 120.dp)
-    ) {
-        item {
-            com.example.ui.components.NovenaBannerCard(
-                onOpenNovena = { novenaDef ->
-                    viewModel.openNovenaDialogByDefinition(novenaDef)
-                }
-            )
-        }
-
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "📿 ALL FEAST NOVENAS (${novenas.size})",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = GoldBright
-                )
-
-                Button(
-                    onClick = {
-                        viewModel.triggerTestNovenaNotification()
-                        android.widget.Toast.makeText(context, "Fired Special Novena Start Banner Notification!", android.widget.Toast.LENGTH_SHORT).show()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B2D0A), contentColor = GoldBright),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text("🔔 Test Banner Alert", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        items(novenas, key = { it.id }) { novena ->
-            val prayedCount = remember(novenaProgressLogs, novena.id) {
-                novenaProgressLogs.filter { it.novenaId == novena.id }.map { it.dayNumber }.toSet().size
-            }
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, GoldDark, RoundedCornerShape(12.dp))
-                    .clickable { viewModel.openNovenaDialogByDefinition(novena) },
-                colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface)
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            color = Color(0xFF32144A),
-                            shape = RoundedCornerShape(4.dp),
-                            border = BorderStroke(1.dp, Color(0xFFA855F7))
-                        ) {
-                            Text(
-                                text = "📿 NOVENA",
-                                color = Color(0xFFE9D5FF),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-
-                        Text(
-                            text = novena.feastTitle,
-                            color = GoldBright,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = novena.novenaTitle,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    com.example.ui.components.ResponsiveText(
-                        text = novena.summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ParchmentLight,
-                        maxLines = 4,
-                        minFontSize = 9.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Progress Indicator Bar & Badge
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Surface(
-                            color = if (prayedCount >= 9) Color(0xFF14532D) else if (prayedCount > 0) Color(0xFF312E81) else Color(0xFF1C1917),
-                            shape = RoundedCornerShape(4.dp),
-                            border = BorderStroke(1.dp, if (prayedCount >= 9) Color(0xFF22C55E) else if (prayedCount > 0) Color(0xFF818CF8) else Color(0xFF44403C))
-                        ) {
-                            Text(
-                                text = when {
-                                    prayedCount >= 9 -> "🎉 COMPLETED (9/9 DAYS)"
-                                    prayedCount > 0 -> "PROGRESS: DAY $prayedCount OF 9"
-                                    else -> "PROGRESS: NOT STARTED (0/9 DAYS)"
-                                },
-                                color = if (prayedCount >= 9) Color(0xFF86EFAC) else if (prayedCount > 0) Color(0xFFC7D2FE) else Color(0xFFA1A1AA),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-
-                        if (prayedCount > 0) {
-                            LinearProgressIndicator(
-                                progress = { prayedCount / 9f },
-                                modifier = Modifier
-                                    .width(90.dp)
-                                    .height(6.dp),
-                                color = if (prayedCount >= 9) Color(0xFF22C55E) else GoldBright,
-                                trackColor = Color(0xFF292524)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Intention: ${novena.intention}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMutedParchment,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Button(
-                            onClick = { viewModel.openNovenaDialogByDefinition(novena) },
-                            colors = ButtonDefaults.buttonColors(containerColor = GoldSacred, contentColor = Color.Black),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("📿 Pray / View", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

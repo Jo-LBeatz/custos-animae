@@ -126,11 +126,6 @@ class MainActivity : ComponentActivity() {
                     keyguardManager.requestDismissKeyguard(this, null)
                 }
             }
-        } else if (intent != null && intent.action == "ACTION_OPEN_NOVENA") {
-            val novenaId = intent.getStringExtra("EXTRA_NOVENA_ID")
-            if (novenaId != null) {
-                viewModel.openNovenaDialog(novenaId)
-            }
         }
     }
 
@@ -379,26 +374,6 @@ fun MainAppContent(
             },
             onDismiss = { dontAskAgain ->
                 viewModel.dismissPageVisibilityPrompt(dontAskAgain)
-            }
-        )
-    }
-
-    val selectedNovenaForDialog by viewModel.selectedNovenaForDialog.collectAsStateWithLifecycle()
-    val allNovenaProgressLogs by viewModel.allNovenaProgressLogs.collectAsStateWithLifecycle()
-
-    selectedNovenaForDialog?.let { novenaDef ->
-        val completedDaysForNovena = remember(allNovenaProgressLogs, novenaDef) {
-            allNovenaProgressLogs
-                .filter { it.novenaId == novenaDef.id }
-                .map { it.dayNumber }
-                .toSet()
-        }
-        com.example.ui.components.NovenaPrayerDialog(
-            novena = novenaDef,
-            onDismiss = { viewModel.closeNovenaDialog() },
-            initialCompletedDays = completedDaysForNovena,
-            onMarkDayPrayed = { novenaId, day ->
-                viewModel.markNovenaDayPrayed(novenaId, day)
             }
         )
     }

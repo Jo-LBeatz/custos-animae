@@ -183,40 +183,6 @@ interface AppDao {
 
     @Query("DELETE FROM call_logs")
     suspend fun clearCallLogs()
-
-    // Novenas & Novena Progress Local Storage
-    @Query("SELECT * FROM novenas ORDER BY novenaTitle ASC")
-    fun getAllNovenas(): Flow<List<NovenaEntity>>
-
-    @Query("SELECT * FROM novenas ORDER BY novenaTitle ASC")
-    suspend fun getAllNovenasSync(): List<NovenaEntity>
-
-    @Query("SELECT * FROM novenas WHERE id = :id")
-    suspend fun getNovenaById(id: String): NovenaEntity?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNovena(novena: NovenaEntity)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNovenas(novenas: List<NovenaEntity>)
-
-    @Query("SELECT COUNT(*) FROM novenas")
-    suspend fun getNovenasCount(): Int
-
-    @Query("UPDATE novenas SET lastPrayedDay = :day, lastPrayedDate = :dateStr, completedCount = completedCount + CASE WHEN :day = 9 THEN 1 ELSE 0 END WHERE id = :novenaId")
-    suspend fun updateNovenaLastPrayed(novenaId: String, day: Int, dateStr: String)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNovenaProgress(log: NovenaProgressEntity)
-
-    @Query("SELECT * FROM novena_progress_logs WHERE novenaId = :novenaId ORDER BY datePrayed DESC, dayNumber DESC")
-    fun getNovenaProgressLogs(novenaId: String): Flow<List<NovenaProgressEntity>>
-
-    @Query("SELECT * FROM novena_progress_logs WHERE novenaId = :novenaId ORDER BY datePrayed DESC, dayNumber DESC")
-    suspend fun getNovenaProgressLogsSync(novenaId: String): List<NovenaProgressEntity>
-
-    @Query("SELECT * FROM novena_progress_logs ORDER BY timestamp DESC")
-    fun getAllNovenaProgressLogs(): Flow<List<NovenaProgressEntity>>
 }
 
 

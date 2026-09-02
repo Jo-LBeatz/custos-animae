@@ -22,6 +22,21 @@ object PrayerAndMissalDataSeeder {
             )
         }
 
+        // 1b. Leonine Prayers
+        TraditionalPrayerLibrary.leoninePrayers.forEach { item ->
+            list.add(
+                PrayerEntity(
+                    id = item.id,
+                    title = item.title,
+                    category = item.category,
+                    subtitle = item.subtitle,
+                    englishText = item.englishText,
+                    latinText = item.latinText,
+                    notes = item.notes
+                )
+            )
+        }
+
         // 2. Night Prayers
         TraditionalPrayerLibrary.nightPrayers.forEach { item ->
             list.add(

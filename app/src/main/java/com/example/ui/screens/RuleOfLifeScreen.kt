@@ -261,23 +261,30 @@ fun RuleOfLifeScreen(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     // Frequency Filter Tabs
-                    TabRow(
-                        selectedTabIndex = when (selectedFrequency) {
-                            "DAILY" -> 0
-                            "WEEKLY" -> 1
-                            "MONTHLY" -> 2
-                            else -> 3
-                        },
-                        containerColor = DarkCathedralSurface,
-                        contentColor = GoldBright,
-                        indicator = {}
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(DarkCathedralSurface, RoundedCornerShape(10.dp))
+                            .border(1.dp, GoldDark.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                            .padding(3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        listOf("DAILY", "WEEKLY", "MONTHLY", "YEARLY").forEachIndexed { index, freq ->
+                        listOf("DAILY", "WEEKLY", "MONTHLY", "YEARLY").forEach { freq ->
                             val isSelected = selectedFrequency == freq
-                            Tab(
+                            Surface(
                                 selected = isSelected,
                                 onClick = { selectedFrequency = freq },
-                                text = {
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(36.dp),
+                                shape = RoundedCornerShape(7.dp),
+                                color = if (isSelected) GoldSacred.copy(alpha = 0.25f) else Color.Transparent,
+                                border = if (isSelected) BorderStroke(1.dp, GoldBright) else null
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(horizontal = 2.dp)
+                                ) {
                                     com.example.ui.components.ResponsiveText(
                                         text = freq,
                                         style = MaterialTheme.typography.labelMedium.copy(
@@ -285,11 +292,12 @@ fun RuleOfLifeScreen(
                                             fontSize = 11.sp
                                         ),
                                         color = if (isSelected) GoldBright else TextMutedParchment,
-                                        maxLines = 2,
+                                        maxLines = 1,
+                                        minFontSize = 7.sp,
                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                     )
                                 }
-                            )
+                            }
                         }
                     }
 

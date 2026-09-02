@@ -987,7 +987,7 @@ fun LiturgicalColorAndSeasonWidget(
                 "Paschaltide (Eastertide)",
                 "Tempus Paschale",
                 "The Triumph of the Resurrection & Holy Ghost",
-                "Joyful singing of Alleluia, celebrating the Ascension, and Pentecost Novena."
+                "Joyful singing of Alleluia, celebrating the Ascension, and Pentecost season."
             )
             com.example.data.calendar.LiturgicalSeason.PENTECOST_SEASON -> Quadruple(
                 "Time after Pentecost",

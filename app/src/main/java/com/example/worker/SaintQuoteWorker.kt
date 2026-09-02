@@ -70,8 +70,19 @@ class SaintQuoteWorker(
             )
         }
 
-        // Add additional traditional Patristic / Doctor of the Church quotations
-        if (traditionalQuotes.isEmpty()) {
+        // Always include today's quote from Desert Fathers & Traditional Saints for Rule of Life discipline
+        val desertFatherWisdom = com.example.data.calendar.DesertFathersAndSaintsQuotes.getDailyQuoteForDate()
+        traditionalQuotes.add(
+            SaintQuoteEntity(
+                saintId = mmdd,
+                saintName = "${desertFatherWisdom.saintOrFatherName} (${desertFatherWisdom.era})",
+                quoteText = desertFatherWisdom.quoteText,
+                sourceWork = "${desertFatherWisdom.sourceWork} • [Rule Focus: ${desertFatherWisdom.disciplineCategory}]"
+            )
+        )
+
+        // Add additional traditional Patristic / Doctor of the Church quotations if list was empty
+        if (traditionalQuotes.size == 1 && saint.quote.isBlank()) {
             traditionalQuotes.add(
                 SaintQuoteEntity(
                     saintId = mmdd,

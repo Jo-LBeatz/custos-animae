@@ -8,8 +8,10 @@ import android.util.Log
 import com.example.data.calendar.Roman1954Calendar
 import com.example.data.calendar.Roman1954DataSeeder
 import com.example.data.calendar.SaintData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -61,19 +63,19 @@ class SpiritualRepository(
         }
     }
 
-    suspend fun ensureJsonPrepopulated() {
+    suspend fun ensureJsonPrepopulated() = withContext(Dispatchers.IO) {
         context?.let { ctx ->
             LiturgicalJsonPrepopulator.populateFromJsonAsset(ctx, appDao)
         }
     }
 
-    suspend fun ensureCalendarSeeded() {
+    suspend fun ensureCalendarSeeded() = withContext(Dispatchers.IO) {
         ensureJsonPrepopulated()
         val entries = Roman1954DataSeeder.getInitialCalendarEntries()
         appDao.insertCalendarEntries(entries)
     }
 
-    suspend fun ensurePrayersSeeded() {
+    suspend fun ensurePrayersSeeded() = withContext(Dispatchers.IO) {
         ensureJsonPrepopulated()
         val prayers = PrayerAndMissalDataSeeder.getInitialPrayers()
         if (appDao.getPrayersCount() < prayers.size) {
@@ -509,57 +511,5 @@ class SpiritualRepository(
         sb.append("========================================================\n")
         
         return sb.toString()
-    }
-
-    // Novenas Room Local Storage & Seeding
-    val allNovenas: Flow<List<NovenaEntity>> = appDao.getAllNovenas()
-    val allNovenaLogs: Flow<List<NovenaProgressEntity>> = appDao.getAllNovenaProgressLogs()
-
-    suspend fun ensureNovenasSeeded() {
-        try {
-            val count = appDao.getNovenasCount()
-            if (count == 0) {
-                val defaultDefs = com.example.data.novena.NovenaData.allNovenas
-                val entities = defaultDefs.map { def ->
-                    NovenaEntity(
-                        id = def.id,
-                        feastTitle = def.feastTitle,
-                        novenaTitle = def.novenaTitle,
-                        fixedStartMonth = def.fixedStartMonth,
-                        fixedStartDay = def.fixedStartDay,
-                        fixedFeastMonth = def.fixedFeastMonth,
-                        fixedFeastDay = def.fixedFeastDay,
-                        category = def.category,
-                        summary = def.summary,
-                        intention = def.intention,
-                        englishPrayer = def.englishPrayer,
-                        latinPrayer = def.latinPrayer,
-                        isMovable = def.isMovable,
-                        movableType = def.movableType
-                    )
-                }
-                appDao.insertNovenas(entities)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    suspend fun recordNovenaDayPrayed(novenaId: String, dayNumber: Int, notes: String = "") {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val currentDate = dateFormat.format(Date())
-        val progressLog = NovenaProgressEntity(
-            novenaId = novenaId,
-            dayNumber = dayNumber,
-            datePrayed = currentDate,
-            notes = notes,
-            timestamp = System.currentTimeMillis()
-        )
-        appDao.insertNovenaProgress(progressLog)
-        appDao.updateNovenaLastPrayed(novenaId, dayNumber, currentDate)
-    }
-
-    fun getNovenaProgressLogs(novenaId: String): Flow<List<NovenaProgressEntity>> {
-        return appDao.getNovenaProgressLogs(novenaId)
     }
 }

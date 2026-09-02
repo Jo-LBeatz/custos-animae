@@ -106,16 +106,6 @@ object NotificationScheduler {
                 enabled = profile?.liturgicalSeasonNotificationsEnabled == true && profile.notificationEnabled == true,
                 isDaily = true
             )
-
-            // Feast Novena Start Banner Notifications (Daily check at novenaNotificationTime)
-            scheduleDevotionReminder(
-                context,
-                "NOVENA_START",
-                profile?.novenaNotificationTime ?: "08:00",
-                intentId = 7104,
-                enabled = profile?.novenaNotificationsEnabled != false && profile?.notificationEnabled != false,
-                isDaily = true
-            )
         // 3. Schedule Task Notifications for Daily, Weekly, Monthly, Yearly duties
         duties.forEach { duty ->
             scheduleDutyNotification(context, alarmManager, duty)
@@ -547,6 +537,39 @@ object NotificationScheduler {
     }
 
     fun scheduleDutyNotification(context: Context, alarmManager: AlarmManager, duty: SpiritualDuty) {
+        if (duty.isCompleted) {
+            // Duty is marked completed (early or on time): disarm active alarms, notifications, and call service for today
+            cancelDutyNotification(context, duty.id)
+
+            // Schedule the duty for the next cycle (after today)
+            val endOfToday = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 59)
+                set(Calendar.SECOND, 59)
+                set(Calendar.MILLISECOND, 999)
+            }.timeInMillis
+
+            val intent = Intent(context, NotificationReceiver::class.java).apply {
+                action = ACTION_DUTY_REMINDER
+                putExtra("EXTRA_TYPE", "DUTY")
+                putExtra("EXTRA_ID", duty.id)
+                putExtra("EXTRA_TITLE", duty.title)
+                putExtra("EXTRA_IS_COMPLETED", true)
+                putExtra("EXTRA_MESSAGE", duty.description.ifBlank { "Reminder: It is time to perform your task '${duty.title}'." })
+            }
+
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                1000 + duty.id,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val nextTriggerMs = calculateNextTriggerTime(context, duty, fromTimeMs = endOfToday)
+            setAlarm(context, alarmManager, nextTriggerMs, pendingIntent)
+            return
+        }
+
         val intent = Intent(context, NotificationReceiver::class.java).apply {
             action = ACTION_DUTY_REMINDER
             putExtra("EXTRA_TYPE", "DUTY")

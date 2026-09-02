@@ -6,28 +6,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 
 // Raw Static Color Constants for Palette Definition
-val StaticGoldSacred = Color(0xFFD4AF37)
-val StaticGoldBright = Color(0xFFFFD700)
-val StaticGoldLight = Color(0xFFF9E79F)
-val StaticGoldDark = Color(0xFF997A15)
-val StaticGoldenBrown = Color(0xFF704D1A)
-val StaticWarmBronze = Color(0xFF8A5A04)
-val StaticLightGold = Color(0xFFFFF4C7)
-val StaticDeepBrownGold = Color(0xFF5C3805)
+val StaticGoldSacred = Color(0xFFC8A332)
+val StaticGoldBright = Color(0xFFE5C158)
+val StaticGoldLight = Color(0xFFF5E8BE)
+val StaticGoldDark = Color(0xFF8B6B15)
+val StaticGoldenBrown = Color(0xFF6E4B17)
+val StaticWarmBronze = Color(0xFF855604)
+val StaticLightGold = Color(0xFFFAF1CD)
+val StaticDeepBrownGold = Color(0xFF593605)
 
 val StaticCrimsonBurgundy = Color(0xFF800020)
-val StaticCrimsonDeep = Color(0xFF4A0012)
-val StaticCrimsonLight = Color(0xFFB03A2E)
+val StaticCrimsonDeep = Color(0xFF480010)
+val StaticCrimsonLight = Color(0xFFA82835)
 
-val StaticDarkCathedralBackground = Color(0xFF0E1116)
-val StaticDarkCathedralSurface = Color(0xFF1D242E)
-val StaticDarkCathedralSurfaceVariant = Color(0xFF2A3441)
-val StaticDarkCathedralCardBorder = Color(0xFF5A6B82)
+val StaticDarkCathedralBackground = Color(0xFF120F0D)
+val StaticDarkCathedralSurface = Color(0xFF1E1914)
+val StaticDarkCathedralSurfaceVariant = Color(0xFF28211A)
+val StaticDarkCathedralCardBorder = Color(0xFF594835)
 
-val StaticParchmentLight = Color(0xFFFFFFFF)
-val StaticParchmentCard = Color(0xFFF3EFE0)
-val StaticTextGoldHighlight = Color(0xFFFFE082)
-val StaticTextMutedParchment = Color(0xFFD1D8E0)
+val StaticParchmentLight = Color(0xFFFAF5EA)
+val StaticParchmentCard = Color(0xFFF3ECE0)
+val StaticTextGoldHighlight = Color(0xFFE5C158)
+val StaticTextMutedParchment = Color(0xFFC9BCA4)
 
 // Image Palette Colors: Sacred Rose & Mint Frost (Exact Hex Values)
 val StaticBlushCream = Color(0xFFFDEEF1)   // #FDEEF1

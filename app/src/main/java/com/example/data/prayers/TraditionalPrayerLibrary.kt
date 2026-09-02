@@ -110,6 +110,57 @@ CREDO in Deum Patrem omnipotentem, Creatorem caeli et terrae. Et in Iesum Christ
         )
     )
 
+    val leoninePrayers = listOf(
+        PrayerItem(
+            id = "leonine_prayers_complete",
+            title = "The Complete Leonine Prayers (Preces Leoninae)",
+            category = "Leonine Prayers",
+            subtitle = "Prescribed by Pope Leo XIII after Low Mass for the Church & Conversion of Sinners",
+            englishText = """In the name of the Father, and of the Son, and of the Holy Ghost. Amen.
+
+[1. Three Hail Marys]
+Hail Mary, full of grace, the Lord is with thee. Blessed art thou among women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen. (Recited 3 times)
+
+[2. Hail, Holy Queen]
+Hail, Holy Queen, Mother of Mercy, our life, our sweetness and our hope. To thee do we cry, poor banished children of Eve; to thee do we send up our sighs, mourning and weeping in this valley of tears. Turn then, most gracious advocate, thine eyes of mercy toward us; and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.
+
+V. Pray for us, O holy Mother of God.
+R. That we may be made worthy of the promises of Christ.
+
+[3. Collect for the Church & Sinners]
+Let us pray.
+O God, our refuge and our strength, look down with favor upon Thy people who cry to Thee; and through the intercession of the Glorious and Immaculate Virgin Mary, Mother of God, of Saint Joseph her Spouse, of Thy Blessed Apostles Peter and Paul, and of all the Saints, mercifully and graciously hear the prayers which we pour forth for the conversion of sinners, and for the freedom and exultation of Holy Mother the Church. Through the same Christ Our Lord. Amen.
+
+[4. Prayer to Saint Michael the Archangel]
+Saint Michael the Archangel, defend us in battle; be our protection against the malice and snares of the devil. May God rebuke him, we humbly pray; and do thou, O Prince of the heavenly host, by the divine power, thrust into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen.
+
+[5. Invocation to the Sacred Heart]
+V. Most Sacred Heart of Jesus.
+R. Have mercy on us. (Recited 3 times)""",
+            latinText = """In nomine Patris, et Filii, et Spiritus Sancti. Amen.
+
+[1. Tres Ave Mariae]
+Ave Maria, gratia plena, Dominus tecum. Benedicta tu in mulieribus, et benedictus fructus ventris tui, Iesus. Sancta Maria, Mater Dei, ora pro nobis peccatoribus, nunc et in hora mortis nostrae. Amen. (Ter dicatur)
+
+[2. Salve Regina]
+Salve, Regina, Mater misericordiae, vita, dulcedo, et spes nostra, salve. Ad te clamamus, exsules filii Evae. Ad te suspiramus, gementes et flentes in hac lacrimarum valle. Eia, ergo, advocata nostra, illos tuos misericordes oculos ad nos converte; et Iesum, benedictum fructum ventris tui, nobis post hoc exsilium ostende. O clemens, O pia, O dulcis Virgo Maria.
+
+V. Ora pro nobis, sancta Dei Genitrice.
+R. Ut digni efficiamur promissionibus Christi.
+
+[3. Oratio pro Ecclesia et Peccatoribus]
+Oremus.
+Deus, refugium nostrum et virtus, populum ad te clamantem propitius respice; et intercedente gloriosa et immaculata Virgine Dei Genitrice Maria, cum beato Ioseph eius Sponso, ac beatis Apostolis tuis Petro et Paulo, et omnibus Sanctis, quas pro conversione peccatorum, pro libertate et exaltatione sanctae Matris Ecclesiae, preces effundimus, misericors et benignus exaudi. Per eundem Christum Dominum nostrum. Amen.
+
+[4. Oratio ad Sanctum Michael]
+Sancte Michael Archangele, defende nos in proelio; contra nequitiam et insidias diaboli esto praesidium. Imperet illi Deus, supplices deprecamur: tuque, Princeps militiae caelestis, Satanam aliosque spiritus malignos, qui ad perditionem animarum pervagantur in mundo, divina virtute, in infernum detrude. Amen.
+
+[5. Invocatio ad Cor Iesu]
+V. Cor Iesu Sacratissimum.
+R. Miserere nobis. (Ter dicatur)"""
+        )
+    )
+
     val nightPrayers = listOf(
         PrayerItem(
             id = "n_examination",
@@ -645,11 +696,11 @@ We offer thee our prayers, our penances, and our total devotion, uniting our suf
 Offerimus tibi preces nostras, paenitentias nostras et plenam devotionem nostram, unientes dolores nostros cum lacrimis quas pro nostra salute effudisti. Amor noster te consoletur, o Mater Dolorosa, et impetret a Iesu veniam delictorum nostrorum ac pacem Ecclesiae et universo mundo. Amen."""
         ),
         PrayerItem(
-            id = "novena_immaculate_heart",
-            title = "Traditional Novena to the Immaculate Heart of Mary",
+            id = "immaculate_heart_traditional_prayer",
+            title = "Traditional Prayer to the Immaculate Heart of Mary",
             category = "Immaculate Heart Devotions",
             subtitle = "Roman Raccolta 390",
-            subsection = "Novenas & Classical Devotions",
+            subsection = "Classical Devotions",
             englishText = """O Heart of Mary, Mother of God and our Mother; Heart most worthy of love, in which the Adorable Trinity is well-pleased, and worthy of all the veneration and love of Angels and of men; Heart most like unto the Heart of Jesus, whereof thou art the most perfect copy; Heart full of goodness, which art so compassionate toward our miseries: do thou melt the coldness of our hearts and make them to be entirely turned to the Heart of our Divine Savior.
 
 Infuse into them the love of thy virtues, inflame them with that divine fire wherewith thine own ever burns. Take under thy protection the Holy Church, defend her and be her sweet refuge against every assault of her enemies. Be thou our way to Jesus, and the channel whereby we may receive all the graces needful for our salvation. Amen.""",
@@ -660,7 +711,7 @@ Infuse into them the love of thy virtues, inflame them with that divine fire whe
             title = "Memorare to the Immaculate Heart of Mary",
             category = "Immaculate Heart Devotions",
             subtitle = "Roman Raccolta 395",
-            subsection = "Novenas & Classical Devotions",
+            subsection = "Classical Devotions",
             englishText = """Remember, O most pure and compassionate Virgin Mary, that it is a thing unheard of that anyone who had recourse to thy Immaculate Heart, implored its help, or sought its intercession was left forsaken. Inspired with this confidence, I come to thee, O Virgin of virgins, and to thy maternal Heart do I fly; before thee I stand, sinful and sorrowful. O Mother of the Incarnate Word, despise not my petitions, but in thy clemency hear and answer me. Amen.""",
             latinText = """Memorare, o purissima et clementissima Virgo Maria, a saeculo inauditum esse quemquam ad tuum Immaculatum Cor confugientem, tua implorantem auxilia, tua petentem suffragia, esse derelictum. Tali animatus confidentia, ad tuum Cor maternum curro, ad te venio, coram te gemens peccator assisto. Noli, Mater Verbi Incarnati, verba mea despicere, sed audi propitia et exaudi. Amen."""
         ),
@@ -669,7 +720,7 @@ Infuse into them the love of thy virtues, inflame them with that divine fire whe
             title = "Salutation of St. John Eudes to the Immaculate Heart of Mary",
             category = "Immaculate Heart Devotions",
             subtitle = "Ave Cor Sanctissimum Mariae (St. John Eudes, 1601–1680)",
-            subsection = "Novenas & Classical Devotions",
+            subsection = "Classical Devotions",
             englishText = """Hail, Heart most holy! Hail, Heart most meek! Hail, Heart most humble! Hail, Heart most pure! Hail, Heart most devoted! Hail, Heart most wise! Hail, Heart most patient! Hail, Heart most obedient! Hail, Heart most vigilant! Hail, Heart most faithful! Hail, Heart most blessed! Hail, Heart most merciful! Hail, most loving Heart of Jesus and Mary!
 
 We praise Thee, we bless Thee, we glorify Thee, we give Thee thanks; we love Thee with all our heart, with all our soul, and with all our strength. We offer Thee our heart, we give it to Thee, we consecrate it to Thee, we immolate it to Thee. Receive it and possess it wholly; purify it, enlighten it, sanctify it, that Thou mayest live and reign in it forever. Amen.""",
@@ -682,7 +733,7 @@ Te laudamus, te benedicimus, te glorificamus, tibi gratias agimus; te amamus ex 
             title = "Prayer of St. Anthony Mary Claret to the Immaculate Heart",
             category = "Immaculate Heart Devotions",
             subtitle = "For the Salvation and Conversion of Sinners",
-            subsection = "Novenas & Classical Devotions",
+            subsection = "Classical Devotions",
             englishText = """O Heart of Mary, furnace and instrument of love, enkindle me with the love of God and of my neighbor. Thou didst so ardently desire the salvation of souls that thou didst suffer martyrdom of heart at the foot of the Cross.
 
 Obtain for me, O Mother, an ardent zeal for the salvation of my brethren, that I may spare no labor, fear no trial, and shrink from no sacrifice to win souls to Jesus Christ, and to lead them to the eternal joy of Heaven. Amen.""",
@@ -943,11 +994,11 @@ Forgive, O Lord, our lukewarmness, our wandering thoughts, and our lack of rever
 Dimitte nobis, Domine, tepiditatem nostram et irreverentiam in Sanctissima Praesentia tua. Desideramus te amare pro omnibus qui te non amant, te adorare pro omnibus qui te non adorant, et te benedicere pro omnibus qui nomen sanctum tuum blasphemant. Sit laus, adoratio et amor grato animo Sacratissimo Cordi Iesu in Sanctissimo Sacramento, omni momento, in omnibus tabernaculis mundi, usque ad consummationem saeculi. Amen."""
         ),
         PrayerItem(
-            id = "novena_sacred_heart_padre_pio",
-            title = "Efficacious Novena to the Sacred Heart of Jesus",
+            id = "sacred_heart_padre_pio",
+            title = "Efficacious Devotion to the Sacred Heart of Jesus",
             category = "Sacred Heart Devotions",
-            subtitle = "Padre Pio's Daily Novena of the Three Promises",
-            subsection = "Novenas & Classical Devotions",
+            subtitle = "Padre Pio's Daily Devotion of the Three Promises",
+            subsection = "Classical Devotions",
             englishText = """I. O my Jesus, Who hast said: 'Truly I say to you, ask and you shall receive, seek and you shall find, knock and it shall be opened to you.' Behold, I knock, I seek, and I ask for the grace of (mention petition).
 Our Father... Hail Mary... Glory be...
 Sacred Heart of Jesus, I place all my trust in Thee.
@@ -982,7 +1033,7 @@ Salve Regina... Sancte Ioseph, ora pro nobis. Amen."""
             title = "Daily Offering to the Sacred Heart of Jesus",
             category = "Sacred Heart Devotions",
             subtitle = "Apostleship of Prayer (1844, approved by Pius IX & Leo XIII)",
-            subsection = "Novenas & Classical Devotions",
+            subsection = "Classical Devotions",
             englishText = """O Jesus, through the Immaculate Heart of Mary, I offer Thee my prayers, works, joys, and sufferings of this day, for all the intentions of Thy Sacred Heart, in union with the Holy Sacrifice of the Mass throughout the world, in reparation for my sins, for the intentions of all our associates, and in particular for the intentions of the Sovereign Pontiff. Amen.""",
             latinText = """O Iesu, per Immaculatum Cor Mariae, offero tibi orationes, opera, gaudia et passiones huius diei, pro omnibus intentionibus Sacratissimi Cordis tui, in unione cum Sancto Missae Sacrificio ubique terrarum celebrato, in reparationem peccatorum meorum, et pro intentionibus Summi Pontificis. Amen."""
         ),
@@ -991,7 +1042,7 @@ Salve Regina... Sancte Ioseph, ora pro nobis. Amen."""
             title = "Prayer of St. Gertrude the Great to the Sacred Heart",
             category = "Sacred Heart Devotions",
             subtitle = "Living Fountain of Eternal Life (St. Gertrude, 1256–1302)",
-            subsection = "Novenas & Classical Devotions",
+            subsection = "Classical Devotions",
             englishText = """O Sacred Heart of Jesus, living and life-giving fountain of eternal life, infinite treasury of the Divinity, and burning furnace of divine love, Thou art my refuge and my sanctuary.
 
 O my loving Savior, consume my heart with that burning fire with which Thine own is ever inflamed. Pour down upon my soul those graces which flow from Thy love. Let my heart be so united with Thine that our wills may be one, and that mine may in all things be conformed to Thine. Amen.""",
@@ -1004,7 +1055,7 @@ O Salvator amantissime, consume cor meum illo ardenti igne quo tuum indesinenter
             title = "Prayer of St. Bonaventure to the Sacred Heart",
             category = "Sacred Heart Devotions",
             subtitle = "The Wound of Divine Love (St. Bonaventure, Doctor Seraphicus)",
-            subsection = "Novenas & Classical Devotions",
+            subsection = "Classical Devotions",
             englishText = """O most sweet Jesus, pierce the inmost depths of my soul with the most joyous and health-giving wound of Thy love, with true, serene, and most holy apostolic charity, that my soul may ever languish and melt with love and longing for Thee alone.
 
 May my soul yearn for Thee and faint for Thy courts; may it long to be dissolved and to be with Thee. Grant that my heart may ever hunger after Thee, the Bread of Angels, the refreshment of holy souls, our daily and supersubstantial Bread. Amen.""",
@@ -1017,7 +1068,7 @@ Te concupiscat et deficiat in atria tua, cupiat dissolvi et esse tecum. Da ut co
             title = "Act of Resignation & Offering in Sickness to the Sacred Heart",
             category = "Sacred Heart Devotions",
             subtitle = "Written by Saint Margaret Mary Alacoque",
-            subsection = "Novenas & Classical Devotions",
+            subsection = "Classical Devotions",
             englishText = """O Sacred Heart of Jesus, I accept from Thy hand this sickness and all the sufferings, bodily and spiritual, which it brings, in union with the bitter agony and sufferings of Thy Sacred Heart.
 
 I offer them to Thee in expiation of my sins, for the relief of the souls in Purgatory, and for the sanctification of the Holy Catholic Church. Dispose of me, O Lord, in life and in death, according to Thy holy and adorable will. Amen.""",

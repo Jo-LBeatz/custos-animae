@@ -259,14 +259,6 @@ fun StainedGlassDashboardScreen(
 
                     Spacer(modifier = Modifier.height(2.dp))
 
-                    com.example.ui.components.NovenaBannerCard(
-                        onOpenNovena = { novenaDef ->
-                            viewModel.openNovenaDialogByDefinition(novenaDef)
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
                     RuleOfLifeProgressCard(
                         viewModel = viewModel,
                         duties = duties,
@@ -301,12 +293,13 @@ fun StainedGlassDashboardScreen(
                 )
             }
 
-            // Saintly Inspirations of the Day
+            // Daily Wisdom: Desert Fathers & Traditional Saints
             item(span = { GridItemSpan(columns) }) {
                 val todaySaintQuotes by viewModel.todaySaintQuotes.collectAsStateWithLifecycle()
                 SaintlyQuotesCard(
                     todaySaintQuotes = todaySaintQuotes,
-                    saintName = todaySaint.saintName
+                    saintName = todaySaint.saintName,
+                    onNavigateToRule = { onNavigateToTab(0) }
                 )
             }
 
@@ -1030,65 +1023,248 @@ private data class SeasonInfo(
 @Composable
 fun SaintlyQuotesCard(
     todaySaintQuotes: List<com.example.data.SaintQuoteEntity>,
-    saintName: String
+    saintName: String,
+    onNavigateToRule: () -> Unit = {}
 ) {
-    if (todaySaintQuotes.isEmpty()) return
+    var dayOffset by remember { mutableStateOf(0) }
+    val dailyWisdom = remember(dayOffset) {
+        com.example.data.calendar.DesertFathersAndSaintsQuotes.getDailyQuoteForDate(dayOffset)
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
             .testTag("saintly_quotes_card"),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
         border = BorderStroke(1.dp, GoldDark)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.FormatQuote,
-                    contentDescription = "Saintly Quotes",
-                    tint = GoldBright,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Saintly Quotes: $saintName",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = GoldBright
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-
-            todaySaintQuotes.forEachIndexed { index, quote ->
-                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                    Text(
-                        text = "“${quote.quoteText}”",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontStyle = FontStyle.Italic,
-                            lineHeight = 18.sp
-                        ),
-                        color = ParchmentLight
-                    )
-                    if (quote.sourceWork.isNotBlank()) {
+            // Section Title & Navigation Arrows
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(CrimsonBurgundy.copy(alpha = 0.3f))
+                            .border(1.dp, GoldBright, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FormatQuote,
+                            contentDescription = "Daily Wisdom",
+                            tint = GoldBright,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
                         Text(
-                            text = "— ${quote.sourceWork}",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.SemiBold
+                            text = "Daily Monastic & Saintly Wisdom",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold
                             ),
-                            color = GoldDark,
-                            modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
+                            color = GoldBright
+                        )
+                        Text(
+                            text = "Desert Fathers & Pre-Vatican II Traditional Saints",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMutedParchment
                         )
                     }
                 }
-                if (index < todaySaintQuotes.size - 1) {
-                    HorizontalDivider(
-                        color = DarkCathedralCardBorder,
-                        modifier = Modifier.padding(vertical = 8.dp)
+
+                // Prev/Next buttons
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = { dayOffset-- },
+                        modifier = Modifier.size(32.dp).testTag("quotes_prev_day")
+                    ) {
+                        Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Day Quote", tint = GoldBright)
+                    }
+                    if (dayOffset != 0) {
+                        TextButton(
+                            onClick = { dayOffset = 0 },
+                            contentPadding = PaddingValues(horizontal = 6.dp)
+                        ) {
+                            Text("Today", fontSize = 11.sp, color = GoldLight)
+                        }
+                    }
+                    IconButton(
+                        onClick = { dayOffset++ },
+                        modifier = Modifier.size(32.dp).testTag("quotes_next_day")
+                    ) {
+                        Icon(Icons.Default.ChevronRight, contentDescription = "Next Day Quote", tint = GoldBright)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Discipline Category Badge
+            Surface(
+                color = CrimsonBurgundy.copy(alpha = 0.25f),
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(1.dp, GoldDark.copy(alpha = 0.6f)),
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = GoldBright,
+                        modifier = Modifier.size(12.dp)
                     )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = dailyWisdom.disciplineCategory,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = GoldLight
+                    )
+                }
+            }
+
+            // Main Desert Father / Traditional Saint Quote
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color.Black.copy(alpha = 0.25f))
+                    .border(1.dp, DarkCathedralCardBorder, RoundedCornerShape(10.dp))
+                    .padding(14.dp)
+            ) {
+                Text(
+                    text = "“${dailyWisdom.quoteText}”",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontFamily = FontFamily.Serif,
+                        fontStyle = FontStyle.Italic,
+                        lineHeight = 23.sp
+                    ),
+                    color = ParchmentLight
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "— ${dailyWisdom.saintOrFatherName}",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = GoldBright,
+                    modifier = Modifier.align(Alignment.End)
+                )
+                Text(
+                    text = "${dailyWisdom.era} • ${dailyWisdom.sourceWork}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMutedParchment,
+                    modifier = Modifier.align(Alignment.End)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Practical Rule of Life Discipline Application
+            Surface(
+                color = StaticGoldenBrown.copy(alpha = 0.18f),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, GoldDark.copy(alpha = 0.4f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = GoldBright,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Rule of Life Discipline Practice:",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = GoldLight
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = dailyWisdom.ruleApplication,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ParchmentLight
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Action Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Updates automatically at midnight",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMutedParchment,
+                    fontSize = 10.sp
+                )
+
+                OutlinedButton(
+                    onClick = onNavigateToRule,
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, GoldBright),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GoldBright),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Apply to Rule of Life", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Additional Today's Saint Quotes from Room DB if dayOffset == 0
+            if (dayOffset == 0 && todaySaintQuotes.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = DarkCathedralCardBorder)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Commemorated Saint Reflections ($saintName):",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = GoldDark
+                )
+                todaySaintQuotes.forEach { quote ->
+                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                        Text(
+                            text = "“${quote.quoteText}”",
+                            style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+                            color = ParchmentLight
+                        )
+                        if (quote.sourceWork.isNotBlank()) {
+                            Text(
+                                text = "— ${quote.sourceWork}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMutedParchment,
+                                modifier = Modifier.align(Alignment.End)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -1121,7 +1297,10 @@ fun RegulaVitaeDashboardCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         modifier = Modifier
                             .size(32.dp)
@@ -1136,16 +1315,18 @@ fun RegulaVitaeDashboardCard(
                             modifier = Modifier.size(18.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        com.example.ui.components.ResponsiveText(
                             text = "POWERED BY REGULAVITAE",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontFamily = FontFamily.Serif,
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.8.sp
+                                letterSpacing = 0.6.sp
                             ),
-                            color = GoldBright
+                            color = GoldBright,
+                            maxLines = 2,
+                            minFontSize = 9.sp
                         )
                         Text(
                             text = "My Personal Work & Social Channels",
@@ -1155,16 +1336,20 @@ fun RegulaVitaeDashboardCard(
                     }
                 }
 
+                Spacer(modifier = Modifier.width(6.dp))
+
                 Surface(
                     shape = RoundedCornerShape(6.dp),
                     color = GoldSacred.copy(alpha = 0.2f),
                     border = BorderStroke(0.5.dp, GoldBright.copy(alpha = 0.5f))
                 ) {
-                    Text(
+                    com.example.ui.components.ResponsiveText(
                         text = "Connect",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = GoldBright,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        maxLines = 1,
+                        minFontSize = 8.sp
                     )
                 }
             }
@@ -1186,6 +1371,20 @@ fun RegulaVitaeDashboardCard(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://whatsapp.com/channel/0029Vb8WpzkFi8xWdG8IJf2F"))
+                        context.startActivity(intent)
+                    },
+                    border = BorderStroke(1.dp, Color(0xFF25D366)),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Default.Send, contentDescription = null, tint = Color(0xFF25D366), modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("WhatsApp", fontSize = 11.sp, color = ParchmentLight)
+                }
+
                 OutlinedButton(
                     onClick = {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://regulavitae.vercel.app/"))
