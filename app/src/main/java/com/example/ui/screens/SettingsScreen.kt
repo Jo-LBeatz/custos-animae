@@ -238,6 +238,10 @@ fun SettingsScreen(
         mutableStateOf(isBatteryOptimizationIgnored(context))
     }
 
+    var isExactAlarmGranted by remember {
+        mutableStateOf(checkExactAlarmPermission(context))
+    }
+
     var isOverlayGranted by remember {
         mutableStateOf(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             android.provider.Settings.canDrawOverlays(context)
@@ -249,6 +253,7 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         while (true) {
             isOptimizedIgnored = isBatteryOptimizationIgnored(context)
+            isExactAlarmGranted = checkExactAlarmPermission(context)
             isOverlayGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 android.provider.Settings.canDrawOverlays(context)
             } else {
@@ -1068,7 +1073,7 @@ fun SettingsScreen(
 
         // Background Execution Card
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("background_execution_card"),
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
             border = BorderStroke(1.dp, GoldDark)
@@ -1078,7 +1083,7 @@ fun SettingsScreen(
                     Icon(imageVector = Icons.Default.BatteryChargingFull, contentDescription = null, tint = GoldBright)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Background Execution Status",
+                        text = "Background Execution & Exact Alarms",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold
@@ -1088,20 +1093,88 @@ fun SettingsScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = if (isOptimizedIgnored) "Status: Unrestricted (Notifications will arrive reliably)" else "Status: Battery Optimized (Alarms may be delayed by Android power management)",
+                    text = "Ensure timely rule alarms when your device is locked or in Doze mode by granting unrestricted battery and exact alarm permissions.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isOptimizedIgnored) GoldBright else TextMutedParchment
+                    color = ParchmentLight
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = {
-                        requestIgnoreBatteryOptimization(context)
-                        isOptimizedIgnored = isBatteryOptimizationIgnored(context)
-                    },
-                    border = BorderStroke(1.dp, GoldSacred),
-                    modifier = Modifier.fillMaxWidth()
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Battery Status
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Request Unrestricted Background Execution", color = GoldBright, fontWeight = FontWeight.Bold)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Battery Optimization",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = GoldBright
+                        )
+                        Text(
+                            text = if (isOptimizedIgnored) "Unrestricted (Reliable background delivery)" else "Optimized (OEM may suppress exact triggers)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isOptimizedIgnored) GoldBright else TextMutedParchment
+                        )
+                    }
+                    if (!isOptimizedIgnored) {
+                        TextButton(
+                            onClick = {
+                                requestIgnoreBatteryOptimization(context)
+                                isOptimizedIgnored = isBatteryOptimizationIgnored(context)
+                            }
+                        ) {
+                            Text("Fix", color = GoldBright, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(color = DarkCathedralCardBorder)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Exact Alarm Status
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Exact Alarm Permission",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = GoldBright
+                        )
+                        Text(
+                            text = if (isExactAlarmGranted) "Granted (Alarms dispatch to the exact second)" else "Restricted (Alarms may be batched by OS)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isExactAlarmGranted) GoldBright else TextMutedParchment
+                        )
+                    }
+                    if (!isExactAlarmGranted) {
+                        TextButton(
+                            onClick = {
+                                requestExactAlarmPermission(context)
+                                isExactAlarmGranted = checkExactAlarmPermission(context)
+                            }
+                        ) {
+                            Text("Grant", color = GoldBright, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                if (!isOptimizedIgnored || !isExactAlarmGranted) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = {
+                            if (!isOptimizedIgnored) requestIgnoreBatteryOptimization(context)
+                            if (!isExactAlarmGranted) requestExactAlarmPermission(context)
+                        },
+                        border = BorderStroke(1.dp, GoldSacred),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Grant All Background Permissions", color = GoldBright, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

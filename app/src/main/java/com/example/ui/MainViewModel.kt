@@ -453,18 +453,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // Trigger background worker to fetch or fallback quotes for today's Saint of the Day
             com.example.worker.SaintQuoteWorker.enqueueFetch(application)
 
-            // Automatically ensure alarms are synced with current duties whenever duties change
+            // Real-Time Intelligent Rule Synchronization Engine:
+            // Listens reactively to all Room database additions, reschedules, modifications, and deletions.
             viewModelScope.launch {
                 repository.allDuties.collect { duties ->
-                    if (duties.isNotEmpty()) {
-                        val profile = repository.getUserProfileSync()
-                        com.example.notifications.NotificationScheduler.scheduleAll(
-                            application,
-                            duties,
-                            profile?.saintNotificationTime ?: "07:30",
-                            profile
-                        )
-                    }
+                    val profile = repository.getUserProfileSync()
+                    com.example.notifications.IntelligentRuleSyncManager.syncDuties(
+                        application,
+                        duties,
+                        profile
+                    )
                 }
             }
 
@@ -637,7 +635,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (duty != null) {
                 com.example.notifications.RescheduleManager.clearReschedule(getApplication(), dutyId)
                 com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), dutyId)
-                val updated = duty.copy(reminderTime = newTime)
+                val updated = duty.copy(reminderTime = newTime, isCompleted = false, completedDate = "")
                 repository.insertDuty(updated)
                 val currentDuties = allDuties.value.map { if (it.id == dutyId) updated else it }
                 com.example.notifications.NotificationScheduler.scheduleAll(
@@ -788,18 +786,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleDutyCompletion(duty: SpiritualDuty) {
         viewModelScope.launch {
             repository.toggleDutyCompletion(duty)
-            val isNowCompleted = !duty.isCompleted
-            val updatedDuty = duty.copy(isCompleted = isNowCompleted)
-            if (isNowCompleted) {
-                com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), duty.id)
-            }
-            val currentDuties = allDuties.value.map { if (it.id == duty.id) updatedDuty else it }
-            com.example.notifications.NotificationScheduler.scheduleAll(
-                getApplication(),
-                currentDuties,
-                userProfile.value?.saintNotificationTime ?: "07:30",
-                userProfile.value
-            )
         }
     }
 
@@ -811,26 +797,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             val isNew = duty.id == 0
+            val preparedDuty = duty.copy(isCompleted = false, completedDate = "")
             if (!isNew) {
-                com.example.notifications.RescheduleManager.clearReschedule(getApplication(), duty.id)
-                com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), duty.id)
+                com.example.notifications.RescheduleManager.clearReschedule(getApplication(), preparedDuty.id)
             }
-            val savedDuty = if (isNew) {
-                val newId = repository.insertDuty(duty)
-                duty.copy(id = newId.toInt())
+            if (isNew) {
+                repository.insertDuty(preparedDuty)
             } else {
-                repository.updateDuty(duty)
-                duty
+                repository.updateDuty(preparedDuty)
             }
-
-            com.example.notifications.RescheduleManager.clearReschedule(getApplication(), savedDuty.id)
-            val currentDuties = if (isNew) allDuties.value + savedDuty else allDuties.value.map { if (it.id == savedDuty.id) savedDuty else it }
-            com.example.notifications.NotificationScheduler.scheduleAll(
-                getApplication(),
-                currentDuties,
-                userProfile.value?.saintNotificationTime ?: "07:30",
-                userProfile.value
-            )
             _pendingReflectionDuty.value = null
         }
     }
@@ -839,26 +814,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val pending = _pendingReflectionDuty.value ?: return
         viewModelScope.launch {
             val isNew = pending.id == 0
+            val preparedPending = pending.copy(isCompleted = false, completedDate = "")
             if (!isNew) {
-                com.example.notifications.RescheduleManager.clearReschedule(getApplication(), pending.id)
-                com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), pending.id)
+                com.example.notifications.RescheduleManager.clearReschedule(getApplication(), preparedPending.id)
             }
-            val savedDuty = if (isNew) {
-                val newId = repository.insertDuty(pending)
-                pending.copy(id = newId.toInt())
+            if (isNew) {
+                repository.insertDuty(preparedPending)
             } else {
-                repository.updateDuty(pending)
-                pending
+                repository.updateDuty(preparedPending)
             }
-
-            com.example.notifications.RescheduleManager.clearReschedule(getApplication(), savedDuty.id)
-            val currentDuties = if (isNew) allDuties.value + savedDuty else allDuties.value.map { if (it.id == savedDuty.id) savedDuty else it }
-            com.example.notifications.NotificationScheduler.scheduleAll(
-                getApplication(),
-                currentDuties,
-                userProfile.value?.saintNotificationTime ?: "07:30",
-                userProfile.value
-            )
             _pendingReflectionDuty.value = null
         }
     }
@@ -869,8 +833,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteDuty(dutyId: Int) {
         viewModelScope.launch {
+            com.example.notifications.RescheduleManager.clearReschedule(getApplication(), dutyId)
             repository.deleteDuty(dutyId)
-            com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), dutyId)
         }
     }
 

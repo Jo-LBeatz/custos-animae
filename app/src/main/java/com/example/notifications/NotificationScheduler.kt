@@ -387,9 +387,81 @@ object NotificationScheduler {
             set(Calendar.MILLISECOND, 0)
         }
 
+        // Extremely robust close-interval helper.
+        // Calculates delta in minutes between target schedule time and fromTimeMs.
+        val targetMinCal = Calendar.getInstance().apply {
+            timeInMillis = cal.timeInMillis
+        }
+        val currentMinCal = Calendar.getInstance().apply {
+            timeInMillis = fromTimeMs
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val minuteDelta = (targetMinCal.timeInMillis - currentMinCal.timeInMillis) / 60000L
+
+        // Check if the scheduled day matches today for weekly/monthly/yearly
+        val isScheduledForToday = when (freq) {
+            "DAILY", "" -> true
+            "WEEKLY" -> {
+                val daysList = duty.scheduledDaysOfWeek.split(",")
+                    .map { it.trim().lowercase(Locale.ROOT) }
+                    .filter { it.isNotBlank() }
+                    .ifEmpty { listOf("monday") }
+                val currentDayStr = when (Calendar.getInstance().apply { timeInMillis = fromTimeMs }.get(Calendar.DAY_OF_WEEK)) {
+                    Calendar.SUNDAY -> "sunday"
+                    Calendar.MONDAY -> "monday"
+                    Calendar.TUESDAY -> "tuesday"
+                    Calendar.WEDNESDAY -> "wednesday"
+                    Calendar.THURSDAY -> "thursday"
+                    Calendar.FRIDAY -> "friday"
+                    Calendar.SATURDAY -> "saturday"
+                    else -> "monday"
+                }
+                daysList.any { currentDayStr.contains(it) }
+            }
+            "MONTHLY" -> {
+                val daysList = duty.scheduledDaysOfMonth.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .ifEmpty { listOf("1") }
+                val currentDay = Calendar.getInstance().apply { timeInMillis = fromTimeMs }.get(Calendar.DAY_OF_MONTH).toString()
+                daysList.contains(currentDay)
+            }
+            "YEARLY" -> {
+                val rules = duty.scheduledDaysOfYear.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .ifEmpty { listOf("01-01") }
+                val todayCal = Calendar.getInstance().apply { timeInMillis = fromTimeMs }
+                val todayMmDd = String.format(Locale.US, "%02d-%02d", todayCal.get(Calendar.MONTH) + 1, todayCal.get(Calendar.DAY_OF_MONTH))
+                rules.contains(todayMmDd)
+            }
+            else -> true
+        }
+
+        if (isScheduledForToday) {
+            if (minuteDelta == 0L) {
+                // Scheduled for the current minute: fire immediately in 2 seconds
+                Log.d("NotificationScheduler", "Close-interval trigger: rule is scheduled for current minute, firing in 2s")
+                return fromTimeMs + 2000L
+            } else if (minuteDelta == 1L) {
+                val sec = Calendar.getInstance().apply { timeInMillis = fromTimeMs }.get(Calendar.SECOND)
+                if (sec >= 45) {
+                    // Extremely close to the next minute (less than 15 seconds remaining).
+                    // Trigger in 15 seconds to ensure OS AlarmManager receives the alarm in the future.
+                    Log.d("NotificationScheduler", "Close-interval trigger: next minute is too close ($sec s), pushing by 15s")
+                    return fromTimeMs + 15000L
+                }
+            }
+        }
+
         when (freq) {
             "DAILY" -> {
-                if (cal.timeInMillis <= fromTimeMs) {
+                val timeDiff = fromTimeMs - cal.timeInMillis
+                if (timeDiff in 0..59_999L) {
+                    // Rule was set for the current minute: fire immediately (+2 seconds)
+                    return fromTimeMs + 2000L
+                } else if (cal.timeInMillis <= fromTimeMs) {
                     cal.add(Calendar.DAY_OF_YEAR, 1)
                 }
             }
@@ -408,10 +480,16 @@ object NotificationScheduler {
                         set(Calendar.SECOND, 0)
                         set(Calendar.MILLISECOND, 0)
                     }
-                    while (c.get(Calendar.DAY_OF_WEEK) != targetDay || c.timeInMillis <= fromTimeMs) {
-                        c.add(Calendar.DAY_OF_YEAR, 1)
+                    val isToday = c.get(Calendar.DAY_OF_WEEK) == targetDay
+                    val timeDiff = fromTimeMs - c.timeInMillis
+                    if (isToday && timeDiff in 0..59_999L) {
+                        fromTimeMs + 2000L
+                    } else {
+                        while (c.get(Calendar.DAY_OF_WEEK) != targetDay || c.timeInMillis <= fromTimeMs) {
+                            c.add(Calendar.DAY_OF_YEAR, 1)
+                        }
+                        c.timeInMillis
                     }
-                    c.timeInMillis
                 }
                 return candidates.minOrNull() ?: cal.timeInMillis
             }
@@ -434,11 +512,17 @@ object NotificationScheduler {
                             set(Calendar.MILLISECOND, 0)
                             set(Calendar.DAY_OF_MONTH, minOf(targetDay, getActualMaximum(Calendar.DAY_OF_MONTH)))
                         }
-                        if (c.timeInMillis <= fromTimeMs) {
-                            c.add(Calendar.MONTH, 1)
-                            c.set(Calendar.DAY_OF_MONTH, minOf(targetDay, c.getActualMaximum(Calendar.DAY_OF_MONTH)))
+                        val isToday = c.get(Calendar.DAY_OF_MONTH) == targetDay
+                        val timeDiff = fromTimeMs - c.timeInMillis
+                        if (isToday && timeDiff in 0..59_999L) {
+                            fromTimeMs + 2000L
+                        } else {
+                            if (c.timeInMillis <= fromTimeMs) {
+                                c.add(Calendar.MONTH, 1)
+                                c.set(Calendar.DAY_OF_MONTH, minOf(targetDay, c.getActualMaximum(Calendar.DAY_OF_MONTH)))
+                            }
+                            c.timeInMillis
                         }
-                        c.timeInMillis
                     }
                 }
                 return candidates.minOrNull() ?: cal.timeInMillis
@@ -476,13 +560,16 @@ object NotificationScheduler {
                 return candidates.minOrNull() ?: cal.timeInMillis
             }
             else -> {
-                if (cal.timeInMillis <= fromTimeMs) {
+                val timeDiff = fromTimeMs - cal.timeInMillis
+                if (timeDiff in 0..59_999L) {
+                    return fromTimeMs + 2000L
+                } else if (cal.timeInMillis <= fromTimeMs) {
                     cal.add(Calendar.DAY_OF_YEAR, 1)
                 }
             }
         }
 
-        return cal.timeInMillis
+        return maxOf(cal.timeInMillis, fromTimeMs + 1000L)
     }
 
     private fun calculateNextRelativeMonthlyCalendar(rule: String, hour: Int, minute: Int, fromTimeMs: Long): Calendar {
@@ -586,7 +673,12 @@ object NotificationScheduler {
         }
     }
 
-    fun scheduleDutyNotification(context: Context, alarmManager: AlarmManager, duty: SpiritualDuty) {
+    fun scheduleDutyNotification(
+        context: Context,
+        alarmManager: AlarmManager,
+        duty: SpiritualDuty,
+        fromTimeMs: Long = System.currentTimeMillis()
+    ) {
         if (duty.isCompleted) {
             // Duty is marked completed (early or on time): disarm active alarms, notifications, and call service for today
             cancelDutyNotification(context, duty.id)
@@ -604,6 +696,7 @@ object NotificationScheduler {
                 putExtra("EXTRA_TYPE", "DUTY")
                 putExtra("EXTRA_ID", duty.id)
                 putExtra("EXTRA_TITLE", duty.title)
+                putExtra("EXTRA_STYLE", duty.notificationStyle)
                 putExtra("EXTRA_IS_COMPLETED", true)
                 putExtra("EXTRA_MESSAGE", duty.description.ifBlank { "Reminder: It is time to perform your task '${duty.title}'." })
             }
@@ -616,7 +709,7 @@ object NotificationScheduler {
             )
 
             val nextTriggerMs = calculateNextTriggerTime(context, duty, fromTimeMs = endOfToday)
-            setAlarm(context, alarmManager, nextTriggerMs, pendingIntent)
+            setAlarm(context, alarmManager, nextTriggerMs, pendingIntent, requestCode = 1000 + duty.id)
             return
         }
 
@@ -625,6 +718,7 @@ object NotificationScheduler {
             putExtra("EXTRA_TYPE", "DUTY")
             putExtra("EXTRA_ID", duty.id)
             putExtra("EXTRA_TITLE", duty.title)
+            putExtra("EXTRA_STYLE", duty.notificationStyle)
             putExtra("EXTRA_IS_COMPLETED", duty.isCompleted)
             putExtra("EXTRA_MESSAGE", duty.description.ifBlank { "Reminder: It is time to perform your task '${duty.title}'." })
         }
@@ -636,15 +730,21 @@ object NotificationScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val nextTriggerMs = calculateNextTriggerTime(context, duty)
-        setAlarm(context, alarmManager, nextTriggerMs, pendingIntent)
+        val nextTriggerMs = calculateNextTriggerTime(context, duty, fromTimeMs = fromTimeMs)
+        setAlarm(context, alarmManager, nextTriggerMs, pendingIntent, requestCode = 1000 + duty.id)
     }
 
-    private fun setAlarm(context: Context, alarmManager: AlarmManager, triggerAtMs: Long, pendingIntent: PendingIntent) {
+    private fun setAlarm(
+        context: Context,
+        alarmManager: AlarmManager,
+        triggerAtMs: Long,
+        pendingIntent: PendingIntent,
+        requestCode: Int = 0
+    ) {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val targetFormatted = sdf.format(Date(triggerAtMs))
         val diffSec = (triggerAtMs - System.currentTimeMillis()) / 1000
-        Log.d("NotificationScheduler", "Attempting to schedule alarm for $targetFormatted (in ${diffSec}s)")
+        Log.d("NotificationScheduler", "Attempting to schedule alarm for $targetFormatted (in ${diffSec}s) [reqCode=$requestCode]")
 
         val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             alarmManager.canScheduleExactAlarms()
@@ -659,13 +759,13 @@ object NotificationScheduler {
                 }
                 val showPendingIntent = PendingIntent.getActivity(
                     context,
-                    0,
+                    requestCode,
                     showIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerAtMs, showPendingIntent)
                 alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-                Log.d("NotificationScheduler", "Scheduled via setAlarmClock for $targetFormatted")
+                Log.d("NotificationScheduler", "Scheduled via setAlarmClock for $targetFormatted [reqCode=$requestCode]")
                 return
             }
         } catch (e: Exception) {

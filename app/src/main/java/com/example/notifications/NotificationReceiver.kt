@@ -4,6 +4,8 @@ import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
+import android.util.Log
 import com.example.data.AppDatabase
 import com.example.data.calendar.SaintData
 import kotlinx.coroutines.CoroutineScope
@@ -13,8 +15,20 @@ import java.util.Calendar
 import java.util.Locale
 
 class NotificationReceiver : BroadcastReceiver() {
+
     override fun onReceive(context: Context, intent: Intent) {
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val wakeLock = powerManager?.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "CustosAnimae:NotificationReceiverWakeLock"
+        )?.apply {
+            setReferenceCounted(false)
+            acquire(15_000L) // 15-second timeout safeguard
+        }
+
         val action = intent.action
+        Log.d("NotificationReceiver", "onReceive triggered: action=$action, extraType=${intent.getStringExtra("EXTRA_TYPE")}")
+
         if (action == Intent.ACTION_BOOT_COMPLETED ||
             action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
             action == "android.intent.action.QUICKBOOT_POWERON" ||
@@ -37,6 +51,9 @@ class NotificationReceiver : BroadcastReceiver() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
+                    try {
+                        if (wakeLock?.isHeld == true) wakeLock.release()
+                    } catch (_: Exception) {}
                     try { pendingResult.finish() } catch (_: Exception) {}
                 }
             }
@@ -50,12 +67,12 @@ class NotificationReceiver : BroadcastReceiver() {
             val saint = SaintData.getSaintForDate(mmdd) ?: SaintData.saintList.first()
             val title = "Saint of the Day: ${saint.saintName}"
             val message = "${saint.feastTitle} • \"${saint.quote}\""
-            dispatchReminder(context, title, message, notificationId = 9999)
+            dispatchReminder(context, title, message, notificationId = 9999, wakeLock = wakeLock)
         } else if (type == "PRAYER") {
             val title = intent.getStringExtra("EXTRA_TITLE") ?: "Daily Prayer"
             val message = intent.getStringExtra("EXTRA_MESSAGE") ?: "Time for your daily prayer."
             val notificationId = intent.getIntExtra("EXTRA_ID", 7001)
-            dispatchReminder(context, title, message, notificationId)
+            dispatchReminder(context, title, message, notificationId, wakeLock = wakeLock)
         } else if (type == "SACRED_HEART") {
             val cal = Calendar.getInstance()
             val isFirstFriday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY && cal.get(Calendar.DAY_OF_MONTH) <= 7
@@ -66,7 +83,7 @@ class NotificationReceiver : BroadcastReceiver() {
                 "In honor of Christ's Passion, dedicate today's prayers and mortifications to His Most Sacred Heart."
             }
             val notificationId = intent.getIntExtra("EXTRA_ID", 7101)
-            dispatchReminder(context, title, message, notificationId)
+            dispatchReminder(context, title, message, notificationId, wakeLock = wakeLock)
         } else if (type == "IMMACULATE_HEART") {
             val cal = Calendar.getInstance()
             val isFirstSaturday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY && cal.get(Calendar.DAY_OF_MONTH) <= 7
@@ -77,7 +94,7 @@ class NotificationReceiver : BroadcastReceiver() {
                 "Dedicate today's prayers, Rosary, and offerings in loving reparation to the Immaculate Heart of Mary."
             }
             val notificationId = intent.getIntExtra("EXTRA_ID", 7102)
-            dispatchReminder(context, title, message, notificationId)
+            dispatchReminder(context, title, message, notificationId, wakeLock = wakeLock)
         } else if (type == "LITURGICAL_SEASON") {
             val today = Calendar.getInstance()
             val year = today.get(Calendar.YEAR)
@@ -95,23 +112,35 @@ class NotificationReceiver : BroadcastReceiver() {
             if (todayInfo.season != yesterdayInfo.season) {
                 val title = "Liturgical Season: ${todayInfo.season.displayName}"
                 val message = "Today begins the ${todayInfo.season.displayName}. Vestment color: ${todayInfo.vestmentColor}."
-                dispatchReminder(context, title, message, 7103)
+                dispatchReminder(context, title, message, 7103, wakeLock = wakeLock)
+            } else {
+                try {
+                    if (wakeLock?.isHeld == true) wakeLock.release()
+                } catch (_: Exception) {}
             }
         } else if (type == "TEST") {
             val title = intent.getStringExtra("EXTRA_TITLE") ?: "Test Rule Reminder"
             val message = intent.getStringExtra("EXTRA_MESSAGE") ?: "This is a test Rule of Life reminder."
             val notificationId = intent.getIntExtra("EXTRA_ID", 12345)
             val testStyle = intent.getStringExtra("EXTRA_STYLE") ?: "CALL_OVERLAY"
-            android.util.Log.d("NotificationReceiver", "[ALARM FIRED] Test Reminder triggered: style=$testStyle, notificationId=$notificationId")
+            Log.d("NotificationReceiver", "[ALARM FIRED] Test Reminder triggered: style=$testStyle, notificationId=$notificationId")
             RuleOfLifeCallStateHelper.markScheduledEventTriggered(context)
             if (testStyle == "BANNER") {
                 NotificationHelper.showNotification(context, title, message, notificationId)
             } else {
                 NotificationHelper.showIncomingCallNotification(context, title, message, notificationId)
             }
+            try {
+                if (wakeLock?.isHeld == true) wakeLock.release()
+            } catch (_: Exception) {}
         } else {
             val dutyId = intent.getIntExtra("EXTRA_ID", -1)
-            if (dutyId <= 0) return
+            if (dutyId <= 0) {
+                try {
+                    if (wakeLock?.isHeld == true) wakeLock.release()
+                } catch (_: Exception) {}
+                return
+            }
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -139,7 +168,7 @@ class NotificationReceiver : BroadcastReceiver() {
                             "BANNER" -> "BANNER"
                             else -> profile?.ruleNotificationStyle ?: "CALL_OVERLAY"
                         }
-                        android.util.Log.d(
+                        Log.d(
                             "NotificationReceiver",
                             "[ALARM FIRED] Duty Reminder triggered for dutyId=$dutyId (${duty.title}). Effective ruleNotificationStyle=$effectiveStyle"
                         )
@@ -160,10 +189,15 @@ class NotificationReceiver : BroadcastReceiver() {
                             )
                         }
 
-                        // Re-schedule alarm for repeating schedule
+                        // Re-schedule alarm for repeating schedule starting from the next minute onwards
                         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
                         if (alarmManager != null) {
-                            NotificationScheduler.scheduleDutyNotification(context, alarmManager, duty)
+                            NotificationScheduler.scheduleDutyNotification(
+                                context,
+                                alarmManager,
+                                duty,
+                                fromTimeMs = System.currentTimeMillis() + 60_000L
+                            )
                         }
                     } else {
                         NotificationScheduler.cancelDutyNotification(context, dutyId)
@@ -171,24 +205,33 @@ class NotificationReceiver : BroadcastReceiver() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
+                    try {
+                        if (wakeLock?.isHeld == true) wakeLock.release()
+                    } catch (_: Exception) {}
                     try { pendingResult.finish() } catch (_: Exception) {}
                 }
             }
         }
     }
 
-    private fun dispatchReminder(context: Context, title: String, message: String, notificationId: Int) {
+    private fun dispatchReminder(
+        context: Context,
+        title: String,
+        message: String,
+        notificationId: Int,
+        wakeLock: PowerManager.WakeLock? = null
+    ) {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val db = AppDatabase.getDatabase(context)
-                val profile = db.appDao().getUserProfileSync()
-
                 RuleOfLifeCallStateHelper.markScheduledEventTriggered(context)
                 NotificationHelper.showNotification(context, title, message, notificationId)
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
+                try {
+                    if (wakeLock?.isHeld == true) wakeLock.release()
+                } catch (_: Exception) {}
                 try { pendingResult.finish() } catch (_: Exception) {}
             }
         }

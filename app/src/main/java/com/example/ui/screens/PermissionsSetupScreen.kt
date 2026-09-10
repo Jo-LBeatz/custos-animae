@@ -318,6 +318,26 @@ fun isBatteryOptimizationIgnored(context: Context): Boolean {
     }
 }
 
+fun requestExactAlarmPermission(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        try {
+            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                data = Uri.parse("package:${context.packageName}")
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+                context.startActivity(intent)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+        }
+    }
+}
+
 fun requestIgnoreBatteryOptimization(context: Context) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         try {
