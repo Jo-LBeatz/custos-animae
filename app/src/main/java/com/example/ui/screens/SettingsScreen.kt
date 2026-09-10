@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CameraAlt
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Lock
@@ -33,6 +35,8 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
@@ -41,6 +45,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import com.example.ui.PageViewMode
 import com.example.util.AppLanguage
 import com.example.util.AppTranslationHelper
+import com.example.util.PrayerMode
 import android.net.Uri
 import androidx.compose.foundation.shape.CircleShape
 import com.example.ui.components.ScrollableClockPicker
@@ -59,8 +64,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.border
 import kotlinx.coroutines.launch
-import com.example.requestIgnoreBatteryOptimization
-import com.example.isBatteryOptimizationIgnored
 import com.example.ui.MainViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.GothicHeader
@@ -632,6 +635,190 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Rule of Life Reminder Style Card
+        val ruleStyle = profile?.ruleNotificationStyle ?: "CALL_OVERLAY"
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("rule_notification_style_settings_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (ruleStyle == "CALL_OVERLAY") Icons.Default.Call else Icons.Default.Notifications,
+                        contentDescription = null,
+                        tint = GoldBright
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Rule of Life Reminder Style",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Select how scheduled Rule of Life duties alert you. Call overlay and banner notifications are strictly mutually exclusive.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ParchmentLight
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Call Overlay Option
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { viewModel.updateRuleNotificationStyle("CALL_OVERLAY") }
+                            .testTag("style_call_overlay_card"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (ruleStyle == "CALL_OVERLAY") CrimsonBurgundy.copy(alpha = 0.45f) else DarkCathedralSurface
+                        ),
+                        border = BorderStroke(
+                            if (ruleStyle == "CALL_OVERLAY") 1.5.dp else 1.dp,
+                            if (ruleStyle == "CALL_OVERLAY") GoldBright else TextMutedParchment.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Call,
+                                contentDescription = null,
+                                tint = if (ruleStyle == "CALL_OVERLAY") GoldBright else TextMutedParchment,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Call Overlay 📞",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = if (ruleStyle == "CALL_OVERLAY") GoldBright else ParchmentLight
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Full-screen ringtone",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextMutedParchment,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+
+                    // Banner Option
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { viewModel.updateRuleNotificationStyle("BANNER") }
+                            .testTag("style_banner_card"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (ruleStyle == "BANNER") CrimsonBurgundy.copy(alpha = 0.45f) else DarkCathedralSurface
+                        ),
+                        border = BorderStroke(
+                            if (ruleStyle == "BANNER") 1.5.dp else 1.dp,
+                            if (ruleStyle == "BANNER") GoldBright else TextMutedParchment.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = null,
+                                tint = if (ruleStyle == "BANNER") GoldBright else TextMutedParchment,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "System Banner 🔔",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = if (ruleStyle == "BANNER") GoldBright else ParchmentLight
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Heads-up banner",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextMutedParchment,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Test Triggers Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            com.example.notifications.NotificationScheduler.triggerDutyNotificationNow(
+                                context,
+                                title = "Test Rule: Angelus",
+                                message = "The Angel of the Lord declared unto Mary. And she conceived of the Holy Spirit.",
+                                style = "CALL_OVERLAY"
+                            )
+                            android.widget.Toast.makeText(context, "Triggering Call Overlay alert...", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("test_call_overlay_button"),
+                        border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp)
+                    ) {
+                        Text(
+                            "Test Call 📞",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = GoldBright
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            com.example.notifications.NotificationScheduler.triggerDutyNotificationNow(
+                                context,
+                                title = "Test Rule: Rosary",
+                                message = "Time for your daily Holy Rosary devotion.",
+                                style = "BANNER"
+                            )
+                            android.widget.Toast.makeText(context, "Triggering System Banner notification...", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("test_banner_button"),
+                        border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp)
+                    ) {
+                        Text(
+                            "Test Banner 🔔",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = GoldBright
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Sacred Heart & Immaculate Heart Devotion Card
         Card(
             modifier = Modifier
@@ -921,6 +1108,80 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Prayer Perspective Mode Selector Card
+        val activePrayerMode = PrayerMode.fromCode(profile?.prayerMode)
+        Card(
+            modifier = Modifier.fillMaxWidth().testTag("prayer_mode_card"),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkCathedralSurface),
+            border = BorderStroke(1.dp, GoldDark)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = when (activePrayerMode) {
+                            PrayerMode.INDIVIDUAL -> Icons.Default.Person
+                            PrayerMode.GROUP -> Icons.Default.Groups
+                            PrayerMode.TRADITIONAL -> Icons.AutoMirrored.Filled.MenuBook
+                        },
+                        contentDescription = null,
+                        tint = GoldBright
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Prayer Perspective Mode",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Select whether you are praying individually or in a group. Individual mode formats Saint intercessions and devotions into first-person language (I / me / my). Group mode preserves traditional plural language (We / us / our):",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMutedParchment
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                PrayerMode.entries.forEach { mode ->
+                    val isSelected = activePrayerMode == mode
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.updatePrayerMode(mode) }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = isSelected,
+                            onClick = { viewModel.updatePrayerMode(mode) },
+                            colors = RadioButtonDefaults.colors(selectedColor = GoldBright)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${mode.label}  (${mode.badgeText})",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                color = if (isSelected) GoldBright else ParchmentLight,
+                                softWrap = true
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = mode.description,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextMutedParchment,
+                                softWrap = true
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Page Visibility Preference Card
         val pageViewMode by viewModel.pageViewMode.collectAsStateWithLifecycle()
         Card(
@@ -970,9 +1231,10 @@ fun SettingsScreen(
                             colors = RadioButtonDefaults.colors(selectedColor = GoldBright)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(text = title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = GoldBright)
-                            Text(text = desc, style = MaterialTheme.typography.bodySmall, color = TextMutedParchment)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = GoldBright, softWrap = true)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(text = desc, style = MaterialTheme.typography.bodySmall, color = TextMutedParchment, softWrap = true)
                         }
                     }
                 }
@@ -1071,7 +1333,7 @@ fun SettingsScreen(
                         try {
                             val uri = Uri.parse(activeRingtoneUri)
                             val lastSegment = uri.lastPathSegment ?: activeRingtoneUri
-                            "Custom Audio: ${lastSegment.takeLast(30)}"
+                            "Custom Audio: $lastSegment"
                         } catch (e: Exception) {
                             "Custom Audio Selected"
                         }

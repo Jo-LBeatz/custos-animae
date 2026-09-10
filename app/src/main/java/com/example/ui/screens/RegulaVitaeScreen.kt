@@ -2,9 +2,14 @@ package com.example.ui.screens
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -272,6 +277,8 @@ fun RegulaVitaeScreen(
                     color = TextMutedParchment,
                     textAlign = TextAlign.Center
                 )
+
+
             }
         }
 
@@ -709,3 +716,5 @@ private fun copyToClipboard(context: Context, url: String, label: String) {
         Toast.makeText(context, "Copied: $url", Toast.LENGTH_SHORT).show()
     }
 }
+
+

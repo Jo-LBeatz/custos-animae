@@ -65,7 +65,7 @@ fun format12HourTo24Hour(hour12: Int, minute: Int, isAm: Boolean): String {
     if (!isAm) {
         h24 += 12
     }
-    return String.format("%02d:%02d", h24, minute)
+    return String.format(java.util.Locale.US, "%02d:%02d", h24, minute)
 }
 
 /**

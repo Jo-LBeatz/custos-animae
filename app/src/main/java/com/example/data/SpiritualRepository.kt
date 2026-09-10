@@ -367,6 +367,9 @@ class SpiritualRepository(
 
     suspend fun saveUserProfile(profile: UserProfile) = appDao.saveUserProfile(profile)
 
+    suspend fun getAllDutiesSync(): List<SpiritualDuty> = appDao.getAllDutiesSync()
+    suspend fun getUserProfileSync(): UserProfile? = appDao.getUserProfileSync()
+
     suspend fun resetExpiredDuties() {
         val today = getTodayString()
         val duties = appDao.getAllDutiesSync()

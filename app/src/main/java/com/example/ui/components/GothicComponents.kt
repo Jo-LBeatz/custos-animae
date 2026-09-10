@@ -34,7 +34,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
 import androidx.compose.ui.draw.scale
@@ -556,8 +562,13 @@ fun SpiritualDutyCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             val scheduleText = formatDutySchedule(duty)
+                            val styleBadge = when (duty.notificationStyle) {
+                                "CALL_OVERLAY" -> " • 📞 Call"
+                                "BANNER" -> " • 🔔 Banner"
+                                else -> ""
+                            }
                             Text(
-                                text = "$scheduleText • ${duty.category}",
+                                text = "$scheduleText • ${duty.category}$styleBadge",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextMutedParchment
                             )

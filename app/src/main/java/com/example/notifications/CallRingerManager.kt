@@ -78,9 +78,9 @@ object CallRingerManager {
                     }
                     player.setAudioAttributes(audioAttributes)
                     player.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                    afd.close()
                     player.isLooping = true
                     player.prepare()
+                    afd.close()
                     player.start()
                     mediaPlayer = player
                     soundStarted = true

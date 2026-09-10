@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -83,6 +84,9 @@ fun FuturisticRosaryScreen(
     var currentOpeningStep by remember { mutableStateOf(0) } // 0-5 (opening prayers)
     var currentConcludingStep by remember { mutableStateOf(0) } // 0-3 (concluding prayers)
     var isAutoPlay by remember { mutableStateOf(false) }
+
+    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+    val activePrayerMode = com.example.util.PrayerMode.fromCode(userProfile?.prayerMode)
 
     val currentSet = TraditionalPrayerLibrary.rosarySets.getOrElse(selectedSetIndex) { TraditionalPrayerLibrary.rosarySets[0] }
     val currentMystery = currentSet.mysteries.getOrElse(currentMysteryIndex) { currentSet.mysteries[0] }
@@ -207,7 +211,8 @@ fun FuturisticRosaryScreen(
                 }
             }
 
-            val cleanText = textToSpeak.replace("☩", "").trim()
+            val formattedTextToSpeak = if (!isLatin) com.example.util.PrayerPerspectiveFormatter.format(textToSpeak, activePrayerMode) else textToSpeak
+            val cleanText = formattedTextToSpeak.replace("☩", "").trim()
             viewModel.playLatinAudio(
                 id = prayerId,
                 text = cleanText,
@@ -893,6 +898,10 @@ private fun DecadesInteractiveView(
             }
         }
 
+        val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+        val activePrayerMode = com.example.util.PrayerMode.fromCode(userProfile?.prayerMode)
+        val formattedPrayerCardBody = if (!isLatin) com.example.util.PrayerPerspectiveFormatter.format(prayerCardBody, activePrayerMode) else prayerCardBody
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -912,7 +921,7 @@ private fun DecadesInteractiveView(
 
                 // COMPLETE NON-TRUNCATED PRAYER TEXT
                 Text(
-                    text = prayerCardBody,
+                    text = formattedPrayerCardBody,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontFamily = FontFamily.Serif,
                         fontSize = 16.sp,
@@ -1130,6 +1139,11 @@ private fun PrayerSectionCard(
     prayerId: String = "",
     isActive: Boolean = false
 ) {
+    val userProfile by viewModel?.userProfile?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(null) }
+    val isLatinMode by viewModel?.isLatinMode?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
+    val activePrayerMode = com.example.util.PrayerMode.fromCode(userProfile?.prayerMode)
+    val formattedText = if (!isLatinMode) com.example.util.PrayerPerspectiveFormatter.format(text, activePrayerMode) else text
+
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = if (isActive) CrimsonBurgundy.copy(alpha = 0.25f) else DarkCathedralSurface,
@@ -1158,7 +1172,7 @@ private fun PrayerSectionCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = text,
+                text = formattedText,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontFamily = FontFamily.Serif,
                     fontSize = 15.sp,
@@ -1170,7 +1184,7 @@ private fun PrayerSectionCard(
             )
 
             if (viewModel != null && prayerId.isNotEmpty()) {
-                val cleanText = text.replace("☩", "").trim()
+                val cleanText = formattedText.replace("☩", "").trim()
                 Spacer(modifier = Modifier.height(10.dp))
                 com.example.ui.components.LatinAudioPlayerController(
                     viewModel = viewModel,

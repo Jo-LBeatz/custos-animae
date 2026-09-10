@@ -70,6 +70,14 @@ android {
   testOptions { unitTests { isIncludeAndroidResources = true } }
 }
 
+composeCompiler {
+  featureFlags.add(org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.OptimizeNonSkippingGroups)
+}
+
+configurations.all {
+  exclude(group = "androidx.compose.compiler", module = "compiler")
+}
+
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
 // to match the convention used in Web projects.
 secrets {

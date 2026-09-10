@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.R
-import com.example.isBatteryOptimizationIgnored
 import com.example.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -307,5 +306,32 @@ fun checkOverlayPermission(context: Context): Boolean {
         Settings.canDrawOverlays(context)
     } else {
         true
+    }
+}
+
+fun isBatteryOptimizationIgnored(context: Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
+        powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: true
+    } else {
+        true
+    }
+}
+
+fun requestIgnoreBatteryOptimization(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        try {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:${context.packageName}")
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                context.startActivity(intent)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+        }
     }
 }

@@ -2,17 +2,15 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FormatQuote
 import android.content.Intent
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -27,15 +25,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.SaintReflection
 import com.example.data.calendar.SaintData
 import com.example.data.calendar.SaintProfile
+import com.example.data.prayers.SaintPrayerContent
+import com.example.data.prayers.SaintPrayerUiState
 import com.example.ui.MainViewModel
 import com.example.ui.components.GothicHeader
 import com.example.ui.components.IlluminatedDivider
+import com.example.ui.components.LatinAudioPlayerController
 import com.example.ui.theme.*
 import com.example.util.AppLanguage
 import com.example.util.AppTranslationHelper
@@ -83,6 +85,13 @@ fun SaintMeditationScreen(
 
     val scrollState = rememberScrollState()
     TrackScrollState(scrollState = scrollState, viewModel = viewModel)
+
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
+    val saintPrayerUiState by viewModel.saintPrayerUiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(selectedSaint.saintId) {
+        viewModel.loadSaintPrayer(selectedSaint)
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -299,30 +308,14 @@ fun SaintMeditationScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Intercessory Prayer
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = CrimsonBurgundy.copy(alpha = 0.25f)),
-                    border = BorderStroke(1.dp, CrimsonBurgundy)
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = "Traditional Intercessory Prayer",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = GoldBright
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = selectedSaint.intercessoryPrayer,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Serif),
-                            color = ParchmentLight
-                        )
-                    }
-                }
+                // Traditional 1954 Roman Rite Intercessory Prayer & Collect Section
+                TraditionalSaintPrayerSection(
+                    selectedSaint = selectedSaint,
+                    prayerState = saintPrayerUiState,
+                    isOnline = isOnline,
+                    onRefreshPrayer = { viewModel.loadSaintPrayer(selectedSaint, forceRefresh = true) },
+                    viewModel = viewModel
+                )
             }
         }
 
@@ -603,3 +596,519 @@ fun SaintMeditationScreen(
         Spacer(modifier = Modifier.height(120.dp))
     }
 }
+
+private enum class PrayerLanguageTab {
+    BILINGUAL,
+    ENGLISH,
+    LATIN
+}
+
+private enum class PrayerFormTab {
+    INTERCESSORY,
+    COLLECT
+}
+
+@Composable
+fun TraditionalSaintPrayerSection(
+    selectedSaint: SaintProfile,
+    prayerState: SaintPrayerUiState,
+    isOnline: Boolean,
+    onRefreshPrayer: () -> Unit,
+    viewModel: MainViewModel
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+    val activePrayerMode = com.example.util.PrayerMode.fromCode(userProfile?.prayerMode)
+    val readingSize by viewModel.readingTextSize.collectAsStateWithLifecycle()
+
+    var languageTab by remember { mutableStateOf(PrayerLanguageTab.BILINGUAL) }
+    var formTab by remember { mutableStateOf(PrayerFormTab.INTERCESSORY) }
+
+    val prayerContent: SaintPrayerContent? = when (prayerState) {
+        is SaintPrayerUiState.Success -> prayerState.prayer
+        is SaintPrayerUiState.OfflineFallback -> prayerState.prayer
+        is SaintPrayerUiState.Error -> prayerState.fallbackPrayer
+        is SaintPrayerUiState.Loading -> null
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("traditional_saint_prayer_section"),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = CrimsonBurgundy.copy(alpha = 0.22f)),
+        border = BorderStroke(1.5.dp, CrimsonBurgundy.copy(alpha = 0.85f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Section Header & Real-time Connectivity Badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "†",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = GoldBright
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Traditional Intercessory Prayer",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = GoldBright
+                    )
+                }
+
+                // Connectivity Status Indicator Badge
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = if (isOnline && prayerContent?.isRemoteFetched == true) {
+                        Color(0xFF1B5E20).copy(alpha = 0.85f)
+                    } else {
+                        Color(0xFFE65100).copy(alpha = 0.85f)
+                    },
+                    border = BorderStroke(
+                        1.dp,
+                        if (isOnline && prayerContent?.isRemoteFetched == true) Color(0xFF81C784) else Color(0xFFFFB74D)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (isOnline) Icons.Default.Wifi else Icons.Default.WifiOff,
+                            contentDescription = if (isOnline) "Online" else "Offline",
+                            tint = Color.White,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isOnline && prayerContent?.isRemoteFetched == true) "1954 Online" else "Offline Fallback",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
+                            ),
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Offline Fallback Notice Box (Displayed when offline or network fallback occurs)
+            if (!isOnline || prayerContent?.isOfflineFallback == true) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = DarkCathedralSurface.copy(alpha = 0.9f),
+                    border = BorderStroke(1.dp, Color(0xFFFFB74D).copy(alpha = 0.6f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudOff,
+                            contentDescription = "Offline Mode",
+                            tint = Color(0xFFFFB74D),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Offline Mode Active",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Serif
+                                ),
+                                color = Color(0xFFFFD54F)
+                            )
+                            Text(
+                                text = "No internet connection. Displaying the authentic traditional Collect of the feast from the 1954 Roman Missal as a local fallback.",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
+                                color = ParchmentLight.copy(alpha = 0.9f)
+                            )
+                        }
+                        if (isOnline) {
+                            IconButton(
+                                onClick = onRefreshPrayer,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Retry Online Fetch",
+                                    tint = GoldBright,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            // Controls Row: Prayer Form Tabs & Language Filter
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Form Toggle: Intercession vs Collect
+                Row(modifier = Modifier.background(DarkCathedralSurfaceVariant.copy(alpha = 0.6f), RoundedCornerShape(8.dp))) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (formTab == PrayerFormTab.INTERCESSORY) CrimsonBurgundy else Color.Transparent,
+                        modifier = Modifier.clickable { formTab = PrayerFormTab.INTERCESSORY }
+                    ) {
+                        Text(
+                            text = "Intercession",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = if (formTab == PrayerFormTab.INTERCESSORY) FontWeight.Bold else FontWeight.Normal
+                            ),
+                            color = if (formTab == PrayerFormTab.INTERCESSORY) StaticGoldBright else ParchmentLight.copy(alpha = 0.7f)
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (formTab == PrayerFormTab.COLLECT) CrimsonBurgundy else Color.Transparent,
+                        modifier = Modifier.clickable { formTab = PrayerFormTab.COLLECT }
+                    ) {
+                        Text(
+                            text = "Collect",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = if (formTab == PrayerFormTab.COLLECT) FontWeight.Bold else FontWeight.Normal
+                            ),
+                            color = if (formTab == PrayerFormTab.COLLECT) StaticGoldBright else ParchmentLight.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+
+                // Language Toggle: Bilingual vs English vs Latin
+                Row(modifier = Modifier.background(DarkCathedralSurfaceVariant.copy(alpha = 0.6f), RoundedCornerShape(8.dp))) {
+                    listOf(
+                        PrayerLanguageTab.BILINGUAL to "Both",
+                        PrayerLanguageTab.ENGLISH to "EN",
+                        PrayerLanguageTab.LATIN to "LA"
+                    ).forEach { (tab, label) ->
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (languageTab == tab) GoldSacred.copy(alpha = 0.4f) else Color.Transparent,
+                            modifier = Modifier.clickable { languageTab = tab }
+                        ) {
+                            Text(
+                                text = label,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = if (languageTab == tab) FontWeight.Bold else FontWeight.Normal
+                                ),
+                                color = if (languageTab == tab) StaticGoldBright else ParchmentLight.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (prayerState is SaintPrayerUiState.Loading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = GoldSacred,
+                        modifier = Modifier.size(28.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+            } else if (prayerContent != null) {
+                val englishPrayerRaw = if (formTab == PrayerFormTab.INTERCESSORY) {
+                    prayerContent.intercessoryPrayerEnglish
+                } else {
+                    prayerContent.collectEnglish
+                }
+                val latinPrayerRaw = if (formTab == PrayerFormTab.INTERCESSORY) {
+                    prayerContent.intercessoryPrayerLatin
+                } else {
+                    prayerContent.collectLatin
+                }
+
+                val formattedEnglishPrayer = com.example.util.PrayerPerspectiveFormatter.format(englishPrayerRaw, activePrayerMode)
+
+                // Versicle & Response Display
+                if (languageTab == PrayerLanguageTab.BILINGUAL || languageTab == PrayerLanguageTab.LATIN) {
+                    LiturgicalVersicleRow(
+                        symbol = "℣.",
+                        text = prayerContent.versicleLatin,
+                        fontSize = (readingSize * 0.95f).sp
+                    )
+                    LiturgicalVersicleRow(
+                        symbol = "℟.",
+                        text = prayerContent.responseLatin,
+                        fontSize = (readingSize * 0.95f).sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
+
+                if (languageTab == PrayerLanguageTab.BILINGUAL || languageTab == PrayerLanguageTab.ENGLISH) {
+                    LiturgicalVersicleRow(
+                        symbol = "℣.",
+                        text = prayerContent.versicleEnglish,
+                        fontSize = (readingSize * 0.95f).sp,
+                        isEnglish = true
+                    )
+                    LiturgicalVersicleRow(
+                        symbol = "℟.",
+                        text = prayerContent.responseEnglish,
+                        fontSize = (readingSize * 0.95f).sp,
+                        isEnglish = true
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // Latin Oratio
+                if (languageTab == PrayerLanguageTab.BILINGUAL || languageTab == PrayerLanguageTab.LATIN) {
+                    Text(
+                        text = "Oratio:",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Serif
+                        ),
+                        color = Color(0xFFFF6B6B)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = latinPrayerRaw,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontSize = (readingSize * 1.05f).sp,
+                            lineHeight = (readingSize * 1.45f).sp
+                        ),
+                        color = ParchmentLight
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = prayerContent.concludingFormulaLatin,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontSize = (readingSize * 0.9f).sp,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        ),
+                        color = TextGoldHighlight.copy(alpha = 0.9f)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
+                // English Prayer Translation
+                if (languageTab == PrayerLanguageTab.BILINGUAL || languageTab == PrayerLanguageTab.ENGLISH) {
+                    if (languageTab == PrayerLanguageTab.BILINGUAL) {
+                        Text(
+                            text = "English Translation:",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Serif
+                            ),
+                            color = GoldSacred
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                    }
+                    Text(
+                        text = formattedEnglishPrayer,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontSize = (readingSize * 1.05f).sp,
+                            lineHeight = (readingSize * 1.45f).sp
+                        ),
+                        color = ParchmentLight
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = prayerContent.concludingFormulaEnglish,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontSize = (readingSize * 0.9f).sp,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        ),
+                        color = TextGoldHighlight.copy(alpha = 0.9f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Rubric and Source Citation Footnote
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(DarkCathedralSurface.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                        contentDescription = "Source Rubric",
+                        tint = GoldSacred.copy(alpha = 0.8f),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = prayerContent.sourceCitation,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 10.5.sp
+                        ),
+                        color = TextGoldHighlight.copy(alpha = 0.85f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Audio Pronunciation Player Component
+                LatinAudioPlayerController(
+                    viewModel = viewModel,
+                    prayerId = "saint_${selectedSaint.saintId}_${formTab.name}_${languageTab.name}",
+                    prayerText = if (languageTab == PrayerLanguageTab.LATIN || languageTab == PrayerLanguageTab.BILINGUAL) {
+                        "${prayerContent.versicleLatin} ${prayerContent.responseLatin} $latinPrayerRaw ${prayerContent.concludingFormulaLatin}"
+                    } else {
+                        "${prayerContent.versicleEnglish} ${prayerContent.responseEnglish} $formattedEnglishPrayer ${prayerContent.concludingFormulaEnglish}"
+                    },
+                    isLatin = languageTab != PrayerLanguageTab.ENGLISH
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Actions: Copy to Clipboard & Share
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = {
+                            val fullPrayerText = buildString {
+                                appendLine("† ${selectedSaint.feastTitle.uppercase()} †")
+                                appendLine("Traditional 1954 Roman Rite Prayer")
+                                appendLine()
+                                appendLine(prayerContent.versicleLatin)
+                                appendLine(prayerContent.responseLatin)
+                                appendLine()
+                                appendLine("Oratio:")
+                                appendLine(latinPrayerRaw)
+                                appendLine(prayerContent.concludingFormulaLatin)
+                                appendLine()
+                                appendLine("English Translation:")
+                                appendLine(prayerContent.versicleEnglish)
+                                appendLine(prayerContent.responseEnglish)
+                                appendLine()
+                                appendLine(formattedEnglishPrayer)
+                                appendLine(prayerContent.concludingFormulaEnglish)
+                                appendLine()
+                                appendLine("— ${prayerContent.sourceCitation} —")
+                            }
+                            clipboardManager.setText(AnnotatedString(fullPrayerText))
+                            Toast.makeText(context, "Traditional prayer copied to clipboard", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy prayer to clipboard",
+                            tint = GoldBright,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    IconButton(
+                        onClick = {
+                            val fullPrayerText = buildString {
+                                appendLine("† ${selectedSaint.feastTitle.uppercase()} †")
+                                appendLine("Traditional 1954 Roman Rite Prayer")
+                                appendLine()
+                                appendLine(prayerContent.versicleLatin)
+                                appendLine(prayerContent.responseLatin)
+                                appendLine()
+                                appendLine("Oratio:")
+                                appendLine(latinPrayerRaw)
+                                appendLine(prayerContent.concludingFormulaLatin)
+                                appendLine()
+                                appendLine("English Translation:")
+                                appendLine(prayerContent.versicleEnglish)
+                                appendLine(prayerContent.responseEnglish)
+                                appendLine()
+                                appendLine(formattedEnglishPrayer)
+                                appendLine(prayerContent.concludingFormulaEnglish)
+                                appendLine()
+                                appendLine("— ${prayerContent.sourceCitation} —")
+                            }
+                            val sendIntent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, fullPrayerText)
+                                type = "text/plain"
+                            }
+                            context.startActivity(Intent.createChooser(sendIntent, "Share Traditional 1954 Prayer"))
+                        },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share prayer",
+                            tint = GoldBright,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LiturgicalVersicleRow(
+    symbol: String,
+    text: String,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    isEnglish: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = symbol,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = fontSize
+            ),
+            color = Color(0xFFFF5252) // Traditional Liturgical Red
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = text.removePrefix(symbol).trim(),
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontFamily = FontFamily.Serif,
+                fontSize = fontSize,
+                fontStyle = if (isEnglish) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal
+            ),
+            color = if (isEnglish) TextGoldHighlight else ParchmentLight
+        )
+    }
+}
+

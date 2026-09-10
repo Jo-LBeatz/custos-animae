@@ -396,6 +396,7 @@ fun DutyEditDialog(
     var reminderTime by remember { mutableStateOf(duty?.reminderTime ?: "08:00") }
     var priority by remember { mutableStateOf(duty?.priority ?: "SACRED") }
     var category by remember { mutableStateOf(duty?.category ?: "PRAYER") }
+    var notificationStyle by remember { mutableStateOf(duty?.notificationStyle ?: "DEFAULT") }
 
     var monthlyMode by remember { mutableStateOf("DATES") }
     var yearlyMode by remember { mutableStateOf("DATES") }
@@ -510,6 +511,39 @@ fun DutyEditDialog(
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = GoldSacred,
                                 selectedLabelColor = Color.Black
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                HorizontalDivider(color = DarkCathedralCardBorder.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Reminder Style:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMutedParchment
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                ) {
+                    listOf(
+                        "DEFAULT" to "App Default",
+                        "CALL_OVERLAY" to "📞 Incoming Call",
+                        "BANNER" to "🔔 System Banner"
+                    ).forEach { (styleKey, label) ->
+                        FilterChip(
+                            selected = notificationStyle == styleKey,
+                            onClick = { notificationStyle = styleKey },
+                            label = { Text(label, fontSize = 11.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = GoldSacred,
+                                selectedLabelColor = Color.Black,
+                                containerColor = Color(0xFF1E1E28)
                             )
                         )
                     }
@@ -1103,7 +1137,8 @@ fun DutyEditDialog(
                             category = category.ifBlank { "PRAYER" },
                             scheduledDaysOfWeek = if (frequency == "WEEKLY") scheduledDaysOfWeekList.joinToString(",") else "",
                             scheduledDaysOfMonth = if (frequency == "MONTHLY") scheduledDaysOfMonthList.joinToString(",") else "",
-                            scheduledDaysOfYear = if (frequency == "YEARLY") scheduledDaysOfYearList.joinToString(",") else ""
+                            scheduledDaysOfYear = if (frequency == "YEARLY") scheduledDaysOfYearList.joinToString(",") else "",
+                            notificationStyle = notificationStyle
                         )
                         onSave(updated)
                     }

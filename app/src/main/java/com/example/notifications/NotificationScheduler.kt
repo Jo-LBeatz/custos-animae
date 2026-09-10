@@ -5,8 +5,11 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import com.example.data.SpiritualDuty
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 object NotificationScheduler {
@@ -238,21 +241,31 @@ object NotificationScheduler {
 
 
 
-    private fun parseHourAndMinute(timeStr: String): Pair<Int, Int> {
-        val clean = timeStr.trim().uppercase(Locale.ROOT)
+    fun parseHourAndMinute(timeStr: String): Pair<Int, Int> {
+        val normalized = timeStr.map { ch ->
+            when (ch) {
+                in '0'..'9' -> ch
+                in '\u0660'..'\u0669' -> '0' + (ch - '\u0660')
+                in '\u06F0'..'\u06F9' -> '0' + (ch - '\u06F0')
+                in '\uFF10'..'\uFF19' -> '0' + (ch - '\uFF10')
+                else -> ch
+            }
+        }.joinToString("")
+
+        val clean = normalized.trim().uppercase(Locale.ROOT)
         val isPM = clean.contains("PM")
         val isAM = clean.contains("AM")
         val digitsOnly = clean.replace("AM", "").replace("PM", "").trim()
         val parts = digitsOnly.split(":")
-        var hour = parts.getOrNull(0)?.toIntOrNull() ?: 8
-        val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        var hour = parts.getOrNull(0)?.trim()?.toIntOrNull() ?: 8
+        val minute = parts.getOrNull(1)?.trim()?.take(2)?.toIntOrNull() ?: 0
 
         if (isPM && hour < 12) {
             hour += 12
         } else if (isAM && hour == 12) {
             hour = 0
         }
-        return Pair(hour, minute)
+        return Pair(hour.coerceIn(0, 23), minute.coerceIn(0, 59))
     }
 
     fun scheduleSaintOfDay(context: Context, timeStr: String = "07:30") {
@@ -304,7 +317,7 @@ object NotificationScheduler {
             context,
             1000 + dutyId,
             intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         if (pendingIntent != null) {
             try {
@@ -320,15 +333,10 @@ object NotificationScheduler {
         notificationManager?.cancel(1000 + dutyId)
 
         // Stop ringing active call for this specific duty ID
-        val stopCallIntent = Intent(context, RuleOfLifeCallService::class.java).apply {
-            action = RuleOfLifeCallService.ACTION_STOP_CALL
-            putExtra("EXTRA_NOTIFICATION_ID", 1000 + dutyId)
-        }
-        try {
-            context.startService(stopCallIntent)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        RuleOfLifeCallService.stopCall(context, 1000 + dutyId)
+
+        // Clear reschedule state
+        RescheduleManager.clearReschedule(context, dutyId)
     }
 
     fun mapDayOfWeekToCalendar(dayStr: String): Int {
@@ -386,44 +394,86 @@ object NotificationScheduler {
                 }
             }
             "WEEKLY" -> {
-                val dayStr = duty.scheduledDaysOfWeek.ifBlank { "Monday" }
-                val targetDay = mapDayOfWeekToCalendar(dayStr)
-                while (cal.get(Calendar.DAY_OF_WEEK) != targetDay || cal.timeInMillis <= fromTimeMs) {
-                    cal.add(Calendar.DAY_OF_YEAR, 1)
+                val daysList = duty.scheduledDaysOfWeek.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .ifEmpty { listOf("Monday") }
+
+                val candidates = daysList.map { dayStr ->
+                    val targetDay = mapDayOfWeekToCalendar(dayStr)
+                    val c = Calendar.getInstance().apply {
+                        timeInMillis = fromTimeMs
+                        set(Calendar.HOUR_OF_DAY, hour)
+                        set(Calendar.MINUTE, minute)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    while (c.get(Calendar.DAY_OF_WEEK) != targetDay || c.timeInMillis <= fromTimeMs) {
+                        c.add(Calendar.DAY_OF_YEAR, 1)
+                    }
+                    c.timeInMillis
                 }
+                return candidates.minOrNull() ?: cal.timeInMillis
             }
             "MONTHLY" -> {
-                val rule = duty.scheduledDaysOfMonth.trim().ifBlank { "1" }
-                if (rule.contains("_")) {
-                    val nextCal = calculateNextRelativeMonthlyCalendar(rule, hour, minute, fromTimeMs)
-                    return nextCal.timeInMillis
-                } else {
-                    val targetDay = rule.toIntOrNull() ?: 1
-                    cal.set(Calendar.DAY_OF_MONTH, minOf(targetDay, cal.getActualMaximum(Calendar.DAY_OF_MONTH)))
-                    if (cal.timeInMillis <= fromTimeMs) {
-                        cal.add(Calendar.MONTH, 1)
-                        cal.set(Calendar.DAY_OF_MONTH, minOf(targetDay, cal.getActualMaximum(Calendar.DAY_OF_MONTH)))
+                val rules = duty.scheduledDaysOfMonth.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .ifEmpty { listOf("1") }
+
+                val candidates = rules.map { rule ->
+                    if (rule.contains("_")) {
+                        calculateNextRelativeMonthlyCalendar(rule, hour, minute, fromTimeMs).timeInMillis
+                    } else {
+                        val targetDay = rule.toIntOrNull() ?: 1
+                        val c = Calendar.getInstance().apply {
+                            timeInMillis = fromTimeMs
+                            set(Calendar.HOUR_OF_DAY, hour)
+                            set(Calendar.MINUTE, minute)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                            set(Calendar.DAY_OF_MONTH, minOf(targetDay, getActualMaximum(Calendar.DAY_OF_MONTH)))
+                        }
+                        if (c.timeInMillis <= fromTimeMs) {
+                            c.add(Calendar.MONTH, 1)
+                            c.set(Calendar.DAY_OF_MONTH, minOf(targetDay, c.getActualMaximum(Calendar.DAY_OF_MONTH)))
+                        }
+                        c.timeInMillis
                     }
                 }
+                return candidates.minOrNull() ?: cal.timeInMillis
             }
             "YEARLY" -> {
-                val rule = duty.scheduledDaysOfYear.trim().ifBlank { "01-01" }
-                if (rule.contains("_")) {
-                    val nextCal = calculateNextRelativeYearlyCalendar(rule, hour, minute, fromTimeMs)
-                    return nextCal.timeInMillis
-                } else {
-                    val parts = rule.split("-")
-                    val month = parts.getOrNull(0)?.toIntOrNull() ?: 1
-                    val day = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                val rules = duty.scheduledDaysOfYear.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .ifEmpty { listOf("01-01") }
 
-                    cal.set(Calendar.MONTH, month - 1)
-                    cal.set(Calendar.DAY_OF_MONTH, minOf(day, cal.getActualMaximum(Calendar.DAY_OF_MONTH)))
-                    if (cal.timeInMillis <= fromTimeMs) {
-                        cal.add(Calendar.YEAR, 1)
-                        cal.set(Calendar.MONTH, month - 1)
-                        cal.set(Calendar.DAY_OF_MONTH, minOf(day, cal.getActualMaximum(Calendar.DAY_OF_MONTH)))
+                val candidates = rules.map { rule ->
+                    if (rule.contains("_")) {
+                        calculateNextRelativeYearlyCalendar(rule, hour, minute, fromTimeMs).timeInMillis
+                    } else {
+                        val parts = rule.split("-")
+                        val month = parts.getOrNull(0)?.toIntOrNull() ?: 1
+                        val day = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                        val c = Calendar.getInstance().apply {
+                            timeInMillis = fromTimeMs
+                            set(Calendar.HOUR_OF_DAY, hour)
+                            set(Calendar.MINUTE, minute)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                            set(Calendar.MONTH, month - 1)
+                            set(Calendar.DAY_OF_MONTH, minOf(day, getActualMaximum(Calendar.DAY_OF_MONTH)))
+                        }
+                        if (c.timeInMillis <= fromTimeMs) {
+                            c.add(Calendar.YEAR, 1)
+                            c.set(Calendar.MONTH, month - 1)
+                            c.set(Calendar.DAY_OF_MONTH, minOf(day, c.getActualMaximum(Calendar.DAY_OF_MONTH)))
+                        }
+                        c.timeInMillis
                     }
                 }
+                return candidates.minOrNull() ?: cal.timeInMillis
             }
             else -> {
                 if (cal.timeInMillis <= fromTimeMs) {
@@ -591,71 +641,147 @@ object NotificationScheduler {
     }
 
     private fun setAlarm(context: Context, alarmManager: AlarmManager, triggerAtMs: Long, pendingIntent: PendingIntent) {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+        val targetFormatted = sdf.format(Date(triggerAtMs))
+        val diffSec = (triggerAtMs - System.currentTimeMillis()) / 1000
+        Log.d("NotificationScheduler", "Attempting to schedule alarm for $targetFormatted (in ${diffSec}s)")
+
+        val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            true
+        }
+
         try {
-            val showIntent = Intent(context, com.example.MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            if (canExact) {
+                val showIntent = Intent(context, com.example.MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+                val showPendingIntent = PendingIntent.getActivity(
+                    context,
+                    0,
+                    showIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerAtMs, showPendingIntent)
+                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+                Log.d("NotificationScheduler", "Scheduled via setAlarmClock for $targetFormatted")
+                return
             }
-            val showPendingIntent = PendingIntent.getActivity(
-                context,
-                0,
-                showIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerAtMs, showPendingIntent)
-            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
         } catch (e: Exception) {
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-                        alarmManager.setAndAllowWhileIdle(
-                            AlarmManager.RTC_WAKEUP,
-                            triggerAtMs,
-                            pendingIntent
-                        )
-                    } else {
-                        alarmManager.setExactAndAllowWhileIdle(
-                            AlarmManager.RTC_WAKEUP,
-                            triggerAtMs,
-                            pendingIntent
-                        )
-                    }
-                } else {
-                    alarmManager.set(
+            Log.w("NotificationScheduler", "setAlarmClock failed, falling back", e)
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (canExact) {
+                    alarmManager.setExactAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         triggerAtMs,
                         pendingIntent
                     )
-                }
-            } catch (ex: Exception) {
-                try {
+                    Log.d("NotificationScheduler", "Scheduled via setExactAndAllowWhileIdle for $targetFormatted")
+                } else {
                     alarmManager.setAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         triggerAtMs,
                         pendingIntent
                     )
-                } catch (inner: Exception) {
-                    inner.printStackTrace()
+                    Log.d("NotificationScheduler", "Scheduled via setAndAllowWhileIdle for $targetFormatted")
                 }
+            } else {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMs,
+                    pendingIntent
+                )
+                Log.d("NotificationScheduler", "Scheduled via alarmManager.set for $targetFormatted")
+            }
+        } catch (ex: Exception) {
+            try {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMs,
+                    pendingIntent
+                )
+                Log.d("NotificationScheduler", "Final fallback scheduled via setAndAllowWhileIdle for $targetFormatted")
+            } catch (inner: Exception) {
+                Log.e("NotificationScheduler", "All alarm scheduling attempts failed", inner)
             }
         }
     }
 
     fun triggerSaintNotificationNow(context: Context) {
-        val intent = Intent(context, NotificationReceiver::class.java).apply {
-            action = ACTION_SAINT_DAY
-            putExtra("EXTRA_TYPE", "SAINT")
+        try {
+            val cal = Calendar.getInstance()
+            val mmdd = String.format(Locale.US, "%02d-%02d", cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
+            val saint = com.example.data.calendar.SaintData.getSaintForDate(mmdd) ?: com.example.data.calendar.SaintData.saintList.first()
+            val title = "Saint of the Day: ${saint.saintName}"
+            val message = "${saint.feastTitle} • \"${saint.quote}\""
+            NotificationHelper.showNotification(context, title, message, notificationId = 9999)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            val intent = Intent(context, NotificationReceiver::class.java).apply {
+                action = ACTION_SAINT_DAY
+                putExtra("EXTRA_TYPE", "SAINT")
+            }
+            context.sendBroadcast(intent)
         }
-        context.sendBroadcast(intent)
     }
 
-    fun triggerDutyNotificationNow(context: Context, title: String, message: String) {
+    fun scheduleOneOffReminder(
+        context: Context,
+        title: String,
+        message: String,
+        timeStr: String,
+        notificationId: Int = 12345
+    ) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val (hour, minute) = parseHourAndMinute(timeStr)
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
         val intent = Intent(context, NotificationReceiver::class.java).apply {
             action = ACTION_DUTY_REMINDER
             putExtra("EXTRA_TYPE", "TEST")
             putExtra("EXTRA_TITLE", title)
             putExtra("EXTRA_MESSAGE", message)
-            putExtra("EXTRA_ID", (System.currentTimeMillis() % 10000).toInt())
+            putExtra("EXTRA_ID", notificationId)
         }
-        context.sendBroadcast(intent)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            notificationId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        setAlarm(context, alarmManager, cal.timeInMillis, pendingIntent)
+    }
+
+    fun triggerDutyNotificationNow(context: Context, title: String, message: String, style: String? = null) {
+        val notifId = (System.currentTimeMillis() % 10000).toInt() + 1000
+        RuleOfLifeCallStateHelper.markScheduledEventTriggered(context)
+        if (style == "BANNER") {
+            NotificationHelper.showNotification(context, title, message, notifId)
+        } else if (style == "CALL_OVERLAY") {
+            NotificationHelper.showIncomingCallNotification(context, title, message, notifId)
+        } else {
+            val intent = Intent(context, NotificationReceiver::class.java).apply {
+                action = ACTION_DUTY_REMINDER
+                putExtra("EXTRA_TYPE", "TEST")
+                putExtra("EXTRA_TITLE", title)
+                putExtra("EXTRA_MESSAGE", message)
+                if (style != null) {
+                    putExtra("EXTRA_STYLE", style)
+                }
+                putExtra("EXTRA_ID", notifId)
+            }
+            context.sendBroadcast(intent)
+        }
     }
 }

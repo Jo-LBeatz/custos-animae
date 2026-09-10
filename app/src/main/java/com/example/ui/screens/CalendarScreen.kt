@@ -677,10 +677,12 @@ fun CalendarScreen(
                         .heightIn(max = 350.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
+                    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+                    val activePrayerMode = com.example.util.PrayerMode.fromCode(userProfile?.prayerMode)
                     val textToDisplay = if (dialogIsLatin && prayer.latinText.isNotBlank()) {
                         prayer.latinText
                     } else {
-                        prayer.englishText
+                        com.example.util.PrayerPerspectiveFormatter.format(prayer.englishText, activePrayerMode)
                     }
 
                     Text(

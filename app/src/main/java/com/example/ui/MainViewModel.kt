@@ -78,6 +78,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _readingTextSize = MutableStateFlow(sharedPrefs.getFloat("reading_text_size", 14f))
     val readingTextSize: StateFlow<Float> = _readingTextSize.asStateFlow()
 
+    // Network Connectivity Monitor (Real-time online/offline detector)
+    val connectivityMonitor = com.example.util.NetworkConnectivityMonitor.getInstance(application)
+    val isOnline: StateFlow<Boolean> = connectivityMonitor.isOnline
+
+    // Saint Intercessory Prayer & Collect System (Online fetch with 1954 Collect fallback)
+    private val saintPrayerRepository = com.example.data.prayers.SaintIntercessoryPrayerRepository(application, connectivityMonitor)
+    private val _saintPrayerUiState = MutableStateFlow<com.example.data.prayers.SaintPrayerUiState>(com.example.data.prayers.SaintPrayerUiState.Loading)
+    val saintPrayerUiState: StateFlow<com.example.data.prayers.SaintPrayerUiState> = _saintPrayerUiState.asStateFlow()
+    private var currentSaintProfileLoaded: SaintProfile? = null
+
     // Page Viewing Mode Preference (Pure Content View without top/bottom bars vs Standard with bars vs Dynamic Auto-Hide)
     private val _pageViewMode = MutableStateFlow<PageViewMode>(
         try {
@@ -442,6 +452,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             
             // Trigger background worker to fetch or fallback quotes for today's Saint of the Day
             com.example.worker.SaintQuoteWorker.enqueueFetch(application)
+
+            // Automatically ensure alarms are synced with current duties whenever duties change
+            viewModelScope.launch {
+                repository.allDuties.collect { duties ->
+                    if (duties.isNotEmpty()) {
+                        val profile = repository.getUserProfileSync()
+                        com.example.notifications.NotificationScheduler.scheduleAll(
+                            application,
+                            duties,
+                            profile?.saintNotificationTime ?: "07:30",
+                            profile
+                        )
+                    }
+                }
+            }
+
+            // Real-time network listener: if connectivity is restored, refresh saint prayer if previously offline fallback
+            viewModelScope.launch {
+                connectivityMonitor.isOnline.collect { online ->
+                    if (online) {
+                        val current = _saintPrayerUiState.value
+                        if (current is com.example.data.prayers.SaintPrayerUiState.OfflineFallback) {
+                            currentSaintProfileLoaded?.let { saint ->
+                                loadSaintPrayer(saint, forceRefresh = true)
+                            }
+                        }
+                    }
+                }
+            }
         }
 
 
@@ -574,12 +613,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updatePrayerMode(newMode: com.example.util.PrayerMode) {
+        viewModelScope.launch {
+            val current = userProfile.value ?: com.example.data.UserProfile()
+            val updated = current.copy(prayerMode = newMode.name)
+            repository.saveUserProfile(updated)
+        }
+    }
+
+    fun updateRuleNotificationStyle(style: String) {
+        viewModelScope.launch {
+            val current = userProfile.value ?: com.example.data.UserProfile()
+            val updated = current.copy(ruleNotificationStyle = style)
+            repository.saveUserProfile(updated)
+        }
+    }
+
 
 
     fun updateDutyReminderTime(dutyId: Int, newTime: String) {
         viewModelScope.launch {
             val duty = allDuties.value.find { it.id == dutyId }
             if (duty != null) {
+                com.example.notifications.RescheduleManager.clearReschedule(getApplication(), dutyId)
                 com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), dutyId)
                 val updated = duty.copy(reminderTime = newTime)
                 repository.insertDuty(updated)
@@ -607,6 +663,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
             val newId = repository.insertDuty(newDuty)
             val savedDuty = newDuty.copy(id = newId.toInt())
+            com.example.notifications.RescheduleManager.clearReschedule(getApplication(), savedDuty.id)
             com.example.notifications.NotificationScheduler.scheduleAll(
                 getApplication(),
                 allDuties.value + savedDuty,
@@ -616,11 +673,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun testNotificationNow(title: String, message: String) {
+    fun testNotificationNow(title: String, message: String, forcedStyle: String? = null) {
+        val style = forcedStyle ?: (userProfile.value?.ruleNotificationStyle ?: "BANNER")
         com.example.notifications.NotificationScheduler.triggerDutyNotificationNow(
             getApplication(),
             title,
-            message
+            message,
+            style
         )
     }
 
@@ -721,7 +780,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 notificationEnabled = enabled
             )
             repository.saveUserProfile(updated)
-            com.example.notifications.NotificationScheduler.scheduleAll(getApplication(), allDuties.value, saintTime, updated)
+            val freshDuties = repository.getAllDutiesSync()
+            com.example.notifications.NotificationScheduler.scheduleAll(getApplication(), freshDuties, saintTime, updated)
         }
     }
 
@@ -752,6 +812,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val isNew = duty.id == 0
             if (!isNew) {
+                com.example.notifications.RescheduleManager.clearReschedule(getApplication(), duty.id)
                 com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), duty.id)
             }
             val savedDuty = if (isNew) {
@@ -762,6 +823,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 duty
             }
 
+            com.example.notifications.RescheduleManager.clearReschedule(getApplication(), savedDuty.id)
             val currentDuties = if (isNew) allDuties.value + savedDuty else allDuties.value.map { if (it.id == savedDuty.id) savedDuty else it }
             com.example.notifications.NotificationScheduler.scheduleAll(
                 getApplication(),
@@ -778,6 +840,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val isNew = pending.id == 0
             if (!isNew) {
+                com.example.notifications.RescheduleManager.clearReschedule(getApplication(), pending.id)
                 com.example.notifications.NotificationScheduler.cancelDutyNotification(getApplication(), pending.id)
             }
             val savedDuty = if (isNew) {
@@ -788,6 +851,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 pending
             }
 
+            com.example.notifications.RescheduleManager.clearReschedule(getApplication(), savedDuty.id)
             val currentDuties = if (isNew) allDuties.value + savedDuty else allDuties.value.map { if (it.id == savedDuty.id) savedDuty else it }
             com.example.notifications.NotificationScheduler.scheduleAll(
                 getApplication(),
@@ -812,12 +876,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun needsSpiritualReflection(title: String, description: String): Boolean {
         val text = "$title $description".lowercase(Locale.getDefault())
-        val spiritualKeywords = listOf("pray", "rosary", "mass", "fast", "charity", "read", "bible", "gospel", "saint", "examen", "confession", "sacrament", "virtue", "god", "church", "adoration", "devotion", "silence", "work", "duty", "family", "help", "penance")
-        val worldlyKeywords = listOf("game", "gaming", "movie", "tv", "party", "social media", "scroll", "bar", "gambling", "shopping", "gossip", "idle", "lounge")
-
-        if (worldlyKeywords.any { text.contains(it) }) return true
-        if (!spiritualKeywords.any { text.contains(it) }) return true
-        return false
+        val worldlyKeywords = listOf("casino", "gambling", "gossip", "scroll tiktok", "doomscroll", "binge watch", "idle bar")
+        return worldlyKeywords.any { text.contains(it) }
     }
 
     fun getSaintReflection(saintId: String): Flow<SaintReflection?> = repository.getSaintReflection(saintId)
@@ -864,6 +924,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val cal = Calendar.getInstance()
         val mmdd = String.format("%02d-%02d", cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
         return SaintData.getSaintForDate(mmdd) ?: SaintData.saintList.first()
+    }
+
+    fun loadSaintPrayer(saint: SaintProfile, forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            currentSaintProfileLoaded = saint
+            _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.Loading
+            try {
+                val prayer = saintPrayerRepository.getSaintPrayer(saint, forceRefresh)
+                if (prayer.isOfflineFallback) {
+                    _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.OfflineFallback(prayer)
+                } else {
+                    _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.Success(prayer)
+                }
+            } catch (e: Exception) {
+                val fallback = saintPrayerRepository.getLocalCollectFallback(saint, isNetworkError = true)
+                _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.OfflineFallback(fallback)
+            }
+        }
     }
 
     fun triggerTestNotification(title: String, message: String) {

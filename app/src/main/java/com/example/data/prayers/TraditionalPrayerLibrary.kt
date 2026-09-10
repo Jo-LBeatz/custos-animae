@@ -61,7 +61,7 @@ Domine Deus omnipotens, qui ad principium huius diei nos pervenire fecisti: tua 
 
 HAIL MARY, full of grace, the Lord is with thee; blessed art thou among women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.
 
-I BELIEVE in God, the Father Almighty, Creator of heaven and earth; and in Jesus Christ, His only Son, our Lord: Who was conceived by the Holy Ghost, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died, and was buried. He descended into hell; the third day He arose again from the dead; He ascended into heaven, sitteth at the right hand of God the Father Almighty; from thence He shall come to judge the living and the dead. I believe in the Holy Ghost, the Holy Catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.""",
+I BELIEVE in God, the Father Almighty, Creator of heaven and earth; and in Jesus Christ, His only Son, my Lord: Who was conceived by the Holy Ghost, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died, and was buried. He descended into hell; the third day He arose again from the dead; He ascended into heaven, sitteth at the right hand of God the Father Almighty; from thence He shall come to judge the living and the dead. I believe in the Holy Ghost, the Holy Catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.""",
             latinText = """PATER NOSTER, qui es in caelis, sanctificetur nomen tuum. Adveniat regnum tuum. Fiat voluntas tua, sicut in caelo et in terra. Panem nostrum cotidianum da nobis hodie, et dimitte nobis debita nostra sicut et nos dimittimus debitoribus nostris. Et ne nos inducas in tentationem, sed libera nos a malo. Amen.
 
 AVE MARIA, gratia plena, Dominus tecum. Benedicta tu in mulieribus, et benedictus fructus ventris tui, Iesus. Sancta Maria, Mater Dei, ora pro nobis peccatoribus, nunc et in hora mortis nostrae. Amen.
@@ -106,7 +106,47 @@ CREDO in Deum Patrem omnipotentem, Creatorem caeli et terrae. Et in Iesum Christ
             category = "Morning Prayers",
             subtitle = "Patron of the Universal Church and Protector of Families",
             englishText = """O Holy Joseph, guardian of the Virgin Mother of God and faithful defender of the Holy Family, extend thy protection over us this day. Obtain for us purity of heart, diligence in our duties, and final perseverance in the grace of God. Amen.""",
-            latinText = """O Sancte Ioseph, custos Virginis Matris Dei et fidelis defensor Sanctae Familiae, extende super nos hodie protectionem tuam. Impetra nobis puritatem cordis, diligentiam in officiis nostris, et finalem in gratia Dei perseverantiam. Amen."""
+            latinText = """O Sancte Ioseph, custos Virginis Matris Dei et fidelis defensor Sanctae Familiae, extende super nos hodie protectionem tuam. Impetra nobis puritam cordis, diligentiam in officiis nostris, et finalem in gratia Dei perseverantiam. Amen."""
+        ),
+        PrayerItem(
+            id = "m_st_michael",
+            title = "Prayer to St. Michael the Archangel",
+            category = "Morning Prayers",
+            subtitle = "Invocation for daily spiritual protection and warfare",
+            englishText = """St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray, and do thou, O Prince of the Heavenly Host, by the power of God, cast into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen.""",
+            latinText = """Sancte Michael Archangele, defende nos in praelio; contra nequitiam et insidias diaboli esto praesidium. Imperet illi Deus, supplices deprecamur: tuque, Princeps militiae caelestis, Satanam aliosque spiritus malignos, qui ad perditionem animarum pervagantur in mundo, divina virtute, in infernum detrude. Amen."""
+        ),
+        PrayerItem(
+            id = "prayer_before_work",
+            title = "Prayer before work",
+            category = "Morning Prayers",
+            subtitle = "To St. Joseph the Worker (Pope St. Pius X, 1906)",
+            notes = "An indulgenced prayer to St. Joseph, Patron of Workers, asking for grace to work in a spirit of penance, gratitude, order, and devotion.",
+            englishText = """Glorious St. Joseph, model of all who are devoted to labor, obtain for me the grace to work in the spirit of penance in expiation of my many sins; to work conscientiously by placing the love of duty above my inclinations; to gratefully and joyfully deem it an honor to employ and to develop by labor the gifts I have received from God; to work methodically, peacefully, in moderation and patience, without ever shrinking from hardship and difficulties; to work above all with purity of intention and detachment from self, having unceasingly before my eyes death and the account I have to render of time lost, talents unused, good omitted, and vain complacency in success, so fatal to the work of God.
+
+All for Jesus, all through Mary, all in imitation of thee, O Patriarch St. Joseph! This shall be my motto in life and in death. Amen.""",
+            latinText = """Gloriose Sancte Ioseph, exemplar omnium qui labori sunt addicti, impetra mihi gratiam laborandi in spiritu paenitentiae pro expiatione multorum peccatorum meorum; laborandi conscientia ductum, anteponendo officii amorem propriis inclinationibus; laborandi cum gratitudine et gaudio, honoris loco ducentem adhibere et evolvere per laborem dona a Deo accepta; laborandi cum ordine, pace, moderatione et patience, nunquam succumbentem fatigationi vel difficultatibus; laborandi praesertim cum puritate intentionis et cum abnegatione sui ipsius, semper prae oculis habentem mortem et rationem reddendam de tempore amisso, de talentis inusitatis, de bono omisso, de vana complacentia in successu, tam noxia operi Dei.
+
+Omnia pro Iesu, omnia per Mariam, omnia ad imitationem tuam, O Patriarcha Sancte Ioseph! Hoc erit synthema meum in vita et in morte. Amen."""
+        ),
+        PrayerItem(
+            id = "prayer_before_study",
+            title = "Prayer before study",
+            category = "Morning Prayers",
+            subtitle = "By St. Thomas Aquinas (Doctor Angelicus)",
+            notes = "Traditional prayer composed by St. Thomas Aquinas before studying, preaching, or writing, asking for clarity of understanding and subtlety of interpretation.",
+            englishText = """Creator of all things, true Source of light and wisdom, lofty Origin of all being, graciously let a ray of Your brilliance penetrate into the darkness of my understanding and take from me the double darkness in which I have been born, an obscurity of both sin and ignorance.
+
+Give me a sharp sense of understanding, a retentive memory, and the ability to grasp things correctly and fundamentally. Grant me the favor of being exact in my explanations, and the ability to express myself with thoroughness and charm.
+
+Point out the beginning, direct the progress, and help in the completion; through Christ Our Lord. Amen.""",
+            latinText = """Creator ineffabilis, qui de thesauris sapientiae tuae tres Angelorum hierarchias designasti, et eas super caelum empyreum miro ordine collocasti, et universi partes elegantissime distribuisti:
+
+Tu, inquam, qui verus fons luminis et sapientiae diceris, et supereminens principium, infundere digneris super intellectus mei tenebras tuae radium claritatis, duplices, in quibus natus sum, a me removens tenebras, peccatum scilicet et ignorantiam.
+
+Tu, qui linguas infantium facis disertas, linguae meae erudias et in labiis meis gratiam tuae benedictionis infundas. Da mihi intelligendi acumen, retinendi capacitatem, interpretandi methodum et facilitatem, discendi subtilitatem, loquendi gratiam uberem.
+
+Ingressum instruas, progressum dirigas, egressum compleas: Tu, qui es verus Deus et homo, qui vivis et regnas in saecula saeculorum. Amen."""
         )
     )
 
@@ -275,6 +315,14 @@ Benedicat et custodiat nos omnipotens et misericors Dominus, Pater, et Filius, e
             subtitle = "Commending sleep and body to heavenly protection",
             englishText = """O Holy Angel, watching over my poor soul and life, abandon me not, a sinner, nor depart from me. Give no place to the evil spirit to overpower me. Shield me during the hours of darkness and present my prayers to the Almighty God. Amen.""",
             latinText = """Sancte Angele, custos animae et corporis mei, ne derelinquas me peccatorem. Ne des locum spiritui maligno ut mihi dominetur. Protege me in horis nocturnis et praesenta orationes meas coram Altissimo Deo. Amen."""
+        ),
+        PrayerItem(
+            id = "n_st_michael",
+            title = "Prayer to St. Michael the Archangel",
+            category = "Night Prayers",
+            subtitle = "Nightly protection against the snares of the enemy during sleep",
+            englishText = """St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray, and do thou, O Prince of the Heavenly Host, by the power of God, cast into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen.""",
+            latinText = """Sancte Michael Archangele, defende nos in praelio; contra nequitiam et insidias diaboli esto praesidium. Imperet illi Deus, supplices deprecamur: tuque, Princeps militiae caelestis, Satanam aliosque spiritus malignos, qui ad perditionem animarum pervagantur in mundo, divina virtute, in infernum detrude. Amen."""
         )
     )
 
@@ -408,6 +456,38 @@ Help me, O great Saint Benedict, to live and die as a faithful child of God, to 
             latinText = """Crux sacra sit mihi lux! Non draco sit mihi dux! Vade retro Satana! Nunquam suade mihi vana! Sunt mala quae libas. Ipse venena bibas!
 
 (The Medal of Saint Benedict Exorcism: May the holy Cross be my light! Let not the dragon be my guide! Depart, Satan! Never suggest to me thy vanities! Evil are the things thou profferest. Drink thou thine own poison!)"""
+        ),
+        PrayerItem(
+            id = "st_joseph_before_work",
+            title = "Prayer Before Work (To St. Joseph the Worker)",
+            category = "Protection & Saints",
+            subtitle = "Composed by Pope St. Pius X (1906) for Sanctification of Daily Labor",
+            notes = "An indulgenced prayer to St. Joseph, Patron of Workers, asking for grace to work in a spirit of penance, gratitude, order, and devotion.",
+            englishText = """Glorious St. Joseph, model of all who are devoted to labor, obtain for me the grace to work in the spirit of penance in expiation of my many sins; to work conscientiously by placing the love of duty above my inclinations; to gratefully and joyfully deem it an honor to employ and to develop by labor the gifts I have received from God; to work methodically, peacefully, in moderation and patience, without ever shrinking from hardship and difficulties; to work above all with purity of intention and detachment from self, having unceasingly before my eyes death and the account I have to render of time lost, talents unused, good omitted, and vain complacency in success, so fatal to the work of God.
+
+All for Jesus, all through Mary, all in imitation of thee, O Patriarch St. Joseph! This shall be my motto in life and in death. Amen.""",
+            latinText = """Gloriose Sancte Ioseph, exemplar omnium qui labori sunt addicti, impetra mihi gratiam laborandi in spiritu paenitentiae pro expiatione multorum peccatorum meorum; laborandi conscientia ductum, anteponendo officii amorem propriis inclinationibus; laborandi cum gratitudine et gaudio, honoris loco ducentem adhibere et evolvere per laborem dona a Deo accepta; laborandi cum ordine, pace, moderatione et patientia, nunquam succumbentem fatigationi vel difficultatibus; laborandi praesertim cum puritate intentionis et cum abnegatione sui ipsius, semper prae oculis habentem mortem et rationem reddendam de tempore amisso, de talentis inusitatis, de bono omisso, de vana complacentia in successu, tam noxia operi Dei.
+
+Omnia pro Iesu, omnia per Mariam, omnia ad imitationem tuam, O Patriarcha Sancte Ioseph! Hoc erit synthema meum in vita et in morte. Amen."""
+        ),
+        PrayerItem(
+            id = "st_thomas_aquinas_before_study",
+            title = "Prayer Before Study (By St. Thomas Aquinas)",
+            category = "Protection & Saints",
+            subtitle = "Oratio Ante Studium (Doctor Angelicus)",
+            notes = "Traditional prayer composed by St. Thomas Aquinas before studying, preaching, or writing, asking for clarity of understanding and subtlety of interpretation.",
+            englishText = """Creator of all things, true Source of light and wisdom, lofty Origin of all being, graciously let a ray of Your brilliance penetrate into the darkness of my understanding and take from me the double darkness in which I have been born, an obscurity of both sin and ignorance.
+
+Give me a sharp sense of understanding, a retentive memory, and the ability to grasp things correctly and fundamentally. Grant me the favor of being exact in my explanations, and the ability to express myself with thoroughness and charm.
+
+Point out the beginning, direct the progress, and help in the completion; through Christ Our Lord. Amen.""",
+            latinText = """Creator ineffabilis, qui de thesauris sapientiae tuae tres Angelorum hierarchias designasti, et eas super caelum empyreum miro ordine collocasti, et universi partes elegantissime distribuisti:
+
+Tu, inquam, qui verus fons luminis et sapientiae diceris, et supereminens principium, infundere digneris super intellectus mei tenebras tuae radium claritatis, duplices, in quibus natus sum, a me removens tenebras, peccatum scilicet et ignorantiam.
+
+Tu, qui linguas infantium facis disertas, linguae meae erudias et in labiis meis gratiam tuae benedictionis infundas. Da mihi intelligendi acumen, retinendi capacitatem, interpretandi methodum et facilitatem, discendi subtilitatem, loquendi gratiam uberem.
+
+Ingressum instruas, progressum dirigas, egressum compleas: Tu, qui es verus Deus et homo, qui vivis et regnas in saecula saeculorum. Amen."""
         ),
         PrayerItem(
             id = "st_joseph_ancient",
@@ -1034,8 +1114,11 @@ Salve Regina... Sancte Ioseph, ora pro nobis. Amen."""
             category = "Sacred Heart Devotions",
             subtitle = "Apostleship of Prayer (1844, approved by Pius IX & Leo XIII)",
             subsection = "Classical Devotions",
-            englishText = """O Jesus, through the Immaculate Heart of Mary, I offer Thee my prayers, works, joys, and sufferings of this day, for all the intentions of Thy Sacred Heart, in union with the Holy Sacrifice of the Mass throughout the world, in reparation for my sins, for the intentions of all our associates, and in particular for the intentions of the Sovereign Pontiff. Amen.""",
-            latinText = """O Iesu, per Immaculatum Cor Mariae, offero tibi orationes, opera, gaudia et passiones huius diei, pro omnibus intentionibus Sacratissimi Cordis tui, in unione cum Sancto Missae Sacrificio ubique terrarum celebrato, in reparationem peccatorum meorum, et pro intentionibus Summi Pontificis. Amen."""
+            englishText = """O Jesus, through the Immaculate Heart of Mary, I offer Thee my prayers, works, joys, and sufferings of this day, for all the intentions of Thy Sacred Heart, in union with the Holy Sacrifice of the Mass throughout the world, in reparation for my sins, for the intentions of all our associates, and in particular for the intentions of obtaining a Sovereign Pontiff. Amen.
+
+(Note: Modified by RegulaVitae for the relevance of our time.)""",
+            latinText = """O Iesu, per Immaculatum Cor Mariae, offero tibi orationes, opera, gaudia et passiones huius diei, pro omnibus intentionibus Sacratissimi Cordis tui, in unione cum Sancto Missae Sacrificio ubique terrarum celebrato, in reparationem peccatorum meorum, et pro intentionibus ad impetrandum Summum Pontificem. Amen.""",
+            notes = "Modified by RegulaVitae for the relevance of our time."
         ),
         PrayerItem(
             id = "prayer_st_gertrude_sacred_heart",
@@ -1104,6 +1187,218 @@ V. Cor Iesu Eucharisticum, miserere nobis!
 
 V. Sit laus, honor et gloria Cordi Divino Iesu per infinita saeculorum saecula!
 (Raccolta 250)"""
+        )
+    )
+
+    val traditionalCreeds = listOf(
+        PrayerItem(
+            id = "creed_apostles",
+            title = "The Apostles' Creed (Symbolum Apostolorum)",
+            category = "Traditional Creeds",
+            subtitle = "Ancient Baptismal Symbol of the Primitive Roman Church (c. 1st–2nd Century)",
+            notes = "The foundational rule of faith handed down from the Apostles, recited at the beginning of the Holy Rosary and at Prime in the Divine Office.",
+            englishText = """I BELIEVE in God, the Father Almighty, Creator of heaven and earth; and in Jesus Christ, His only Son, my Lord: Who was conceived by the Holy Ghost, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died, and was buried. He descended into hell; the third day He arose again from the dead; He ascended into heaven, sitteth at the right hand of God the Father Almighty; from thence He shall come to judge the living and the dead. I believe in the Holy Ghost, the Holy Catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.""",
+            latinText = """CREDO in Deum Patrem omnipotentem, Creatorem caeli et terrae. Et in Iesum Christum, Filium eius unicum, Dominum nostrum: qui conceptus est de Spiritu Sancto, natus ex Maria Virgine, passus sub Pontio Pilato, crucifixus, mortuus, et sepultus: descendit ad inferos; tertia die resurrexit a mortuis; ascendit ad caelos, sedet ad dexteram Dei Patris omnipotentis: inde venturus est iudicare vivos et mortuos. Credo in Spiritum Sanctum, sanctam Ecclesiam catholicam, Sanctorum communionem, remissionem peccatorum, carnis resurrectionem, vitam aeternam. Amen."""
+        ),
+        PrayerItem(
+            id = "creed_nicene",
+            title = "Nicene-Constantinopolitan Creed (Symbolum Nicaenum)",
+            category = "Traditional Creeds",
+            subtitle = "Dogmatic Creed of the Holy Sacrifice of the Mass (Council of Nicaea 325 AD / Constantinople 381 AD)",
+            notes = "Solemnly chanted or recited in the 1954 Missale Romanum on Sundays, Feasts of Our Lord, Our Lady, Apostles, and Doctors of the Church.",
+            englishText = """I BELIEVE in one God, the Father Almighty, maker of heaven and earth, and of all things visible and invisible. And in one Lord Jesus Christ, the Only-begotten Son of God, born of the Father before all ages. God of God, Light of Light, true God of true God, begotten, not made, consubstantial with the Father: by Whom all things were made. Who for us men and for our salvation came down from heaven.
+
+[GENUFLECT] AND WAS INCARNATE BY THE HOLY GHOST OF THE VIRGIN MARY, AND WAS MADE MAN.
+
+He was crucified also for us under Pontius Pilate; suffered and was buried, and the third day He rose again, according to the Scriptures, and ascended into heaven, and sitteth at the right hand of the Father. And He shall come again with glory to judge the living and the dead: of Whose kingdom there shall be no end. And in the Holy Ghost, the Lord and Giver of life: Who proceedeth from the Father and the Son. Who together with the Father and the Son is adored and glorified: Who spoke by the prophets. And one, holy, catholic, and apostolic Church. I confess one baptism for the remission of sins. And I look for the resurrection of the dead, and the life of the world to come. Amen.""",
+            latinText = """CREDO in unum Deum, Patrem omnipotentem, factorem caeli et terrae, visibilium omnium et invisibilium. Et in unum Dominum Iesum Christum, Filium Dei Unigenitum, et ex Patre natum ante omnia saecula. Deum de Deo, lumen de lumine, Deum verum de Deo vero, genitum, non factum, consubstantialem Patri: per quem omnia facta sunt. Qui propter nos homines et propter nostram salutem descendit de caelis.
+
+[HIC GENUFLECTITUR] ET INCARNATUS EST DE SPIRITU SANCTO EX MARIA VIRGINE, ET HOMO FACTUS EST.
+
+Crucifixus etiam pro nobis sub Pontio Pilato; passus, et sepultus est, et resurrexit tertia die, secundum Scripturas, et ascendit in caelum, sedet ad dexteram Patris. Et iterum venturus est cum gloria, iudicare vivos et mortuos, cuius regni non erit finis. Et in Spiritum Sanctum, Dominum et vivificantem: qui ex Patre Filioque procedit. Qui cum Patre et Filio simul adoratur et conglorificatur: qui locutus est per prophetas. Et unam, sanctam, catholicam et apostolicam Ecclesiam. Confiteor unum baptisma in remissionem peccatorum. Et exspecto resurrectionem mortuorum, et vitam venturi saeculi. Amen."""
+        ),
+        PrayerItem(
+            id = "creed_athanasian",
+            title = "The Athanasian Creed (Symbolum Athanasianum / Quicumque Vult)",
+            category = "Traditional Creeds",
+            subtitle = "Dogmatic Profession on the Trinity & Incarnation (Recited at Prime in the 1954 Breviarium Romanum)",
+            notes = "Attributed historically to St. Athanasius of Alexandria (c. 296–373 AD) and solemnly prescribed in the 1954 Roman Breviary for Trinity Sunday.",
+            englishText = """WHOSOEVER will be saved, before all things it is necessary that he hold the Catholic Faith: Which Faith except every one do keep whole and undefiled, without doubt he shall perish everlastingly.
+
+And the Catholic Faith is this: That we worship one God in Trinity, and Trinity in Unity; Neither confounding the Persons, nor dividing the Substance. For there is one Person of the Father, another of the Son, and another of the Holy Ghost. But the Godhead of the Father, of the Son, and of the Holy Ghost, is all one, the Glory equal, the Majesty co-eternal.
+
+Such as the Father is, such is the Son, and such is the Holy Ghost. The Father uncreate, the Son uncreate, and the Holy Ghost uncreate. The Father incomprehensible, the Son incomprehensible, and the Holy Ghost incomprehensible. The Father eternal, the Son eternal, and the Holy Ghost eternal. And yet they are not three eternals, but one eternal. As also there are not three incomprehensibles, nor three uncreated, but one uncreated, and one incomprehensible. So likewise the Father is Almighty, the Son Almighty, and the Holy Ghost Almighty. And yet they are not three Almighties, but one Almighty.
+
+So the Father is God, the Son is God, and the Holy Ghost is God. And yet they are not three Gods, but one God. So likewise the Father is Lord, the Son Lord, and the Holy Ghost Lord. And yet not three Lords, but one Lord. For like as we are compelled by the Christian verity to acknowledge every Person by Himself to be God and Lord; So are we forbidden by the Catholic Religion to say, There be three Gods, or three Lords.
+
+The Father is made of none, neither created, nor begotten. The Son is of the Father alone, not made, nor created, but begotten. The Holy Ghost is of the Father and of the Son, neither made, nor created, nor begotten, but proceeding. So there is one Father, not three Fathers; one Son, not three Sons; one Holy Ghost, not three Holy Ghosts. And in this Trinity none is afore or after other, none is greater or less than another; But the whole three Persons are co-eternal together, and co-equal. So that in all things, as is aforesaid, the Unity in Trinity, and the Trinity in Unity is to be worshipped. He therefore that will be saved must thus think of the Trinity.
+
+Furthermore, it is necessary to everlasting salvation that he also believe faithfully the Incarnation of Our Lord Jesus Christ. For the right Faith is, that we believe and confess that Our Lord Jesus Christ, the Son of God, is God and Man; God, of the Substance of the Father, begotten before the worlds; and Man, of the Substance of His Mother, born in the world; Perfect God, and perfect Man, of a reasonable soul and human flesh subsisting; Equal to the Father, as touching His Godhead; and inferior to the Father, as touching His Manhood. Who although He be God and Man, yet He is not two, but one Christ; One, not by conversion of the Godhead into flesh, but by taking of the Manhood into God; One altogether, not by confusion of Substance, but by unity of Person. For as the reasonable soul and flesh is one man, so God and Man is one Christ; Who suffered for our salvation, descended into hell, rose again the third day from the dead. He ascended into heaven, He sitteth on the right hand of the Father, God Almighty, from whence He shall come to judge the quick and the dead. At Whose coming all men shall rise again with their bodies, and shall give account for their own works. And they that have done good shall go into life everlasting, and they that have done evil into everlasting fire.
+
+This is the Catholic Faith, which except a man believe faithfully and firmly, he cannot be saved. Amen.""",
+            latinText = """QUICUMQUE vult salvus esse, ante omnia opus est, ut teneat catholicam fidem: Quam nisi quisque integram inviolatamque servaverit, absque dubio in aeternum peribit.
+
+Fides autem catholica haec est: ut unum Deum in Trinitate, et Trinitatem in unitate veneremur. Neque confundentes personas, neque substantiam separantes. Alia est enim persona Patris, alia Filii, alia Spiritus Sancti. Sed Patris, et Filii, et Spiritus Sancti una est divinitas, aequalis gloria, coaeterna maiestas.
+
+Qualis Pater, talis Filius, talis Spiritus Sanctus. Increatus Pater, increatus Filius, increatus Spiritus Sanctus. Immensus Pater, immensus Filius, immensus Spiritus Sanctus. Aeternus Pater, aeternus Filius, aeternus Spiritus Sanctus. Et tamen non tres aeterni, sed unus aeternus. Sicut non tres increati, nec tres immensi, sed unus increatus, et unus immensus. Similiter omnipotens Pater, omnipotens Filius, omnipotens Spiritus Sanctus. Et tamen non tres omnipotentes, sed unus omnipotens.
+
+Ita Deus Pater, Deus Filius, Deus Spiritus Sanctus. Et tamen non tres Dei, sed unus est Deus. Ita Dominus Pater, Dominus Filius, Dominus Spiritus Sanctus. Et tamen non tres Domini, sed unus est Dominus. Quia sicut singillatim unamquamque personam Deum ac Dominum confiteri christiana veritate compellimur: ita tres Deos aut Dominos dicere catholica religione prohibemur.
+
+Pater a nullo est factus: nec creatus, nec genitus. Filius a Patre solo est: non factus, nec creatus, sed genitus. Spiritus Sanctus a Patre et Filio: non factus, nec creatus, nec genitus, sed procedens. Unus ergo Pater, non tres Patres: unus Filius, non tres Filii: unus Spiritus Sanctus, non tres Spiritus Sancti. Et in hac Trinitate nihil prius aut posterius, nihil maius aut minus: sed totae tres personae coaeternae sibi sunt et coaequales. Ita ut per omnia, sicut iam supra dictum est, et unitas in Trinitate, et Trinitas in unitate veneranda sit. Qui vult ergo salvus esse, ita de Trinitate sentiat.
+
+Sed necessarium est ad aeternam salutem, ut Incarnationem quoque Domini nostri Iesu Christi fideliter credat. Est ergo fides recta ut credamus et confiteamur, quia Dominus noster Iesus Christus, Dei Filius, Deus et homo est. Deus est ex substantia Patris ante saecula genitus: et homo est ex substantia matris in saeculo natus. Perfectus Deus, perfectus homo: ex anima rationali et humana carne subsistens. Aequalis Patri secundum divinitatem: minor Patre secundum humanitatem. Qui licet Deus sit et homo, non duo tamen, sed unus est Christus. Unus autem non conversione divinitatis in carnem, sed assumptione humanitatis in Deum. Unus omnino, non confusione substantiae, sed unitate personae. Nam sicut anima rationalis et caro unus est homo: ita Deus et homo unus est Christus. Qui passus est pro salute nostra: descendit ad inferos: tertia die resurrexit a mortuis. Ascendit ad caelos, sedet ad dexteram Dei Patris omnipotentis: inde venturus est iudicare vivos et mortuos. Ad cuius adventum omnes homines resurgere habent cum corporibus suis: et reddituri sunt de factis propriis rationem. Et qui bona egerunt, ibunt in vitam aeternam: qui vero mala, in ignem aeternum.
+
+Haec est fides catholica, quam nisi quisque fideliter firmiterque crediderit, salvus esse non poterit. Amen."""
+        ),
+        PrayerItem(
+            id = "creed_tridentine",
+            title = "Tridentine Profession of Faith (Professio Fidei Tridentinae)",
+            category = "Traditional Creeds",
+            subtitle = "Solemn Oath of Faith Promulgated by Pope Pius IV (1564) and Re-affirmed by Vatican I (1870)",
+            notes = "Required of all converts, pastors, bishops, and theologians in the 1954 Codex Iuris Canonici (Can. 1406).",
+            englishText = """I, N., with a firm faith believe and profess each and every article contained in the Symbol of Faith which the Holy Roman Church uses, namely:
+
+I believe in one God, the Father Almighty, maker of heaven and earth, and of all things visible and invisible. And in one Lord Jesus Christ, the Only-begotten Son of God, born of the Father before all ages. God of God, Light of Light, true God of true God, begotten, not made, consubstantial with the Father: by Whom all things were made. Who for us men and for our salvation came down from heaven, and was incarnate by the Holy Ghost of the Virgin Mary, and was made man. He was crucified also for us under Pontius Pilate; suffered and was buried, and the third day He rose again, according to the Scriptures, and ascended into heaven, and sitteth at the right hand of the Father. And He shall come again with glory to judge the living and the dead: of Whose kingdom there shall be no end. And in the Holy Ghost, the Lord and Giver of life: Who proceedeth from the Father and the Son. Who together with the Father and the Son is adored and glorified: Who spoke by the prophets. And one, holy, catholic, and apostolic Church. I confess one baptism for the remission of sins. And I look for the resurrection of the dead, and the life of the world to come. Amen.
+
+I most firmly accept and embrace the Apostolic and ecclesiastical traditions and other observances and constitutions of that same Church. I likewise accept Holy Scripture according to that sense which Holy Mother Church has held and holds, to whom it belongs to judge of the true sense and interpretation of the Sacred Scriptures; nor will I ever accept or interpret it except according to the unanimous consent of the Fathers.
+
+I also profess that there are truly and properly seven sacraments of the New Law instituted by Jesus Christ Our Lord, and necessary for the salvation of mankind: namely, Baptism, Confirmation, the Eucharist, Penance, Extreme Unction, Holy Orders, and Matrimony; and that they confer grace.
+
+I embrace and receive each and every definition and declaration of the Sacred Council of Trent concerning original sin and justification. I likewise profess that in the Mass there is offered to God a true, proper, and propitiatory Sacrifice for the living and the dead, and that in the Most Holy Sacrament of the Eucharist there is truly, really, and substantially the Body and Blood, together with the Soul and Divinity, of Our Lord Jesus Christ.
+
+I steadfastly hold that there is a Purgatory, and that the souls therein detained are helped by the suffrages of the faithful; likewise that the Saints reigning together with Christ are to be honored and invoked.
+
+I acknowledge the Holy Catholic and Apostolic Roman Church as the mother and mistress of all churches, and I promise and swear true obedience to the Roman Pontiff, successor of Blessed Peter Prince of the Apostles and Vicar of Jesus Christ.
+
+I likewise undoubtedly receive and profess all other things handed down, defined, and declared by the sacred Canons and Ecumenical Councils, and especially by the Sacred Council of Trent and by the Ecumenical Vatican Council.
+
+This true Catholic Faith, outside of which no one can be saved, which I now freely profess and truly hold, I promise, vow, and swear that I will most constantly retain and confess the same entire and inviolate until the last breath of my life, with God's help. So help me God, and these His holy Gospels. Amen.""",
+            latinText = """Ego N. firma fide credo et profiteor omnia et singula, quae continentur in Symbolo Fidei, quo sancta Romana Ecclesia utitur, videlicet:
+
+Credo in unum Deum, Patrem omnipotentem, factorem caeli et terrae, visibilium omnium et invisibilium. Et in unum Dominum Iesum Christum, Filium Dei Unigenitum, et ex Patre natum ante omnia saecula. Deum de Deo, lumen de lumine, Deum verum de Deo vero, genitum, non factum, consubstantialem Patri: per quem omnia facta sunt. Qui propter nos homines et propter nostram salutem descendit de caelis, et incarnatus est de Spiritu Sancto ex Maria Virgine, et homo factus est. Crucifixus etiam pro nobis sub Pontio Pilato; passus, et sepultus est, et resurrexit tertia die, secundum Scripturas, et ascendit in caelum, sedet ad dexteram Patris. Et iterum venturus est cum gloria, iudicare vivos et mortuos, cuius regni non erit finis. Et in Spiritum Sanctum, Dominum et vivificantem: qui ex Patre Filioque procedit. Qui cum Patre et Filio simul adoratur et conglorificatur: qui locutus est per prophetas. Et unam, sanctam, catholicam et apostolicam Ecclesiam. Confiteor unum baptisma in remissionem peccatorum. Et exspecto resurrectionem mortuorum, et vitam venturi saeculi. Amen.
+
+Apostolicas et ecclesiasticas traditiones, reliquasque eiusdem Ecclesiae observationes et constitutiones firmissime admitto et amplector. Item sacram Scripturam iuxta eum sensum, quem tenuit et tenet sancta Mater Ecclesia, cuius est iudicare de vero sensu et interpretatione sacrarum Scripturarum, admitto; nec eam unquam nisi iuxta unanimem consensum Patrum accipiam et interpretabor.
+
+Profiteor quoque septem esse proprie et vere Sacramenta novae legis a Iesu Christo Domino nostro instituta...
+
+Amplector et recipio omnia et singula, quae in sacrosancta Tridentina Synodo definita et declarata sunt de peccato originali et de iustificatione... Profitentur pariter in Missa offerri Deo verum, proprium et propitiatorium Sacrificium pro vivis et defunctis...
+
+Constanter teneo Purgatorium esse, animasque ibi detentas fidelium suffragiis iuvari...
+
+Sanctam catholicam et apostolicam Romanam Ecclesiam omnium ecclesiarum matrem et magistram agnosco, Romanoque Pontifici, beati Petri Apostolorum Principis successori ac Iesu Christi Vicario, veram obedientiam spondeo ac iuro.
+
+Caetera item omnia a sacris Canonibus et Oecumenicis Conciliis, ac praecipue a sacrosancta Tridentina Synodo, et ab Oecumenico Concilio Vaticano tradita, definita et declarata, indubitanter recipio atque profiteor...
+
+Hanc veram catholicam fidem, extra quam nemo salvus esse potest, quam in praesenti sponte profiteor et veraciter teneo, eandem integram et immaculatam usque ad extremum vitae spiritum constantissime, Deo adiuvante, retinere et confiteri me spondeo, voveo et iuro. Ita me Deus adiuvet, et haec sancta Dei Evangelia. Amen."""
+        ),
+        PrayerItem(
+            id = "creed_oath_anti_modernism",
+            title = "Oath Against Modernism (Iuramentum Contra Errores Modernismi)",
+            category = "Traditional Creeds",
+            subtitle = "Promulgated by Pope St. Pius X in the Motu Proprio 'Sacrorum Antistitum' (September 1, 1910)",
+            notes = "Required of all clergy, confessors, preachers, religious superiors, and seminary professors in the 1954 Roman Rite.",
+            englishText = """I, N., firmly embrace and accept each and every definition, assertion, and declaration of the unerring Magisterium of the Church, especially those principal doctrines which are directly opposed to the errors of the present day.
+
+First: I profess that God, the origin and end of all things, can be known with certainty by the natural light of human reason through the created world, and that His existence can even be demonstrated.
+
+Second: I accept and acknowledge the external proofs of revelation, that is, divine facts, especially miracles and prophecies, as most certain signs of the divine origin of the Christian religion.
+
+Third: I likewise believe with a firm faith that the Church, guardian and teacher of the revealed Word, was directly and proximately instituted by the real and historical Christ Himself during His life among us, and built upon Peter, the prince of the apostolic hierarchy, and his successors unto the end of time.
+
+Fourth: I sincerely accept the doctrine of faith transmitted to us from the Apostles through the orthodox Fathers, in the same sense and always in the same meaning; and therefore I completely reject the heretical misrepresentation of the evolution of dogmas.
+
+Fifth: I hold with complete certainty and sincerely profess that faith is not a blind religious feeling welling up from the secret recesses of the subconscious under the impulse of the heart and the motion of a morally trained will, but a genuine assent of the intellect to truth received externally by hearing.
+
+I also submit with my whole heart to all the condemnations, declarations, and prescriptions contained in the Encyclical 'Pascendi' and the Decree 'Lamentabili'... All these things I promise to observe faithfully, entirely, and sincerely, and to guard inviolably. So help me God, and these His holy Gospels. Amen.""",
+            latinText = """Ego N. firmiter amplector et recipio omnia et singula, quae ab inerranti Ecclesiae magisterio definita, asserta ac declarata sunt, praesertim ea doctrinae capita, quae hodierni temporis erroribus ex adverso opponuntur.
+
+Primo quidem: Deum, rerum omnium principium et finem, naturali rationis lumine per ea quae facta sunt, hoc est per visibilia creationis opera, tanquam causam per effectus, certo cognosci, adeoque demonstrari etiam posse, profiteor.
+
+Secundo: Externa revelationis argumenta, hoc est facta divina, in primisque miracula et prophetias, ut signa certissima divinitus ortae christianae religionis admitto et agnosco.
+
+Tertio: Firma pariter fide credo, Ecclesiam, verbi incarnati custodem et magistram, per ipsum supremum et verum historicum Christum, cum apud nos degeret, proxime et directe institutam, eandemque super Petrum, apostolicae hierarchiae principem, eiusque in aevum successores aedificatam.
+
+Quarto: Fidei doctrinam ab Apostolis per orthodoxos Patres eodem sensu eademque semper sententia ad nos usque transmissam, sincere recipio; proindeque hereticum commentum de dogmatum evolutione penitus reiicio.
+
+Quinto: Certissime teneo ac sincere profiteor, fidem non esse sensum religiosum e latebris subconscientiae erumpentem sub impulsione cordis et inflexione voluntatis moraliter informatae, sed verum assensum intellectus veritati extrinsecus ex auditu acceptae.
+
+Submitto etiam me toto animo condemnationibus, declarationibus, praescriptis omnibus, quae in Encyclicis Litteris 'Pascendi' et in Decreto 'Lamentabili' continentur... Haec omnia fideliter, integre sincereque servaturum et inviolabiliter custoditurum me spondeo. Ita me Deus adiuvet, et haec sancta Dei Evangelia. Amen."""
+        ),
+        PrayerItem(
+            id = "creed_damasus",
+            title = "The Creed of St. Damasus (Symbolum Damasi)",
+            category = "Traditional Creeds",
+            subtitle = "Ancient Roman Profession of Faith on the Most Holy Trinity and Incarnation (c. 382 AD)",
+            notes = "Preserved in traditional Latin liturgical collections and dogmatic codices of the Roman Church.",
+            englishText = """WE BELIEVE in one God, the Father Almighty, and in one Lord Jesus Christ, the Son of God, and in the Holy Ghost. We confess and believe not three gods, but one God: Father, Son, and Holy Ghost; one God in Trinity and Trinity in Unity.
+
+We believe that the Son of God, God born of the Father before all ages, was also born in time of the Virgin Mary; He suffered, was buried, rose again on the third day, ascended into heaven, sitteth at the right hand of the Father, and shall come to judge the living and the dead. And we believe in the Holy Ghost, God, not created, but proceeding from the Father and the Son, co-eternal and consubstantial with the Father and the Son.
+
+This Catholic Faith we profess and hold. Amen.""",
+            latinText = """CREDIMUS in unum Deum Patrem omnipotentem, et in unum Dominum Iesum Christum Filium Dei, et in Spiritum Sanctum. Deum non tres Deos, sed Patrem et Filium et Spiritum Sanctum unum Deum confitemur et credimus; unum Deum in Trinitate et Trinitatem in unitate.
+
+Credimus Filium Dei, Deum natum a Patre ante omnia saecula, et eundem in tempore natum ex Maria Virgine; passum, sepultum, tertia die resurgentem, ascendentem in caelos, sedentem ad dexteram Patris, venturum iudicare vivos et mortuos. Et in Spiritum Sanctum Deum, non creatum, sed de Patre et Filio procedentem, coaeternum et consubstantialem Patri et Filio.
+
+Hanc fidem catholicam profitemur et tenemus. Amen."""
+        ),
+        PrayerItem(
+            id = "creed_toledo_xi",
+            title = "Creed of the XI Council of Toledo (Symbolum Toletanum XI)",
+            category = "Traditional Creeds",
+            subtitle = "Monumental Latin Dogmatic Declaration on the Most Holy Trinity and Incarnation (675 AD)",
+            notes = "Formally referenced in traditional Roman dogmatic manual theology as one of the most magnificent formulations of Trinitarian theology.",
+            englishText = """WE CONFESS and believe the holy and ineffable Trinity, Father, Son, and Holy Ghost, one God by natural property, not by plurality, of one essence, one majesty, and power.
+
+The Father is made of none, neither created, nor begotten. The Son is of the Father alone, not made, nor created, but begotten. The Holy Ghost is neither begotten nor created, but proceeding from the Father and the Son.
+
+We likewise believe that the Son of God, Who is the second Person in the Trinity, is true God and true Man: not by conversion of the Godhead into flesh, but by taking of humanity into the Divine Person.
+
+In this truth of faith we live and abide, and we profess to guard the same undefiled unto the end of life. Amen.""",
+            latinText = """CONFITEMUR et credimus sanctam et ineffabilem Trinitatem, Patrem et Filium et Spiritum Sanctum, unum Deum naturali proprietate, non pluralitate, unius essentiae, unius maiestatis atque virtutis.
+
+Pater a nullo est factus, nec creatus, nec genitus. Filius a Patre est non factus, nec creatus, sed genitus. Spiritus Sanctus quoque nec genitus nec creatus, sed a Patre Filioque procedens est.
+
+Credimus quoque Filium Dei, qui est secunda in Trinitate Persona, verum Deum esse et verum hominem: non conversione divinitatis in carnem, sed assumptione humanitatis in personam divinam.
+
+In hac fidei veritate vivimus et permanemus, et eandem usque ad finem vitae intemeratam custodire profitemur. Amen."""
+        )
+    )
+
+    val prayersBeforeWork = listOf(
+        PrayerItem(
+            id = "prayer_before_work",
+            title = "Prayer before work",
+            category = "Prayer before Work",
+            subtitle = "To St. Joseph the Worker (Pope St. Pius X, 1906)",
+            notes = "An indulgenced prayer to St. Joseph, Patron of Workers, asking for grace to work in a spirit of penance, gratitude, order, and devotion.",
+            englishText = """Glorious St. Joseph, model of all who are devoted to labor, obtain for me the grace to work in the spirit of penance in expiation of my many sins; to work conscientiously by placing the love of duty above my inclinations; to gratefully and joyfully deem it an honor to employ and to develop by labor the gifts I have received from God; to work methodically, peacefully, in moderation and patience, without ever shrinking from hardship and difficulties; to work above all with purity of intention and detachment from self, having unceasingly before my eyes death and the account I have to render of time lost, talents unused, good omitted, and vain complacency in success, so fatal to the work of God.
+
+All for Jesus, all through Mary, all in imitation of thee, O Patriarch St. Joseph! This shall be my motto in life and in death. Amen.""",
+            latinText = """Gloriose Sancte Ioseph, exemplar omnium qui labori sunt addicti, impetra mihi gratiam laborandi in spiritu paenitentiae pro expiatione multorum peccatorum meorum; laborandi conscientia ductum, anteponendo officii amorem propriis inclinationibus; laborandi cum gratitudine et gaudio, honoris loco ducentem adhibere et evolvere per laborem dona a Deo accepta; laborandi cum ordine, pace, moderatione et patience, nunquam succumbentem fatigationi vel difficultatibus; laborandi praesertim cum puritate intentionis et cum abnegatione sui ipsius, semper prae oculis habentem mortem et rationem reddendam de tempore amisso, de talentis inusitatis, de bono omisso, de vana complacentia in successu, tam noxia operi Dei.
+
+Omnia pro Iesu, omnia per Mariam, omnia ad imitationem tuam, O Patriarcha Sancte Ioseph! Hoc erit synthema meum in vita et in morte. Amen."""
+        )
+    )
+
+    val prayersBeforeStudy = listOf(
+        PrayerItem(
+            id = "prayer_before_study",
+            title = "Prayer before study",
+            category = "Prayer before Study",
+            subtitle = "By St. Thomas Aquinas (Doctor Angelicus)",
+            notes = "Traditional prayer composed by St. Thomas Aquinas before studying, preaching, or writing, asking for clarity of understanding and subtlety of interpretation.",
+            englishText = """Creator of all things, true Source of light and wisdom, lofty Origin of all being, graciously let a ray of Your brilliance penetrate into the darkness of my understanding and take from me the double darkness in which I have been born, an obscurity of both sin and ignorance.
+
+Give me a sharp sense of understanding, a retentive memory, and the ability to grasp things correctly and fundamentally. Grant me the favor of being exact in my explanations, and the ability to express myself with thoroughness and charm.
+
+Point out the beginning, direct the progress, and help in the completion; through Christ Our Lord. Amen.""",
+            latinText = """Creator ineffabilis, qui de thesauris sapientiae tuae tres Angelorum hierarchias designasti, et eas super caelum empyreum miro ordine collocasti, et universi partes elegantissime distribuisti:
+
+Tu, inquam, qui verus fons luminis et sapientiae diceris, et supereminens principium, infundere digneris super intellectus mei tenebras tuae radium claritatis, duplices, in quibus natus sum, a me removens tenebras, peccatum scilicet et ignorantiam.
+
+Tu, qui linguas infantium facis disertas, linguae meae erudias et in labiis meis gratiam tuae benedictionis infundas. Da mihi intelligendi acumen, retinendi capacitatem, interpretandi methodum et facilitatem, discendi subtilitatem, loquendi gratiam uberem.
+
+Ingressum instruas, progressum dirigas, egressum compleas: Tu, qui es verus Deus et homo, qui vivis et regnas in saecula saeculorum. Amen."""
         )
     )
 

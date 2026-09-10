@@ -10,12 +10,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Church
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -32,9 +35,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.notifications.NotificationScheduler
+import com.example.notifications.RescheduleManager
 import com.example.ui.MainViewModel
 import com.example.ui.theme.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private fun formatSpokenTextWithBreaks(title: String, message: String): String {
     val cleanTitle = title.trim().trimEnd('.', ':', ';', '!', '?', ',')
@@ -50,13 +57,110 @@ private fun formatSpokenTextWithBreaks(title: String, message: String): String {
 fun ActiveCallOverlay(
     title: String,
     message: String,
+    notificationId: Int = 1001,
     viewModel: MainViewModel,
     onEndCall: () -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var callSeconds by remember { mutableIntStateOf(0) }
     var isMuted by remember { mutableStateOf(false) }
+    var showPostponeDialog by remember { mutableStateOf(false) }
     val isLatinMode by viewModel.isLatinMode.collectAsStateWithLifecycle()
     val playbackState by viewModel.latinAudioState.collectAsStateWithLifecycle()
+    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+    val activePrayerMode = com.example.util.PrayerMode.fromCode(userProfile?.prayerMode)
+    val formattedMessage = if (!isLatinMode) com.example.util.PrayerPerspectiveFormatter.format(message, activePrayerMode) else message
+
+    fun previewTime(minutesToAdd: Int): String {
+        val cal = java.util.Calendar.getInstance().apply {
+            add(java.util.Calendar.MINUTE, minutesToAdd)
+        }
+        return java.text.SimpleDateFormat("hh:mm a", java.util.Locale.US).format(cal.time)
+    }
+
+    fun formatted24h(minutesToAdd: Int): String {
+        val cal = java.util.Calendar.getInstance().apply {
+            add(java.util.Calendar.MINUTE, minutesToAdd)
+        }
+        return String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+    }
+
+    fun applyReschedule(selectedTime: String) {
+        viewModel.stopLatinAudio()
+        showPostponeDialog = false
+        val dutyId = if (notificationId >= 1000) notificationId - 1000 else -1
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val db = com.example.data.AppDatabase.getDatabase(context)
+                val duty = if (dutyId > 0) db.appDao().getDutyById(dutyId) else null
+                if (duty != null) {
+                    val today = RescheduleManager.getTodayDateString()
+                    RescheduleManager.setReschedule(context, dutyId, today, selectedTime)
+                    val alarmManager = context.getSystemService(android.content.Context.ALARM_SERVICE) as? android.app.AlarmManager
+                    if (alarmManager != null) {
+                        NotificationScheduler.scheduleDutyNotification(context, alarmManager, duty)
+                    }
+                } else {
+                    NotificationScheduler.scheduleOneOffReminder(
+                        context,
+                        title,
+                        message,
+                        selectedTime,
+                        notificationId
+                    )
+                }
+
+                com.example.data.CallLogRepository.getInstance(context)
+                    .logCall(title, "Rescheduled to $selectedTime today: $message", "RESCHEDULED")
+
+                launch(Dispatchers.Main) {
+                    android.widget.Toast.makeText(
+                        context,
+                        "Rescheduled '$title' to $selectedTime for today.",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                    onEndCall()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                launch(Dispatchers.Main) { onEndCall() }
+            }
+        }
+    }
+
+    fun applyCompleteDuty() {
+        viewModel.stopLatinAudio()
+        val dutyId = if (notificationId >= 1000) notificationId - 1000 else -1
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val db = com.example.data.AppDatabase.getDatabase(context)
+                val duty = if (dutyId > 0) db.appDao().getDutyById(dutyId) else null
+                if (duty != null) {
+                    val repo = com.example.data.SpiritualRepository(db.appDao())
+                    if (!duty.isCompleted) {
+                        repo.toggleDutyCompletion(duty)
+                    }
+                    NotificationScheduler.cancelDutyNotification(context, dutyId)
+                }
+
+                com.example.data.CallLogRepository.getInstance(context)
+                    .logCall(title, "Completed during call: $message", "ANSWERED")
+
+                launch(Dispatchers.Main) {
+                    android.widget.Toast.makeText(
+                        context,
+                        "Marked '$title' completed! Deo Gratias.",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                    onEndCall()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                launch(Dispatchers.Main) { onEndCall() }
+            }
+        }
+    }
 
     // Call duration timer
     LaunchedEffect(Unit) {
@@ -67,9 +171,9 @@ fun ActiveCallOverlay(
     }
 
     // Auto-play speech audio for prayer/duty message when call connects
-    LaunchedEffect(title, message, isLatinMode) {
+    LaunchedEffect(title, formattedMessage, isLatinMode) {
         if (!isMuted) {
-            val spokenText = formatSpokenTextWithBreaks(title, message)
+            val spokenText = formatSpokenTextWithBreaks(title, formattedMessage)
             viewModel.playLatinAudio(
                 id = "call_${title.hashCode()}",
                 text = spokenText,
@@ -198,7 +302,7 @@ fun ActiveCallOverlay(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = message,
+                            text = formattedMessage,
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontFamily = FontFamily.Serif,
                                 lineHeight = 22.sp
@@ -272,33 +376,214 @@ fun ActiveCallOverlay(
                             tint = GoldBright
                         )
                     }
+
+                    // Postpone / Snooze Button ("I'm Busy")
+                    OutlinedIconButton(
+                        onClick = {
+                            showPostponeDialog = true
+                        },
+                        modifier = Modifier.size(52.dp),
+                        border = BorderStroke(1.dp, GoldBright),
+                        colors = IconButtonDefaults.outlinedIconButtonColors(
+                            containerColor = DarkCathedralSurface
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccessTime,
+                            contentDescription = "Postpone",
+                            tint = GoldBright
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Big Red End Call Button
-                Button(
-                    onClick = {
-                        viewModel.stopLatinAudio()
-                        onEndCall()
-                    },
+                // Bottom Action Buttons: Mark Complete vs End Call
+                Row(
                     modifier = Modifier
-                        .size(68.dp)
-                        .testTag("end_call_button"),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFD32F2F),
-                        contentColor = Color.White
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.CallEnd,
-                        contentDescription = "End Call",
-                        modifier = Modifier.size(34.dp)
-                    )
+                    Button(
+                        onClick = { applyCompleteDuty() },
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .height(54.dp)
+                            .testTag("complete_duty_button"),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2E7D32),
+                            contentColor = Color.White
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Complete Duty",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Mark Done ✓",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            viewModel.stopLatinAudio()
+                            onEndCall()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(54.dp)
+                            .testTag("end_call_button"),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFD32F2F),
+                            contentColor = Color.White
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CallEnd,
+                            contentDescription = "End Call",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            "End Call",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
+        }
+
+        // Postpone / Busy Dialog
+        if (showPostponeDialog) {
+            AlertDialog(
+                onDismissRequest = { showPostponeDialog = false },
+                containerColor = DarkCathedralSurface,
+                title = {
+                    Text(
+                        text = "Postpone for Today?",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Serif
+                        ),
+                        color = GoldBright
+                    )
+                },
+                text = {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Choose a new time for '$title' today. Your regular schedule will resume normally tomorrow.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = ParchmentLight
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Quick buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { applyReschedule(formatted24h(5)) },
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("+5m", color = ParchmentLight, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text(previewTime(5), color = GoldSacred, fontSize = 10.sp)
+                                }
+                            }
+                            OutlinedButton(
+                                onClick = { applyReschedule(formatted24h(15)) },
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("+15m", color = ParchmentLight, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text(previewTime(15), color = GoldSacred, fontSize = 10.sp)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { applyReschedule(formatted24h(30)) },
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("+30m", color = ParchmentLight, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text(previewTime(30), color = GoldSacred, fontSize = 10.sp)
+                                }
+                            }
+                            OutlinedButton(
+                                onClick = { applyReschedule(formatted24h(60)) },
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("+1h", color = ParchmentLight, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text(previewTime(60), color = GoldSacred, fontSize = 10.sp)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Custom time picker
+                        Button(
+                            onClick = {
+                                val cal = java.util.Calendar.getInstance()
+                                val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+                                val minute = cal.get(java.util.Calendar.MINUTE)
+                                val picker = android.app.TimePickerDialog(
+                                    context,
+                                    { _, selectedHour, selectedMinute ->
+                                        val formatted = String.format(java.util.Locale.US, "%02d:%02d", selectedHour, selectedMinute)
+                                        applyReschedule(formatted)
+                                    },
+                                    hour,
+                                    minute,
+                                    false
+                                )
+                                picker.show()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccessTime,
+                                contentDescription = null,
+                                tint = StaticGoldBright,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Select Custom Time...", color = StaticGoldBright, fontSize = 13.sp)
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(onClick = { showPostponeDialog = false }) {
+                        Text("Cancel", color = ParchmentLight.copy(alpha = 0.7f))
+                    }
+                }
+            )
         }
     }
 }

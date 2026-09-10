@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -67,7 +68,7 @@ import com.example.ui.screens.checkNotificationPermission
 import com.example.ui.screens.checkExactAlarmPermission
 import com.example.ui.theme.*
 
-data class ActiveCallState(val title: String, val message: String)
+data class ActiveCallState(val title: String, val message: String, val notificationId: Int = 1001)
 
 class MainActivity : ComponentActivity() {
 
@@ -101,7 +102,7 @@ class MainActivity : ComponentActivity() {
                     action = com.example.notifications.RuleOfLifeCallService.ACTION_STOP_CALL
                     putExtra("EXTRA_NOTIFICATION_ID", notificationId)
                 }
-                stopService(serviceIntent)
+                startService(serviceIntent)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -118,7 +119,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            activeCallData.value = ActiveCallState(title, message)
+            activeCallData.value = ActiveCallState(title, message, notificationId)
 
             val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
             if (keyguardManager != null && keyguardManager.isKeyguardLocked) {
@@ -200,6 +201,7 @@ class MainActivity : ComponentActivity() {
                         com.example.ui.components.ActiveCallOverlay(
                             title = activeCall.title,
                             message = activeCall.message,
+                            notificationId = activeCall.notificationId,
                             viewModel = viewModel,
                             onEndCall = {
                                 activeCallData.value = null
@@ -207,8 +209,9 @@ class MainActivity : ComponentActivity() {
                                 try {
                                     val serviceIntent = Intent(context, com.example.notifications.RuleOfLifeCallService::class.java).apply {
                                         action = com.example.notifications.RuleOfLifeCallService.ACTION_STOP_CALL
+                                        putExtra("EXTRA_NOTIFICATION_ID", activeCall.notificationId)
                                     }
-                                    context.stopService(serviceIntent)
+                                    context.startService(serviceIntent)
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }

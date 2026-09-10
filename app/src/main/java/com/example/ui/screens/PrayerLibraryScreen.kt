@@ -32,9 +32,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.PrayerEntity
@@ -43,6 +46,9 @@ import com.example.data.prayers.RosarySet
 import com.example.data.prayers.TraditionalPrayerLibrary
 import com.example.util.AppLanguage
 import com.example.util.AppTranslationHelper
+import com.example.util.PrayerMode
+import com.example.util.PrayerPerspectiveFormatter
+import com.example.util.getFormattedEnglishText
 import com.example.ui.MainViewModel
 import com.example.ui.components.GothicHeader
 import com.example.ui.components.IlluminatedDivider
@@ -96,22 +102,32 @@ fun PrayerLibraryScreen(
         return
     }
 
+    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+    val isFemaleAccount = remember(userProfile) { userProfile?.gender?.equals("FEMALE", ignoreCase = true) == true }
+
     val isTopHeaderVisible by viewModel.isTopHeaderVisible.collectAsStateWithLifecycle()
     val bookmarkedPrayers by viewModel.bookmarkedPrayers.collectAsStateWithLifecycle()
     val bookmarkedIds = remember(bookmarkedPrayers) { bookmarkedPrayers.map { it.id }.toSet() }
 
-    val categories = listOf(
-        "⭐ Favorites (${bookmarkedPrayers.size})",
-        "Morning Prayers",
-        "Leonine Prayers",
-        "Night Prayers",
-        "Holy Rosary",
-        "Eucharistic",
-        "Protection & Saints",
-        "Angelus & Regina",
-        "Immaculate Heart",
-        "Sacred Heart"
-    )
+    val categories = remember(bookmarkedPrayers.size, isFemaleAccount) {
+        buildList {
+            add("⭐ Favorites (${bookmarkedPrayers.size})")
+            add("Creeds")
+            add("Morning Prayers")
+            if (!isFemaleAccount) {
+                add("Prayer before Work")
+            }
+            add("Prayer before Study")
+            add("Leonine Prayers")
+            add("Night Prayers")
+            add("Holy Rosary")
+            add("Eucharistic")
+            add("Protection & Saints")
+            add("Angelus & Regina")
+            add("Immaculate Heart")
+            add("Sacred Heart")
+        }
+    }
 
     val directionalScrollConnection = rememberDirectionalScrollConnection(viewModel = viewModel)
 
@@ -131,10 +147,13 @@ fun PrayerLibraryScreen(
             exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically()
         ) {
             Column {
+                val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+                val activePrayerMode = PrayerMode.fromCode(userProfile?.prayerMode)
+
                 GothicHeader(
                     title = "TRADITIONAL PRAYERS",
                     subtitle = "100% Offline Catholic Prayer Treasury",
-                    badgeText = if (isLatinMode) "Latin Text" else "English Text"
+                    badgeText = "${if (isLatinMode) "Latin" else "English"} • ${activePrayerMode.badgeText}"
                 )
 
                 // Local Room DB Prayer Search Bar
@@ -168,14 +187,15 @@ fun PrayerLibraryScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 if (searchQuery.isBlank()) {
-                    // Language Toggle & Category Tabs Bar
+                    // Language Toggle, Perspective Mode Toggle & Category Tabs Bar
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val safeTabIdx = selectedCategoryIndex.coerceIn(0, (categories.size - 1).coerceAtLeast(0))
                         ScrollableTabRow(
-                            selectedTabIndex = selectedCategoryIndex,
+                            selectedTabIndex = safeTabIdx,
                             containerColor = DarkCathedralSurface,
                             contentColor = GoldBright,
                             edgePadding = 0.dp,
@@ -183,22 +203,72 @@ fun PrayerLibraryScreen(
                         ) {
                             categories.forEachIndexed { index, cat ->
                                 Tab(
-                                    selected = selectedCategoryIndex == index,
+                                    selected = safeTabIdx == index,
                                     onClick = { selectedCategoryIndex = index },
                                     text = {
                                         Text(
                                             text = cat,
                                             style = MaterialTheme.typography.labelMedium.copy(
-                                                fontWeight = if (selectedCategoryIndex == index) FontWeight.Bold else FontWeight.Normal
+                                                fontWeight = if (safeTabIdx == index) FontWeight.Bold else FontWeight.Normal
                                             ),
-                                            color = if (selectedCategoryIndex == index) GoldBright else TextMutedParchment
+                                            color = if (safeTabIdx == index) GoldBright else TextMutedParchment
                                         )
                                     }
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        // Perspective Mode Toggle Button (Individual -> Group -> Traditional)
+                        FilterChip(
+                            selected = activePrayerMode != PrayerMode.TRADITIONAL,
+                            onClick = {
+                                val nextMode = when (activePrayerMode) {
+                                    PrayerMode.INDIVIDUAL -> PrayerMode.GROUP
+                                    PrayerMode.GROUP -> PrayerMode.TRADITIONAL
+                                    PrayerMode.TRADITIONAL -> PrayerMode.INDIVIDUAL
+                                }
+                                viewModel.updatePrayerMode(nextMode)
+                            },
+                            label = {
+                                Text(
+                                    text = when (activePrayerMode) {
+                                        PrayerMode.INDIVIDUAL -> "Solo"
+                                        PrayerMode.GROUP -> "Group"
+                                        PrayerMode.TRADITIONAL -> "Trad"
+                                    },
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (activePrayerMode == PrayerMode.INDIVIDUAL) GoldBright else ParchmentLight
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = when (activePrayerMode) {
+                                        PrayerMode.INDIVIDUAL -> Icons.Default.Person
+                                        PrayerMode.GROUP -> Icons.Default.Groups
+                                        PrayerMode.TRADITIONAL -> Icons.AutoMirrored.Filled.MenuBook
+                                    },
+                                    contentDescription = "Toggle Prayer Mode",
+                                    tint = GoldBright,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = DarkCathedralSurfaceVariant,
+                                selectedContainerColor = DarkCathedralSurface
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                borderColor = DarkCathedralCardBorder,
+                                selectedBorderColor = GoldSacred,
+                                enabled = true,
+                                selected = activePrayerMode != PrayerMode.TRADITIONAL
+                            ),
+                            modifier = Modifier.testTag("prayer_mode_toggle_btn")
+                        )
+
+                        Spacer(modifier = Modifier.width(4.dp))
 
                         IconButton(
                             onClick = { viewModel.toggleLatinMode() },
@@ -235,22 +305,49 @@ fun PrayerLibraryScreen(
             }
         }
 
+        val safeCategoryIndex = selectedCategoryIndex.coerceIn(0, (categories.size - 1).coerceAtLeast(0))
+        val activeCategoryName = categories.getOrElse(safeCategoryIndex) { "" }
+
+        val filteredSearchResults = remember(searchResults, isFemaleAccount) {
+            if (isFemaleAccount) {
+                searchResults.filterNot { it.id == "prayer_before_work" || it.id == "st_joseph_before_work" || it.title.contains("Prayer before work", ignoreCase = true) }
+            } else searchResults
+        }
+
         if (searchQuery.isBlank()) {
-            when (selectedCategoryIndex) {
-                0 -> BookmarkedPrayersList(bookmarkedPrayers = bookmarkedPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention)
-                1 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.morningPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                2 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.leoninePrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                3 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.nightPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                4 -> InteractiveRosaryViewer(isLatin = isLatinMode, viewModel = viewModel, onLaunchFullRosary = { showFullRosaryScreen = true })
-                5 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.eucharisticDevotions, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                6 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.protectionAndSaints, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                7 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.angelusAndRegina, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                8 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsImmaculateHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
-                9 -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsSacredHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+            when {
+                activeCategoryName.startsWith("⭐ Favorites") -> {
+                    val filteredBookmarks = if (isFemaleAccount) {
+                        bookmarkedPrayers.filterNot { it.id == "prayer_before_work" || it.id == "st_joseph_before_work" || it.title.contains("Prayer before work", ignoreCase = true) }
+                    } else bookmarkedPrayers
+                    BookmarkedPrayersList(bookmarkedPrayers = filteredBookmarks, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention)
+                }
+                activeCategoryName == "Creeds" -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.traditionalCreeds, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                activeCategoryName == "Morning Prayers" -> {
+                    val filteredMorning = if (isFemaleAccount) {
+                        TraditionalPrayerLibrary.morningPrayers.filterNot { it.id == "prayer_before_work" || it.id == "st_joseph_before_work" || it.title.contains("Prayer before work", ignoreCase = true) }
+                    } else TraditionalPrayerLibrary.morningPrayers
+                    PrayerCategoryList(prayers = filteredMorning, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                }
+                activeCategoryName == "Prayer before Work" -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.prayersBeforeWork, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                activeCategoryName == "Prayer before Study" -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.prayersBeforeStudy, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                activeCategoryName == "Leonine Prayers" -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.leoninePrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                activeCategoryName == "Night Prayers" -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.nightPrayers, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                activeCategoryName == "Holy Rosary" -> InteractiveRosaryViewer(isLatin = isLatinMode, viewModel = viewModel, onLaunchFullRosary = { showFullRosaryScreen = true })
+                activeCategoryName == "Eucharistic" -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.eucharisticDevotions, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                activeCategoryName == "Protection & Saints" -> {
+                    val filteredProtection = if (isFemaleAccount) {
+                        TraditionalPrayerLibrary.protectionAndSaints.filterNot { it.id == "prayer_before_work" || it.id == "st_joseph_before_work" || it.title.contains("Prayer before work", ignoreCase = true) }
+                    } else TraditionalPrayerLibrary.protectionAndSaints
+                    PrayerCategoryList(prayers = filteredProtection, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                }
+                activeCategoryName == "Angelus & Regina" -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.angelusAndRegina, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                activeCategoryName == "Immaculate Heart" -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsImmaculateHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
+                activeCategoryName == "Sacred Heart" -> PrayerCategoryList(prayers = TraditionalPrayerLibrary.devotionsSacredHeart, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, onManualIntentionChange = { viewModel.updateManualDevotionalIntention(it) }, bookmarkedIds = bookmarkedIds)
             }
         } else {
             // Room DB Search Results View
-            if (searchResults.isEmpty()) {
+            if (filteredSearchResults.isEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -269,7 +366,7 @@ fun PrayerLibraryScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                     contentPadding = PaddingValues(bottom = 120.dp)
                 ) {
-                    items(searchResults, key = { it.id }) { prayerEntity ->
+                    items(filteredSearchResults, key = { it.id }) { prayerEntity ->
                         PrayerEntityCard(prayer = prayerEntity, isLatin = isLatinMode, viewModel = viewModel, manualIntention = manualIntention, bookmarkedIds = bookmarkedIds)
                     }
                 }
@@ -425,10 +522,13 @@ fun PrayerEntityCard(
             IlluminatedDivider()
             Spacer(modifier = Modifier.height(10.dp))
 
+            val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+            val activePrayerMode = PrayerMode.fromCode(userProfile?.prayerMode)
+
             val basePrayerText = if (isLatin && prayer.latinText.isNotBlank()) {
                 prayer.latinText
             } else {
-                prayer.englishText
+                PrayerPerspectiveFormatter.format(prayer.englishText, activePrayerMode)
             }
 
             val prayerText = if (!isLatin) {
@@ -692,7 +792,10 @@ fun PrayerCategoryList(
                         IlluminatedDivider()
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        val textToShow = if (isLatin && prayer.latinText.isNotBlank()) prayer.latinText else prayer.englishText
+                        val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+                        val activePrayerMode = PrayerMode.fromCode(userProfile?.prayerMode)
+
+                        val textToShow = if (isLatin && prayer.latinText.isNotBlank()) prayer.latinText else prayer.getFormattedEnglishText(activePrayerMode)
                         val formattedAnnotatedString = remember(textToShow, manualIntention) {
                             val placeholders = listOf("(here make your request)", "(specify petition)", "(mention petition)")
                             androidx.compose.ui.text.buildAnnotatedString {

@@ -15,7 +15,12 @@ import java.util.Locale
 class NotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        if (action == Intent.ACTION_BOOT_COMPLETED) {
+        if (action == Intent.ACTION_BOOT_COMPLETED ||
+            action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
+            action == "android.intent.action.QUICKBOOT_POWERON" ||
+            action == Intent.ACTION_MY_PACKAGE_REPLACED ||
+            action == Intent.ACTION_TIMEZONE_CHANGED ||
+            action == Intent.ACTION_TIME_CHANGED) {
             RuleOfLifeCallStateHelper.markBootCompleted(context)
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
@@ -44,7 +49,7 @@ class NotificationReceiver : BroadcastReceiver() {
             val mmdd = String.format(Locale.US, "%02d-%02d", cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
             val saint = SaintData.getSaintForDate(mmdd) ?: SaintData.saintList.first()
             val title = "Saint of the Day: ${saint.saintName}"
-            val message = "${saint.feastTitle} • \"${saint.quote.take(120)}\""
+            val message = "${saint.feastTitle} • \"${saint.quote}\""
             dispatchReminder(context, title, message, notificationId = 9999)
         } else if (type == "PRAYER") {
             val title = intent.getStringExtra("EXTRA_TITLE") ?: "Daily Prayer"
@@ -96,8 +101,14 @@ class NotificationReceiver : BroadcastReceiver() {
             val title = intent.getStringExtra("EXTRA_TITLE") ?: "Test Rule Reminder"
             val message = intent.getStringExtra("EXTRA_MESSAGE") ?: "This is a test Rule of Life reminder."
             val notificationId = intent.getIntExtra("EXTRA_ID", 12345)
+            val testStyle = intent.getStringExtra("EXTRA_STYLE") ?: "CALL_OVERLAY"
+            android.util.Log.d("NotificationReceiver", "[ALARM FIRED] Test Reminder triggered: style=$testStyle, notificationId=$notificationId")
             RuleOfLifeCallStateHelper.markScheduledEventTriggered(context)
-            NotificationHelper.showIncomingCallNotification(context, title, message, notificationId)
+            if (testStyle == "BANNER") {
+                NotificationHelper.showNotification(context, title, message, notificationId)
+            } else {
+                NotificationHelper.showIncomingCallNotification(context, title, message, notificationId)
+            }
         } else {
             val dutyId = intent.getIntExtra("EXTRA_ID", -1)
             if (dutyId <= 0) return
@@ -122,12 +133,32 @@ class NotificationReceiver : BroadcastReceiver() {
 
                         RescheduleManager.clearReschedule(context, dutyId)
                         RuleOfLifeCallStateHelper.markScheduledEventTriggered(context)
-                        NotificationHelper.showIncomingCallNotification(
-                            context,
-                            title,
-                            displayMessage,
-                            notificationId = 1000 + duty.id
+
+                        val effectiveStyle = when (duty.notificationStyle) {
+                            "CALL_OVERLAY" -> "CALL_OVERLAY"
+                            "BANNER" -> "BANNER"
+                            else -> profile?.ruleNotificationStyle ?: "CALL_OVERLAY"
+                        }
+                        android.util.Log.d(
+                            "NotificationReceiver",
+                            "[ALARM FIRED] Duty Reminder triggered for dutyId=$dutyId (${duty.title}). Effective ruleNotificationStyle=$effectiveStyle"
                         )
+
+                        if (effectiveStyle == "BANNER") {
+                            NotificationHelper.showNotification(
+                                context,
+                                title,
+                                displayMessage,
+                                notificationId = 1000 + duty.id
+                            )
+                        } else {
+                            NotificationHelper.showIncomingCallNotification(
+                                context,
+                                title,
+                                displayMessage,
+                                notificationId = 1000 + duty.id
+                            )
+                        }
 
                         // Re-schedule alarm for repeating schedule
                         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager

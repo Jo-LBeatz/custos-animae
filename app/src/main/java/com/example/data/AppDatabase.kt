@@ -18,7 +18,7 @@ import androidx.room.RoomDatabase
         SaintQuoteEntity::class,
         CallLog::class
     ],
-    version = 32,
+    version = 35,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

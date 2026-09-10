@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material.icons.filled.Church
@@ -60,6 +61,17 @@ open class CallOverlayActivity : ComponentActivity() {
 
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
+    private var ringingTimeoutJob: kotlinx.coroutines.Job? = null
+
+    override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
+        if (keyCode == android.view.KeyEvent.KEYCODE_VOLUME_DOWN ||
+            keyCode == android.view.KeyEvent.KEYCODE_VOLUME_UP ||
+            keyCode == android.view.KeyEvent.KEYCODE_VOLUME_MUTE) {
+            stopRinging()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,6 +100,24 @@ open class CallOverlayActivity : ComponentActivity() {
 
         if (!showRescheduleOnly) {
             startRinging()
+            // 45-second auto-timeout: if unanswered, stop ringing and record as missed
+            ringingTimeoutJob = lifecycleScope.launch {
+                kotlinx.coroutines.delay(45000L)
+                if (!isFinishing && !isDestroyed) {
+                    stopRinging()
+                    val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                    manager?.cancel(notificationId)
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        try {
+                            com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
+                                .logCall(title, "Missed prayer call: $message", "MISSED")
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                    finish()
+                }
+            }
         }
 
         val sharedPrefs = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
@@ -117,6 +147,7 @@ open class CallOverlayActivity : ComponentActivity() {
                         title = title,
                         message = message,
                         onAccept = {
+                            ringingTimeoutJob?.cancel()
                             stopRinging()
                             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             manager?.cancel(notificationId)
@@ -135,6 +166,7 @@ open class CallOverlayActivity : ComponentActivity() {
                                 action = CallActionReceiver.ACTION_ANSWER_CALL
                                 putExtra("EXTRA_CALL_TITLE", title)
                                 putExtra("EXTRA_CALL_MESSAGE", message)
+                                putExtra("EXTRA_NOTIFICATION_ID", notificationId)
                                 putExtra("OPEN_PRAYER_DISPLAY", true)
                             }
 
@@ -166,34 +198,37 @@ open class CallOverlayActivity : ComponentActivity() {
                                 finish()
                             }
                         },
-                        onDismiss = {
+                        onBusy = {
+                            ringingTimeoutJob?.cancel()
                             stopRinging()
                             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                             manager?.cancel(notificationId)
-
-                            // Check if this belongs to a spiritual duty (1001 to 6999)
-                            val isSpiritualDuty = notificationId >= 1000 && notificationId < 7000
-                            if (isSpiritualDuty) {
-                                showReschedulePanel = true
-                            } else {
-                                lifecycleScope.launch(Dispatchers.IO) {
-                                    try {
-                                        com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
-                                            .logCall(title, message, "DECLINED")
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    }
+                            showReschedulePanel = true
+                        },
+                        onDismiss = {
+                            ringingTimeoutJob?.cancel()
+                            stopRinging()
+                            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                            manager?.cancel(notificationId)
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                try {
+                                    com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
+                                        .logCall(title, message, "DECLINED")
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
                                 }
-                                finish()
                             }
+                            finish()
                         }
                     )
                 } else {
-                    val dutyId = notificationId - 1000
+                    val dutyId = if (notificationId >= 1000) notificationId - 1000 else -1
                     RescheduleOverlayPanel(
                         title = title,
                         dutyId = dutyId,
+                        onBack = if (!showRescheduleOnly) { { showReschedulePanel = false } } else null,
                         onDeclineConfirmed = {
+                            ringingTimeoutJob?.cancel()
                             lifecycleScope.launch(Dispatchers.IO) {
                                 try {
                                     com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
@@ -205,10 +240,11 @@ open class CallOverlayActivity : ComponentActivity() {
                             finish()
                         },
                         onRescheduled = { selectedTime ->
+                            ringingTimeoutJob?.cancel()
                             lifecycleScope.launch(Dispatchers.IO) {
                                 try {
                                     val db = com.example.data.AppDatabase.getDatabase(this@CallOverlayActivity)
-                                    val duty = db.appDao().getDutyById(dutyId)
+                                    val duty = if (dutyId > 0) db.appDao().getDutyById(dutyId) else null
                                     if (duty != null) {
                                         val today = RescheduleManager.getTodayDateString()
                                         RescheduleManager.setReschedule(this@CallOverlayActivity, dutyId, today, selectedTime)
@@ -217,20 +253,26 @@ open class CallOverlayActivity : ComponentActivity() {
                                         if (alarmManager != null) {
                                             NotificationScheduler.scheduleDutyNotification(this@CallOverlayActivity, alarmManager, duty)
                                         }
-
-                                        com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
-                                            .logCall(title, "Rescheduled to $selectedTime today: $message", "RESCHEDULED")
-
-                                        launch(Dispatchers.Main) {
-                                            android.widget.Toast.makeText(
-                                                this@CallOverlayActivity,
-                                                "Rescheduled '$title' to $selectedTime for today only.",
-                                                android.widget.Toast.LENGTH_LONG
-                                            ).show()
-                                            finish()
-                                        }
                                     } else {
-                                        launch(Dispatchers.Main) { finish() }
+                                        NotificationScheduler.scheduleOneOffReminder(
+                                            this@CallOverlayActivity,
+                                            title,
+                                            message,
+                                            selectedTime,
+                                            notificationId
+                                        )
+                                    }
+
+                                    com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
+                                        .logCall(title, "Rescheduled to $selectedTime today: $message", "RESCHEDULED")
+
+                                    launch(Dispatchers.Main) {
+                                        android.widget.Toast.makeText(
+                                            this@CallOverlayActivity,
+                                            "Rescheduled '$title' to $selectedTime for today.",
+                                            android.widget.Toast.LENGTH_LONG
+                                        ).show()
+                                        finish()
                                     }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
@@ -252,11 +294,7 @@ open class CallOverlayActivity : ComponentActivity() {
         CallRingerManager.stopRinging()
         val notificationId = intent?.getIntExtra("EXTRA_NOTIFICATION_ID", 1001) ?: 1001
         try {
-            val serviceIntent = Intent(this, RuleOfLifeCallService::class.java).apply {
-                action = RuleOfLifeCallService.ACTION_STOP_CALL
-                putExtra("EXTRA_NOTIFICATION_ID", notificationId)
-            }
-            stopService(serviceIntent)
+            RuleOfLifeCallService.stopCall(this, notificationId)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -280,7 +318,8 @@ fun CallOverlayScreen(
     title: String,
     message: String,
     onAccept: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onBusy: () -> Unit
 ) {
     var animateEntrance by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -482,77 +521,117 @@ fun CallOverlayScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // High Visibility Accept & Dismiss Buttons Row - GUARANTEED ALWAYS VISIBLE AT BOTTOM
-            Row(
+            // Action Buttons Section
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp)
                     .offset(y = buttonsOffset)
                     .graphicsLayer(alpha = buttonsAlpha),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Decline / Dismiss Button
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .size(72.dp)
-                            .testTag("dismiss_call_button"),
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFD32F2F),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CallEnd,
-                            contentDescription = "Decline Call",
-                            modifier = Modifier.size(36.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("Decline", style = MaterialTheme.typography.labelMedium, color = ParchmentLight)
+                // Dedicated "I'm Busy / Postpone" option for immediate addition of time
+                OutlinedButton(
+                    onClick = onBusy,
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(48.dp)
+                        .testTag("busy_postpone_button"),
+                    shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(1.5.dp, GoldBright.copy(alpha = 0.8f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = DarkCathedralSurface.copy(alpha = 0.85f),
+                        contentColor = GoldBright
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccessTime,
+                        contentDescription = "Postpone",
+                        tint = GoldBright,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "I'm Busy • Postpone / Add Time",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = GoldBright
+                    )
                 }
 
-                // Pick Up / Accept Button with Outer Glow and Scale Pulse
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(92.dp)
-                    ) {
-                        // Soft glowing outer pulse ring
-                        Box(
-                            modifier = Modifier
-                                .size(92.dp)
-                                .scale(acceptButtonGlowScale)
-                                .background(
-                                    color = Color(0xFF2E7D32).copy(alpha = 0.25f),
-                                    shape = CircleShape
-                                )
-                        )
+                Spacer(modifier = Modifier.height(16.dp))
 
+                // High Visibility Accept & Dismiss Buttons Row - GUARANTEED ALWAYS VISIBLE AT BOTTOM
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Decline / Dismiss Button
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Button(
-                            onClick = onAccept,
+                            onClick = onDismiss,
                             modifier = Modifier
                                 .size(72.dp)
-                                .scale(acceptButtonScale)
-                                .testTag("accept_call_button"),
+                                .testTag("dismiss_call_button"),
                             shape = CircleShape,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF2E7D32),
+                                containerColor = Color(0xFFD32F2F),
                                 contentColor = Color.White
                             )
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Call,
-                                contentDescription = "Pick Up Call",
+                                imageVector = Icons.Default.CallEnd,
+                                contentDescription = "Decline Call",
                                 modifier = Modifier.size(36.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("Decline", style = MaterialTheme.typography.labelMedium, color = ParchmentLight)
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("Pick Up", style = MaterialTheme.typography.labelMedium, color = GoldBright, fontWeight = FontWeight.Bold)
+
+                    // Pick Up / Accept Button with Outer Glow and Scale Pulse
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.size(92.dp)
+                        ) {
+                            // Soft glowing outer pulse ring
+                            Box(
+                                modifier = Modifier
+                                    .size(92.dp)
+                                    .scale(acceptButtonGlowScale)
+                                    .background(
+                                        color = Color(0xFF2E7D32).copy(alpha = 0.25f),
+                                        shape = CircleShape
+                                    )
+                            )
+
+                            Button(
+                                onClick = onAccept,
+                                modifier = Modifier
+                                    .size(72.dp)
+                                    .scale(acceptButtonScale)
+                                    .testTag("accept_call_button"),
+                                shape = CircleShape,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF2E7D32),
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = "Pick Up Call",
+                                    modifier = Modifier.size(36.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("Pick Up", style = MaterialTheme.typography.labelMedium, color = GoldBright, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -563,6 +642,7 @@ fun CallOverlayScreen(
 fun RescheduleOverlayPanel(
     title: String,
     dutyId: Int,
+    onBack: (() -> Unit)? = null,
     onDeclineConfirmed: () -> Unit,
     onRescheduled: (timeStr: String) -> Unit
 ) {
@@ -585,6 +665,19 @@ fun RescheduleOverlayPanel(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Back button if navigated from active call
+            if (onBack != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    TextButton(onClick = onBack) {
+                        Text("← Back to Call", color = GoldBright, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             // Elegant Monastic Icon
             Box(
                 contentAlignment = Alignment.Center,
@@ -606,7 +699,7 @@ fun RescheduleOverlayPanel(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Main Prompt
             Text(
@@ -631,7 +724,7 @@ fun RescheduleOverlayPanel(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "Your regular rule of life schedule will resume normally tomorrow.",
@@ -640,11 +733,25 @@ fun RescheduleOverlayPanel(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            fun previewTime(minutesToAdd: Int): String {
+                val cal = java.util.Calendar.getInstance().apply {
+                    add(java.util.Calendar.MINUTE, minutesToAdd)
+                }
+                return java.text.SimpleDateFormat("hh:mm a", java.util.Locale.US).format(cal.time)
+            }
+
+            fun formatted24h(minutesToAdd: Int): String {
+                val cal = java.util.Calendar.getInstance().apply {
+                    add(java.util.Calendar.MINUTE, minutesToAdd)
+                }
+                return String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+            }
 
             // Quick Postpone Choices Grid
             Text(
-                text = "QUICK SNOOZE / POSTPONE FOR TODAY",
+                text = "CHOOSE SNOOZE TIME FOR TODAY",
                 style = MaterialTheme.typography.labelSmall.copy(
                     letterSpacing = 1.5.sp,
                     fontWeight = FontWeight.Bold
@@ -652,119 +759,118 @@ fun RescheduleOverlayPanel(
                 color = GoldBright.copy(alpha = 0.8f)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
+            // Row 1: +5m and +15m
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                val buttonModifier = Modifier.weight(1f).height(48.dp)
                 Button(
-                    onClick = {
-                        val cal = java.util.Calendar.getInstance().apply {
-                            add(java.util.Calendar.MINUTE, 15)
-                        }
-                        val formatted = String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
-                        onRescheduled(formatted)
-                    },
-                    modifier = buttonModifier,
+                    onClick = { onRescheduled(formatted24h(5)) },
+                    modifier = Modifier.weight(1f).height(52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
                     border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
                 ) {
-                    Text("+15m", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("+5 min", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                        Text(previewTime(5), style = MaterialTheme.typography.labelSmall, color = GoldSacred)
+                    }
                 }
 
                 Button(
-                    onClick = {
-                        val cal = java.util.Calendar.getInstance().apply {
-                            add(java.util.Calendar.MINUTE, 30)
-                        }
-                        val formatted = String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
-                        onRescheduled(formatted)
-                    },
-                    modifier = buttonModifier,
+                    onClick = { onRescheduled(formatted24h(15)) },
+                    modifier = Modifier.weight(1f).height(52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
                     border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
                 ) {
-                    Text("+30m", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("+15 min", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                        Text(previewTime(15), style = MaterialTheme.typography.labelSmall, color = GoldSacred)
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Row 2: +30m and +1 hr
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                val buttonModifier = Modifier.weight(1f).height(48.dp)
                 Button(
-                    onClick = {
-                        val cal = java.util.Calendar.getInstance().apply {
-                            add(java.util.Calendar.HOUR_OF_DAY, 1)
-                        }
-                        val formatted = String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
-                        onRescheduled(formatted)
-                    },
-                    modifier = buttonModifier,
+                    onClick = { onRescheduled(formatted24h(30)) },
+                    modifier = Modifier.weight(1f).height(52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
                     border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
                 ) {
-                    Text("+1 hr", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("+30 min", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                        Text(previewTime(30), style = MaterialTheme.typography.labelSmall, color = GoldSacred)
+                    }
+                }
+
+                Button(
+                    onClick = { onRescheduled(formatted24h(60)) },
+                    modifier = Modifier.weight(1f).height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
+                    border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("+1 hour", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                        Text(previewTime(60), style = MaterialTheme.typography.labelSmall, color = GoldSacred)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Row 3: +2 hr and Custom Time
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = { onRescheduled(formatted24h(120)) },
+                    modifier = Modifier.weight(1f).height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
+                    border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("+2 hours", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                        Text(previewTime(120), style = MaterialTheme.typography.labelSmall, color = GoldSacred)
+                    }
                 }
 
                 Button(
                     onClick = {
-                        val cal = java.util.Calendar.getInstance().apply {
-                            add(java.util.Calendar.HOUR_OF_DAY, 2)
-                        }
-                        val formatted = String.format(java.util.Locale.US, "%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
-                        onRescheduled(formatted)
+                        val cal = java.util.Calendar.getInstance()
+                        val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+                        val minute = cal.get(java.util.Calendar.MINUTE)
+                        val picker = android.app.TimePickerDialog(
+                            context,
+                            { _, selectedHour, selectedMinute ->
+                                val formatted = String.format(java.util.Locale.US, "%02d:%02d", selectedHour, selectedMinute)
+                                onRescheduled(formatted)
+                            },
+                            hour,
+                            minute,
+                            false
+                        )
+                        picker.show()
                     },
-                    modifier = buttonModifier,
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkCathedralSurface),
-                    border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.5f))
+                    modifier = Modifier.weight(1f).height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
+                    border = BorderStroke(1.dp, StaticGoldBright)
                 ) {
-                    Text("+2 hrs", color = ParchmentLight, fontWeight = FontWeight.Bold)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Custom Time", color = StaticGoldBright, fontWeight = FontWeight.Bold)
+                        Text("Pick clock", style = MaterialTheme.typography.labelSmall, color = ParchmentLight.copy(alpha = 0.8f))
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-
-            // Custom Time Picker Button
-            Button(
-                onClick = {
-                    val cal = java.util.Calendar.getInstance()
-                    val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
-                    val minute = cal.get(java.util.Calendar.MINUTE)
-                    val picker = android.app.TimePickerDialog(
-                        context,
-                        { _, selectedHour, selectedMinute ->
-                            val formatted = String.format(java.util.Locale.US, "%02d:%02d", selectedHour, selectedMinute)
-                            onRescheduled(formatted)
-                        },
-                        hour,
-                        minute,
-                        false
-                    )
-                    picker.show()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CrimsonBurgundy, contentColor = StaticGoldBright),
-                border = BorderStroke(1.dp, StaticGoldBright)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Call,
-                    contentDescription = "Set Custom Time",
-                    tint = StaticGoldBright,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Select Custom Time...", color = StaticGoldBright, fontWeight = FontWeight.Bold)
-            }
-
-            Spacer(modifier = Modifier.height(40.dp))
 
             // Decline Completely button
             TextButton(
@@ -772,7 +878,7 @@ fun RescheduleOverlayPanel(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "No, Just Decline",
+                    text = "No, Just Decline For Today",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp

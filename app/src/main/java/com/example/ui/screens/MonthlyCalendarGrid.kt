@@ -337,27 +337,20 @@ fun CalendarCell(
                         data.info.rank
                     }
                     
-                    val displayedText = if (feastText.length > 20) {
-                        feastText.take(18) + "..."
-                    } else {
-                        feastText
-                    }
-
                     Text(
-                        text = displayedText,
+                        text = feastText,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 7.5.sp,
                             lineHeight = 8.5.sp,
                             fontFamily = FontFamily.Serif,
                             fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal
                         ),
+                        softWrap = true,
                         color = if (isSelected) {
                             if (isLightTheme) GoldDark else GoldLight
                         } else {
                             if (isLightTheme) Color(0xFF44403C) else TextMutedParchment
-                        },
-                        maxLines = 3,
-                        softWrap = true
+                        }
                     )
                 }
             }

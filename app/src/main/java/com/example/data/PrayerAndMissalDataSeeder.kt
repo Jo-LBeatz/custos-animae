@@ -127,6 +127,51 @@ object PrayerAndMissalDataSeeder {
             )
         }
 
+        // 7b. Traditional Creeds up to 1954
+        TraditionalPrayerLibrary.traditionalCreeds.forEach { item ->
+            list.add(
+                PrayerEntity(
+                    id = item.id,
+                    title = item.title,
+                    category = item.category,
+                    subtitle = item.subtitle,
+                    englishText = item.englishText,
+                    latinText = item.latinText,
+                    notes = item.notes
+                )
+            )
+        }
+
+        // 7c. Prayer before Work
+        TraditionalPrayerLibrary.prayersBeforeWork.forEach { item ->
+            list.add(
+                PrayerEntity(
+                    id = item.id,
+                    title = item.title,
+                    category = item.category,
+                    subtitle = item.subtitle,
+                    englishText = item.englishText,
+                    latinText = item.latinText,
+                    notes = item.notes
+                )
+            )
+        }
+
+        // 7d. Prayer before Study
+        TraditionalPrayerLibrary.prayersBeforeStudy.forEach { item ->
+            list.add(
+                PrayerEntity(
+                    id = item.id,
+                    title = item.title,
+                    category = item.category,
+                    subtitle = item.subtitle,
+                    englishText = item.englishText,
+                    latinText = item.latinText,
+                    notes = item.notes
+                )
+            )
+        }
+
         // 8. Additional Essential Traditional Catholic Prayers
         list.add(
             PrayerEntity(

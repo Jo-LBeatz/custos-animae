@@ -26,7 +26,8 @@ data class SpiritualDuty(
     val isSuggestedRule: Boolean = false,
     val scheduledDaysOfWeek: String = "", // comma-separated e.g. "Monday,Wednesday,Friday" or day numbers
     val scheduledDaysOfMonth: String = "", // comma-separated e.g. "1,15,30"
-    val scheduledDaysOfYear: String = "" // comma-separated e.g. "08-15,12-25"
+    val scheduledDaysOfYear: String = "", // comma-separated e.g. "08-15,12-25"
+    val notificationStyle: String = "DEFAULT" // "DEFAULT", "CALL_OVERLAY", "BANNER"
 )
 
 @Entity(
@@ -79,7 +80,9 @@ data class UserProfile(
     val sacredHeartTime: String = "08:00",
     val immaculateHeartEnabled: Boolean = true,
     val immaculateHeartTime: String = "08:00",
-    val liturgicalSeasonNotificationsEnabled: Boolean = true
+    val liturgicalSeasonNotificationsEnabled: Boolean = true,
+    val prayerMode: String = "GROUP", // GROUP or INDIVIDUAL
+    val ruleNotificationStyle: String = "CALL_OVERLAY" // CALL_OVERLAY or BANNER
 )
 
 @Entity(
