@@ -1,5 +1,3 @@
-import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
-
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -15,7 +13,7 @@ android {
   defaultConfig {
     applicationId = "com.regulavitae.custos_animae"
     minSdk = 26
-    targetSdk = 35
+    targetSdk = 36
     versionCode = 1
     versionName = "1.0.0"
 
@@ -74,9 +72,7 @@ android {
   testOptions { unitTests { isIncludeAndroidResources = true } }
 }
 
-composeCompiler {
-  featureFlags.add(org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag.OptimizeNonSkippingGroups)
-}
+
 
 configurations.all {
   exclude(group = "androidx.compose.compiler", module = "compiler")
@@ -122,10 +118,7 @@ dependencies {
   testImplementation(libs.roborazzi)
   testImplementation(libs.roborazzi.compose)
   testImplementation(libs.roborazzi.junit.rule)
-  androidTestImplementation(platform(libs.androidx.compose.bom))
-  androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.espresso.core)
-  androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.runner)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
