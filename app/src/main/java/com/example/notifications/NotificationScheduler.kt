@@ -359,20 +359,7 @@ object NotificationScheduler {
         if (context != null) {
             val rescheduledTime = RescheduleManager.getRescheduledTimeForToday(context, duty.id)
             if (rescheduledTime != null) {
-                val (rHour, rMinute) = parseHourAndMinute(rescheduledTime)
-                val rCal = Calendar.getInstance().apply {
-                    timeInMillis = fromTimeMs
-                    set(Calendar.HOUR_OF_DAY, rHour)
-                    set(Calendar.MINUTE, rMinute)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }
-                if (rCal.timeInMillis > fromTimeMs) {
-                    return rCal.timeInMillis
-                } else {
-                    // Rescheduled time for today has already passed, clear it so next days run normally.
-                    RescheduleManager.clearReschedule(context, duty.id)
-                }
+                targetTime = rescheduledTime
             }
         }
 
@@ -387,17 +374,12 @@ object NotificationScheduler {
             set(Calendar.MILLISECOND, 0)
         }
 
-        // Extremely robust close-interval helper.
-        // Calculates delta in minutes between target schedule time and fromTimeMs.
-        val targetMinCal = Calendar.getInstance().apply {
-            timeInMillis = cal.timeInMillis
-        }
-        val currentMinCal = Calendar.getInstance().apply {
-            timeInMillis = fromTimeMs
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val minuteDelta = (targetMinCal.timeInMillis - currentMinCal.timeInMillis) / 60000L
+        val nowCal = Calendar.getInstance().apply { timeInMillis = fromTimeMs }
+
+        val targetHour = cal.get(Calendar.HOUR_OF_DAY)
+        val targetMin = cal.get(Calendar.MINUTE)
+        val nowHour = nowCal.get(Calendar.HOUR_OF_DAY)
+        val nowMin = nowCal.get(Calendar.MINUTE)
 
         // Check if the scheduled day matches today for weekly/monthly/yearly
         val isScheduledForToday = when (freq) {
@@ -407,7 +389,7 @@ object NotificationScheduler {
                     .map { it.trim().lowercase(Locale.ROOT) }
                     .filter { it.isNotBlank() }
                     .ifEmpty { listOf("monday") }
-                val currentDayStr = when (Calendar.getInstance().apply { timeInMillis = fromTimeMs }.get(Calendar.DAY_OF_WEEK)) {
+                val currentDayStr = when (nowCal.get(Calendar.DAY_OF_WEEK)) {
                     Calendar.SUNDAY -> "sunday"
                     Calendar.MONDAY -> "monday"
                     Calendar.TUESDAY -> "tuesday"
@@ -424,7 +406,7 @@ object NotificationScheduler {
                     .map { it.trim() }
                     .filter { it.isNotBlank() }
                     .ifEmpty { listOf("1") }
-                val currentDay = Calendar.getInstance().apply { timeInMillis = fromTimeMs }.get(Calendar.DAY_OF_MONTH).toString()
+                val currentDay = nowCal.get(Calendar.DAY_OF_MONTH).toString()
                 daysList.contains(currentDay)
             }
             "YEARLY" -> {
@@ -432,36 +414,48 @@ object NotificationScheduler {
                     .map { it.trim() }
                     .filter { it.isNotBlank() }
                     .ifEmpty { listOf("01-01") }
-                val todayCal = Calendar.getInstance().apply { timeInMillis = fromTimeMs }
-                val todayMmDd = String.format(Locale.US, "%02d-%02d", todayCal.get(Calendar.MONTH) + 1, todayCal.get(Calendar.DAY_OF_MONTH))
+                val todayMmDd = String.format(Locale.US, "%02d-%02d", nowCal.get(Calendar.MONTH) + 1, nowCal.get(Calendar.DAY_OF_MONTH))
                 rules.contains(todayMmDd)
             }
             else -> true
         }
 
         if (isScheduledForToday) {
-            if (minuteDelta == 0L) {
+            if (targetHour == nowHour && targetMin == nowMin) {
                 // Scheduled for the current minute: fire immediately in 2 seconds
-                Log.d("NotificationScheduler", "Close-interval trigger: rule is scheduled for current minute, firing in 2s")
+                Log.d("NotificationScheduler", "Close-interval trigger: rule is scheduled for current minute ($targetHour:$targetMin), firing in 2s")
                 return fromTimeMs + 2000L
-            } else if (minuteDelta == 1L) {
-                val sec = Calendar.getInstance().apply { timeInMillis = fromTimeMs }.get(Calendar.SECOND)
-                if (sec >= 45) {
-                    // Extremely close to the next minute (less than 15 seconds remaining).
-                    // Trigger in 15 seconds to ensure OS AlarmManager receives the alarm in the future.
-                    Log.d("NotificationScheduler", "Close-interval trigger: next minute is too close ($sec s), pushing by 15s")
-                    return fromTimeMs + 15000L
+            }
+
+            val targetTimeMillis = cal.timeInMillis
+            val diffMs = targetTimeMillis - fromTimeMs
+
+            if (diffMs in 1L..60_000L) {
+                // Scheduled within the next 60 seconds
+                if (diffMs < 5000L) {
+                    Log.d("NotificationScheduler", "Close-interval trigger: target time is in $diffMs ms (<5s), firing in 5s")
+                    return fromTimeMs + 5000L
+                } else {
+                    Log.d("NotificationScheduler", "Close-interval trigger: target time is in $diffMs ms, scheduling exact target")
+                    return targetTimeMillis
+                }
+            }
+        }
+
+        // If a rescheduled time for today was used but has passed (and wasn't current/next minute), clear it
+        if (context != null && RescheduleManager.hasActiveRescheduleForToday(context, duty.id)) {
+            val rTime = RescheduleManager.getRescheduledTimeForToday(context, duty.id)
+            if (rTime != null) {
+                val (rH, rM) = parseHourAndMinute(rTime)
+                if (rH < nowHour || (rH == nowHour && rM < nowMin)) {
+                    RescheduleManager.clearReschedule(context, duty.id)
                 }
             }
         }
 
         when (freq) {
             "DAILY" -> {
-                val timeDiff = fromTimeMs - cal.timeInMillis
-                if (timeDiff in 0..59_999L) {
-                    // Rule was set for the current minute: fire immediately (+2 seconds)
-                    return fromTimeMs + 2000L
-                } else if (cal.timeInMillis <= fromTimeMs) {
+                if (cal.timeInMillis <= fromTimeMs) {
                     cal.add(Calendar.DAY_OF_YEAR, 1)
                 }
             }
@@ -480,16 +474,10 @@ object NotificationScheduler {
                         set(Calendar.SECOND, 0)
                         set(Calendar.MILLISECOND, 0)
                     }
-                    val isToday = c.get(Calendar.DAY_OF_WEEK) == targetDay
-                    val timeDiff = fromTimeMs - c.timeInMillis
-                    if (isToday && timeDiff in 0..59_999L) {
-                        fromTimeMs + 2000L
-                    } else {
-                        while (c.get(Calendar.DAY_OF_WEEK) != targetDay || c.timeInMillis <= fromTimeMs) {
-                            c.add(Calendar.DAY_OF_YEAR, 1)
-                        }
-                        c.timeInMillis
+                    while (c.get(Calendar.DAY_OF_WEEK) != targetDay || c.timeInMillis <= fromTimeMs) {
+                        c.add(Calendar.DAY_OF_YEAR, 1)
                     }
+                    c.timeInMillis
                 }
                 return candidates.minOrNull() ?: cal.timeInMillis
             }
@@ -560,10 +548,7 @@ object NotificationScheduler {
                 return candidates.minOrNull() ?: cal.timeInMillis
             }
             else -> {
-                val timeDiff = fromTimeMs - cal.timeInMillis
-                if (timeDiff in 0..59_999L) {
-                    return fromTimeMs + 2000L
-                } else if (cal.timeInMillis <= fromTimeMs) {
+                if (cal.timeInMillis <= fromTimeMs) {
                     cal.add(Calendar.DAY_OF_YEAR, 1)
                 }
             }
@@ -838,14 +823,20 @@ object NotificationScheduler {
     ) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val (hour, minute) = parseHourAndMinute(timeStr)
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
+        val nowCal = Calendar.getInstance()
+        val triggerMs = if (hour == nowCal.get(Calendar.HOUR_OF_DAY) && minute == nowCal.get(Calendar.MINUTE)) {
+            System.currentTimeMillis() + 2000L
+        } else {
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                if (timeInMillis <= System.currentTimeMillis()) {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                }
             }
+            cal.timeInMillis
         }
         val intent = Intent(context, NotificationReceiver::class.java).apply {
             action = ACTION_DUTY_REMINDER
@@ -860,7 +851,7 @@ object NotificationScheduler {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        setAlarm(context, alarmManager, cal.timeInMillis, pendingIntent)
+        setAlarm(context, alarmManager, triggerMs, pendingIntent)
     }
 
     fun triggerDutyNotificationNow(context: Context, title: String, message: String, style: String? = null) {

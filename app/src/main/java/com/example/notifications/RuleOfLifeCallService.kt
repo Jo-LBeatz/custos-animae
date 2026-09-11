@@ -173,7 +173,7 @@ class RuleOfLifeCallService : Service() {
         try {
             startActivity(directCallIntent)
         } catch (e: Exception) {
-            Log.e("RuleOfLifeCallService", "Failed to force startActivity", e)
+            Log.d("RuleOfLifeCallService", "Direct startActivity deferred to setFullScreenIntent: ${e.message}")
         }
     }
 

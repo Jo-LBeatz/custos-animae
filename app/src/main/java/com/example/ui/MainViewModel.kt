@@ -82,8 +82,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val connectivityMonitor = com.example.util.NetworkConnectivityMonitor.getInstance(application)
     val isOnline: StateFlow<Boolean> = connectivityMonitor.isOnline
 
-    // Saint Intercessory Prayer & Collect System (Online fetch with 1954 Collect fallback)
-    private val saintPrayerRepository = com.example.data.prayers.SaintIntercessoryPrayerRepository(application, connectivityMonitor)
+    // Saint Intercessory Prayer & Collect System (100% Offline 1954 Roman Rite)
+    private val saintPrayerRepository = com.example.data.prayers.SaintIntercessoryPrayerRepository(application)
     private val _saintPrayerUiState = MutableStateFlow<com.example.data.prayers.SaintPrayerUiState>(com.example.data.prayers.SaintPrayerUiState.Loading)
     val saintPrayerUiState: StateFlow<com.example.data.prayers.SaintPrayerUiState> = _saintPrayerUiState.asStateFlow()
     private var currentSaintProfileLoaded: SaintProfile? = null
@@ -465,20 +465,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
             }
-
-            // Real-time network listener: if connectivity is restored, refresh saint prayer if previously offline fallback
-            viewModelScope.launch {
-                connectivityMonitor.isOnline.collect { online ->
-                    if (online) {
-                        val current = _saintPrayerUiState.value
-                        if (current is com.example.data.prayers.SaintPrayerUiState.OfflineFallback) {
-                            currentSaintProfileLoaded?.let { saint ->
-                                loadSaintPrayer(saint, forceRefresh = true)
-                            }
-                        }
-                    }
-                }
-            }
         }
 
 
@@ -801,10 +787,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (!isNew) {
                 com.example.notifications.RescheduleManager.clearReschedule(getApplication(), preparedDuty.id)
             }
-            if (isNew) {
+            val savedId = if (isNew) {
                 repository.insertDuty(preparedDuty)
             } else {
                 repository.updateDuty(preparedDuty)
+                preparedDuty.id.toLong()
+            }
+            val savedDuty = preparedDuty.copy(id = savedId.toInt())
+            val alarmManager = getApplication<android.app.Application>().getSystemService(android.content.Context.ALARM_SERVICE) as? android.app.AlarmManager
+            if (alarmManager != null) {
+                com.example.notifications.NotificationScheduler.scheduleDutyNotification(
+                    getApplication(),
+                    alarmManager,
+                    savedDuty
+                )
             }
             _pendingReflectionDuty.value = null
         }
@@ -818,10 +814,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (!isNew) {
                 com.example.notifications.RescheduleManager.clearReschedule(getApplication(), preparedPending.id)
             }
-            if (isNew) {
+            val savedId = if (isNew) {
                 repository.insertDuty(preparedPending)
             } else {
                 repository.updateDuty(preparedPending)
+                preparedPending.id.toLong()
+            }
+            val savedDuty = preparedPending.copy(id = savedId.toInt())
+            val alarmManager = getApplication<android.app.Application>().getSystemService(android.content.Context.ALARM_SERVICE) as? android.app.AlarmManager
+            if (alarmManager != null) {
+                com.example.notifications.NotificationScheduler.scheduleDutyNotification(
+                    getApplication(),
+                    alarmManager,
+                    savedDuty
+                )
             }
             _pendingReflectionDuty.value = null
         }
@@ -896,14 +902,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.Loading
             try {
                 val prayer = saintPrayerRepository.getSaintPrayer(saint, forceRefresh)
-                if (prayer.isOfflineFallback) {
-                    _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.OfflineFallback(prayer)
-                } else {
-                    _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.Success(prayer)
-                }
+                _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.Success(prayer)
             } catch (e: Exception) {
-                val fallback = saintPrayerRepository.getLocalCollectFallback(saint, isNetworkError = true)
-                _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.OfflineFallback(fallback)
+                val fallback = saintPrayerRepository.getLocalCollectFallback(saint)
+                _saintPrayerUiState.value = com.example.data.prayers.SaintPrayerUiState.Success(fallback)
             }
         }
     }

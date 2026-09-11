@@ -13,7 +13,7 @@ android {
   compileSdk = 36
 
   defaultConfig {
-    applicationId = "com.aistudio.custosanimae.app"
+    applicationId = "com.regulavitae.traditional.catholic"
     minSdk = 26
     targetSdk = 35
     versionCode = 1

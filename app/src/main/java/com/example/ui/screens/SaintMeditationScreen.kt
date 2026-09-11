@@ -667,95 +667,30 @@ fun TraditionalSaintPrayerSection(
                     )
                 }
 
-                // Connectivity Status Indicator Badge
+                // Authentic 1954 Liturgical Rite Badge
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = if (isOnline && prayerContent?.isRemoteFetched == true) {
-                        Color(0xFF1B5E20).copy(alpha = 0.85f)
-                    } else {
-                        Color(0xFFE65100).copy(alpha = 0.85f)
-                    },
-                    border = BorderStroke(
-                        1.dp,
-                        if (isOnline && prayerContent?.isRemoteFetched == true) Color(0xFF81C784) else Color(0xFFFFB74D)
-                    )
+                    color = CrimsonBurgundy.copy(alpha = 0.85f),
+                    border = BorderStroke(1.dp, GoldBright.copy(alpha = 0.8f))
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = if (isOnline) Icons.Default.Wifi else Icons.Default.WifiOff,
-                            contentDescription = if (isOnline) "Online" else "Offline",
-                            tint = Color.White,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isOnline && prayerContent?.isRemoteFetched == true) "1954 Online" else "Offline Fallback",
+                            text = "1954 Missale Romanum",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 11.sp
                             ),
-                            color = Color.White
+                            color = GoldBright
                         )
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
-
-            // Offline Fallback Notice Box (Displayed when offline or network fallback occurs)
-            if (!isOnline || prayerContent?.isOfflineFallback == true) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    color = DarkCathedralSurface.copy(alpha = 0.9f),
-                    border = BorderStroke(1.dp, Color(0xFFFFB74D).copy(alpha = 0.6f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CloudOff,
-                            contentDescription = "Offline Mode",
-                            tint = Color(0xFFFFB74D),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Offline Mode Active",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Serif
-                                ),
-                                color = Color(0xFFFFD54F)
-                            )
-                            Text(
-                                text = "No internet connection. Displaying the authentic traditional Collect of the feast from the 1954 Roman Missal as a local fallback.",
-                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.5.sp),
-                                color = ParchmentLight.copy(alpha = 0.9f)
-                            )
-                        }
-                        if (isOnline) {
-                            IconButton(
-                                onClick = onRefreshPrayer,
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Retry Online Fetch",
-                                    tint = GoldBright,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-            }
 
             // Controls Row: Prayer Form Tabs & Language Filter
             Row(

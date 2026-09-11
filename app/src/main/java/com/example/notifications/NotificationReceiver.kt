@@ -14,6 +14,21 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
 
+object RuleTriggerTracker {
+    private const val PREFS_NAME = "rule_trigger_tracker_prefs"
+
+    fun shouldTriggerAndRecord(context: Context, ruleKey: String, windowMs: Long = 2_000L): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val lastTriggered = prefs.getLong("last_triggered_$ruleKey", 0L)
+        val now = System.currentTimeMillis()
+        if (now - lastTriggered < windowMs) {
+            return false
+        }
+        prefs.edit().putLong("last_triggered_$ruleKey", now).apply()
+        return true
+    }
+}
+
 class NotificationReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -62,6 +77,11 @@ class NotificationReceiver : BroadcastReceiver() {
 
         val type = intent.getStringExtra("EXTRA_TYPE") ?: "DUTY"
         if (type == "SAINT" || action == NotificationScheduler.ACTION_SAINT_DAY) {
+            if (!RuleTriggerTracker.shouldTriggerAndRecord(context, "SAINT_9999")) {
+                Log.d("NotificationReceiver", "Duplicate SAINT alarm trigger suppressed within minute window.")
+                try { if (wakeLock?.isHeld == true) wakeLock.release() } catch (_: Exception) {}
+                return
+            }
             val cal = Calendar.getInstance()
             val mmdd = String.format(Locale.US, "%02d-%02d", cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
             val saint = SaintData.getSaintForDate(mmdd) ?: SaintData.saintList.first()
@@ -69,11 +89,22 @@ class NotificationReceiver : BroadcastReceiver() {
             val message = "${saint.feastTitle} • \"${saint.quote}\""
             dispatchReminder(context, title, message, notificationId = 9999, wakeLock = wakeLock)
         } else if (type == "PRAYER") {
+            val notificationId = intent.getIntExtra("EXTRA_ID", 7001)
+            if (!RuleTriggerTracker.shouldTriggerAndRecord(context, "PRAYER_$notificationId")) {
+                Log.d("NotificationReceiver", "Duplicate PRAYER alarm trigger suppressed for id=$notificationId within minute window.")
+                try { if (wakeLock?.isHeld == true) wakeLock.release() } catch (_: Exception) {}
+                return
+            }
             val title = intent.getStringExtra("EXTRA_TITLE") ?: "Daily Prayer"
             val message = intent.getStringExtra("EXTRA_MESSAGE") ?: "Time for your daily prayer."
-            val notificationId = intent.getIntExtra("EXTRA_ID", 7001)
             dispatchReminder(context, title, message, notificationId, wakeLock = wakeLock)
         } else if (type == "SACRED_HEART") {
+            val notificationId = intent.getIntExtra("EXTRA_ID", 7101)
+            if (!RuleTriggerTracker.shouldTriggerAndRecord(context, "SACRED_HEART_$notificationId")) {
+                Log.d("NotificationReceiver", "Duplicate SACRED_HEART alarm trigger suppressed within minute window.")
+                try { if (wakeLock?.isHeld == true) wakeLock.release() } catch (_: Exception) {}
+                return
+            }
             val cal = Calendar.getInstance()
             val isFirstFriday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY && cal.get(Calendar.DAY_OF_MONTH) <= 7
             val title = if (isFirstFriday) "First Friday Devotion: Sacred Heart of Jesus" else "Friday Devotion: Sacred Heart of Jesus"
@@ -82,9 +113,14 @@ class NotificationReceiver : BroadcastReceiver() {
             } else {
                 "In honor of Christ's Passion, dedicate today's prayers and mortifications to His Most Sacred Heart."
             }
-            val notificationId = intent.getIntExtra("EXTRA_ID", 7101)
             dispatchReminder(context, title, message, notificationId, wakeLock = wakeLock)
         } else if (type == "IMMACULATE_HEART") {
+            val notificationId = intent.getIntExtra("EXTRA_ID", 7102)
+            if (!RuleTriggerTracker.shouldTriggerAndRecord(context, "IMMACULATE_HEART_$notificationId")) {
+                Log.d("NotificationReceiver", "Duplicate IMMACULATE_HEART alarm trigger suppressed within minute window.")
+                try { if (wakeLock?.isHeld == true) wakeLock.release() } catch (_: Exception) {}
+                return
+            }
             val cal = Calendar.getInstance()
             val isFirstSaturday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY && cal.get(Calendar.DAY_OF_MONTH) <= 7
             val title = if (isFirstSaturday) "First Saturday Devotion: Immaculate Heart of Mary" else "Saturday Devotion: Immaculate Heart of Mary"
@@ -93,9 +129,13 @@ class NotificationReceiver : BroadcastReceiver() {
             } else {
                 "Dedicate today's prayers, Rosary, and offerings in loving reparation to the Immaculate Heart of Mary."
             }
-            val notificationId = intent.getIntExtra("EXTRA_ID", 7102)
             dispatchReminder(context, title, message, notificationId, wakeLock = wakeLock)
         } else if (type == "LITURGICAL_SEASON") {
+            if (!RuleTriggerTracker.shouldTriggerAndRecord(context, "LITURGICAL_SEASON_7103")) {
+                Log.d("NotificationReceiver", "Duplicate LITURGICAL_SEASON alarm trigger suppressed within minute window.")
+                try { if (wakeLock?.isHeld == true) wakeLock.release() } catch (_: Exception) {}
+                return
+            }
             val today = Calendar.getInstance()
             val year = today.get(Calendar.YEAR)
             val month = today.get(Calendar.MONTH) + 1
@@ -141,6 +181,13 @@ class NotificationReceiver : BroadcastReceiver() {
                 } catch (_: Exception) {}
                 return
             }
+
+            if (!RuleTriggerTracker.shouldTriggerAndRecord(context, "DUTY_$dutyId")) {
+                Log.d("NotificationReceiver", "Duplicate DUTY alarm trigger suppressed for dutyId=$dutyId within minute window.")
+                try { if (wakeLock?.isHeld == true) wakeLock.release() } catch (_: Exception) {}
+                return
+            }
+
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {

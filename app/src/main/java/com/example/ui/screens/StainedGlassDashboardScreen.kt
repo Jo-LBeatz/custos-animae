@@ -299,7 +299,7 @@ fun StainedGlassDashboardScreen(
                 SaintlyQuotesCard(
                     todaySaintQuotes = todaySaintQuotes,
                     saintName = todaySaint.saintName,
-                    onNavigateToRule = { onNavigateToTab(0) }
+                    onNavigateToRule = { onNavigateToTab(1) }
                 )
             }
 

@@ -1,0 +1,100 @@
+{
+  "version": "2.0",
+  "rubrics": "1954 Missale Romanum & Breviarium Romanum",
+  "concludingFormula": {
+    "latin": "Per Dominum nostrum Jesum Christum, Filium tuum, qui tecum vivit et regnat in unitate Spiritus Sancti, Deus, per omnia sæcula sæculorum. ℟. Amen.",
+    "english": "Through Our Lord Jesus Christ, Thy Son, who livest and reignest with Thee in the unity of the Holy Ghost, God, world without end. ℟. Amen."
+  },
+  "categories": {
+    "mary": {
+      "intercessionLatin": "Deus, qui de beatæ Mariæ Virginis utero Verbum tuum, Angelo nuntiante, carnem suscipere voluisti: præsta supplicibus tuis; ut, qui vere eam Genetricem Dei credimus, eius apud te intercessionibus adiuvemur.",
+      "intercessionEnglish": "O God, who didst will that Thy Word should take flesh in the womb of the Blessed Virgin Mary at the message of an Angel: grant unto us Thy suppliants, that we who believe her to be truly the Mother of God, may be assisted by her intercession with Thee.",
+      "collectLatin": "Deus, qui de beatæ Mariæ Virginis utero Verbum tuum, Angelo nuntiante, carnem suscipere voluisti: præsta supplicibus tuis; ut, qui vere eam Genetricem Dei credimus, eius apud te intercessionibus adiuvemur.",
+      "collectEnglish": "O God, who didst will that Thy Word should take flesh in the womb of the Blessed Virgin Mary at the message of an Angel: grant unto us Thy suppliants, that we who believe her to be truly the Mother of God, may be assisted by her intercession with Thee.",
+      "versicleLatin": "℣. Ora pro nobis, Sancta Dei Genetrix.",
+      "versicleEnglish": "℣. Pray for us, O Holy Mother of God.",
+      "responseLatin": "℟. Ut digni efficiamur promissionibus Christi.",
+      "responseEnglish": "℟. That we may be made worthy of the promises of Christ."
+    },
+    "joseph": {
+      "intercessionLatin": "Sanctissimæ Genetricis tuæ Sponsi, quæsumus, Domine, meritis adiuvemur: ut, quod possibilitas nostra non obtinet, eius nobis intercessione donetur.",
+      "intercessionEnglish": "We beseech Thee, O Lord, that we may be assisted by the merits of the Spouse of Thy most holy Mother: that what we cannot obtain of ourselves may be granted unto us by his intercession.",
+      "collectLatin": "Sanctissimæ Genetricis tuæ Sponsi, quæsumus, Domine, meritis adiuvemur: ut, quod possibilitas nostra non obtinet, eius nobis intercessione donetur.",
+      "collectEnglish": "We beseech Thee, O Lord, that we may be assisted by the merits of the Spouse of Thy most holy Mother: that what we cannot obtain of ourselves may be granted unto us by his intercession.",
+      "versicleLatin": "℣. Constituit eum dominum domus suæ.",
+      "versicleEnglish": "℣. He made him lord of his house.",
+      "responseLatin": "℟. Et principem omnis possessionis suæ.",
+      "responseEnglish": "℟. And ruler of all his substance."
+    },
+    "apostle": {
+      "intercessionLatin": "Deus, qui nos beati Apostoli tui {saintName} annua solemnitate lætificas: præsta, quæsumus; ut, cuius natalitia colimus, eius protegimur et orationibus.",
+      "intercessionEnglish": "O God, who dost gladden us by the yearly festival of Thy blessed Apostle {saintName}: grant, we beseech Thee, that as we celebrate his heavenly birthday, we may also be protected by his prayers.",
+      "collectLatin": "Deus, qui nos beati Apostoli tui {saintName} annua solemnitate lætificas: præsta, quæsumus; ut, cuius natalitia colimus, eius protegimur et orationibus.",
+      "collectEnglish": "O God, who dost gladden us by the yearly festival of Thy blessed Apostle {saintName}: grant, we beseech Thee, that as we celebrate his heavenly birthday, we may also be protected by his prayers.",
+      "versicleLatin": "℣. In omnem terram exivit sonus eorum.",
+      "versicleEnglish": "℣. Their sound went forth into all the earth.",
+      "responseLatin": "℟. Et in fines orbis terræ verba eorum.",
+      "responseEnglish": "℟. And their words unto the ends of the world."
+    },
+    "angels": {
+      "intercessionLatin": "Deus, qui miro ordine Angelorum ministeria hominumque dispensas: concede propitius; ut, a quibus tibi ministrantibus in cælo semper assistitur, ab his in terra vita nostra muniatur.",
+      "intercessionEnglish": "O God, who in a wonderful order hast ordained the services of Angels and men: mercifully grant, that as Thy holy Angels always do Thee service in heaven, so by Thy appointment they may succor, defend, and protect us on earth.",
+      "collectLatin": "Deus, qui miro ordine Angelorum ministeria hominumque dispensas: concede propitius; ut, a quibus tibi ministrantibus in cælo semper assistitur, ab his in terra vita nostra muniatur.",
+      "collectEnglish": "O God, who in a wonderful order hast ordained the services of Angels and men: mercifully grant, that as Thy holy Angels always do Thee service in heaven, so by Thy appointment they may succor, defend, and protect us on earth.",
+      "versicleLatin": "℣. In conspectu Angelorum psallam tibi, Deus meus.",
+      "versicleEnglish": "℣. I will sing praise unto Thee, my God, in the sight of the Angels.",
+      "responseLatin": "℟. Adorabo ad templum sanctum tuum, et confitebor nomini tuo.",
+      "responseEnglish": "℟. I will worship toward Thy holy temple, and give glory unto Thy name."
+    },
+    "martyr": {
+      "intercessionLatin": "Præsta, quæsumus, omnipotens Deus: ut, qui beati {saintName} Martyris tui natalitia colimus, a cunctis malis imminentibus, eius intercessione, liberemur.",
+      "intercessionEnglish": "Grant, we beseech Thee, Almighty God: that we who celebrate the festival of blessed {saintName}, Thy Martyr, may by his intercession be delivered from all impending evils.",
+      "collectLatin": "Præsta, quæsumus, omnipotens Deus: ut, qui beati {saintName} Martyris tui natalitia colimus, a cunctis malis imminentibus, eius intercessione, liberemur.",
+      "collectEnglish": "Grant, we beseech Thee, Almighty God: that we who celebrate the festival of blessed {saintName}, Thy Martyr, may by his intercession be delivered from all impending evils.",
+      "versicleLatin": "℣. Gloria et honore coronasti eum, Domine.",
+      "versicleEnglish": "℣. Thou hast crowned him with glory and honor, O Lord.",
+      "responseLatin": "℟. Et constituisti eum super opera manuum tuarum.",
+      "responseEnglish": "℟. And hast set him over the works of Thy hands."
+    },
+    "doctor": {
+      "intercessionLatin": "Deus, qui populo tuo æternæ salutis beatum {saintName} ministrum tribuisti: præsta, quæsumus; ut, quem Doctorem vitæ habuimus in terris, intercessorem habere mereamur in cælis.",
+      "intercessionEnglish": "O God, who didst give blessed {saintName} to Thy people as a minister of eternal salvation: grant, we beseech Thee, that we may deserve to have him as our intercessor in heaven, whom we have had as our teacher of life upon earth.",
+      "collectLatin": "Deus, qui populo tuo æternæ salutis beatum {saintName} ministrum tribuisti: præsta, quæsumus; ut, quem Doctorem vitæ habuimus in terris, intercessorem habere mereamur in cælis.",
+      "collectEnglish": "O God, who didst give blessed {saintName} to Thy people as a minister of eternal salvation: grant, we beseech Thee, that we may deserve to have him as our intercessor in heaven, whom we have had as our teacher of life upon earth.",
+      "versicleLatin": "℣. Amavit eum Dominus, et ornavit eum.",
+      "versicleEnglish": "℣. The Lord loved him and adorned him.",
+      "responseLatin": "℟. Stolam gloriæ induit eum.",
+      "responseEnglish": "℟. He clothed him with a robe of glory."
+    },
+    "pope_bishop": {
+      "intercessionLatin": "Da, quæsumus, omnipotens Deus: ut beati {saintName} Confessoris tui atque Pontificis veneranda solemnitas, et devotionem nobis augeat et salutem.",
+      "intercessionEnglish": "Grant, we beseech Thee, Almighty God: that the venerable solemnity of blessed {saintName}, Thy Confessor and Bishop, may both increase our devotion and promote our salvation.",
+      "collectLatin": "Da, quæsumus, omnipotens Deus: ut beati {saintName} Confessoris tui atque Pontificis veneranda solemnitas, et devotionem nobis augeat et salutem.",
+      "collectEnglish": "Grant, we beseech Thee, Almighty God: that the venerable solemnity of blessed {saintName}, Thy Confessor and Bishop, may both increase our devotion and promote our salvation.",
+      "versicleLatin": "℣. Sacerdotes tui induantur iustitiam.",
+      "versicleEnglish": "℣. Let Thy priests be clothed with justice.",
+      "responseLatin": "℟. Et sancti tui exsultent.",
+      "responseEnglish": "℟. And let Thy saints rejoice."
+    },
+    "virgin": {
+      "intercessionLatin": "Exaudi nos, Deus, salutaris noster: ut, sicut de beatæ {saintName} Virginis tuæ festivitate gaudemus; ita piæ devotionis erudiamur affectu.",
+      "intercessionEnglish": "Hear us, O God of our salvation: that as we rejoice in the festival of blessed {saintName}, Thy Virgin; so we may be instructed in the affection of pious devotion.",
+      "collectLatin": "Exaudi nos, Deus, salutaris noster: ut, sicut de beatæ {saintName} Virginis tuæ festivitate gaudemus; ita piæ devotionis erudiamur affectu.",
+      "collectEnglish": "Exaudi nos, Deus, salutaris noster: ut, sicut de beatæ {saintName} Virginis tuæ festivitate gaudemus; ita piæ devotionis erudiamur affectu.",
+      "versicleLatin": "℣. Specie tua et pulchritudine tua.",
+      "versicleEnglish": "℣. In thy comeliness and thy beauty.",
+      "responseLatin": "℟. Intende, prospere procede, et regna.",
+      "responseEnglish": "℟. Go forth, proceed prosperously, and reign."
+    },
+    "confessor_common": {
+      "intercessionLatin": "Deus, qui nos beati {saintName} Confessoris tui annua solemnitate lætificas: concede propitius; ut, cuius natalitia colimus, etiam actiones imitemur.",
+      "intercessionEnglish": "O God, who dost gladden us by the yearly festival of blessed {saintName}, Thy Confessor: mercifully grant, that as we celebrate his heavenly birthday, we may also imitate his holy actions.",
+      "collectLatin": "Deus, qui nos beati {saintName} Confessoris tui annua solemnitate lætificas: concede propitius; ut, cuius natalitia colimus, etiam actiones imitemur.",
+      "collectEnglish": "O God, who dost gladden us by the yearly festival of blessed {saintName}, Thy Confessor: mercifully grant, that as we celebrate his heavenly birthday, we may also imitate his holy actions.",
+      "versicleLatin": "℣. Ora pro nobis, beate {saintName}.",
+      "versicleEnglish": "℣. Pray for us, blessed {saintName}.",
+      "responseLatin": "℟. Ut digni efficiamur promissionibus Christi.",
+      "responseEnglish": "℟. That we may be made worthy of the promises of Christ."
+    }
+  }
+}

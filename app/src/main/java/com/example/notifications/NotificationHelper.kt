@@ -201,11 +201,11 @@ object NotificationHelper {
             e.printStackTrace()
         }
 
-        // Also launch call overlay activity if permitted
+        // Launch full screen call activity safely (system setFullScreenIntent handles locked device display)
         try {
             context.startActivity(fullScreenIntent)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.d("NotificationHelper", "Direct startActivity deferred to setFullScreenIntent: ${e.message}")
         }
 
         // Maintain background call service queue safely

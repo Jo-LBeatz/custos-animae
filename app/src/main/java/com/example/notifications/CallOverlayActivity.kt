@@ -90,7 +90,8 @@ open class CallOverlayActivity : ComponentActivity() {
                     WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
                     WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
                     WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-                    WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+                    WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON or
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
 
         val title = intent.getStringExtra("EXTRA_CALL_TITLE") ?: intent.getStringExtra("EXTRA_TITLE") ?: "Rule of Life Reminder"
@@ -100,24 +101,6 @@ open class CallOverlayActivity : ComponentActivity() {
 
         if (!showRescheduleOnly) {
             startRinging()
-            // 45-second auto-timeout: if unanswered, stop ringing and record as missed
-            ringingTimeoutJob = lifecycleScope.launch {
-                kotlinx.coroutines.delay(45000L)
-                if (!isFinishing && !isDestroyed) {
-                    stopRinging()
-                    val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                    manager?.cancel(notificationId)
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        try {
-                            com.example.data.CallLogRepository.getInstance(this@CallOverlayActivity)
-                                .logCall(title, "Missed prayer call: $message", "MISSED")
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-                    finish()
-                }
-            }
         }
 
         val sharedPrefs = getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
