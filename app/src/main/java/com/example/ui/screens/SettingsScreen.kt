@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import androidx.compose.material.icons.filled.ArrowBack
 import android.os.Build
 import android.content.Intent
 import android.widget.Toast
@@ -20,7 +19,7 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Check
@@ -2075,7 +2074,7 @@ fun SettingsScreen(
                         border = BorderStroke(1.dp, Color(0xFF25D366)),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Icon(Icons.Default.Send, contentDescription = null, tint = Color(0xFF25D366), modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = Color(0xFF25D366), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Join WhatsApp Channel", color = ParchmentLight, fontSize = 12.sp, modifier = Modifier.weight(1f))
                     }

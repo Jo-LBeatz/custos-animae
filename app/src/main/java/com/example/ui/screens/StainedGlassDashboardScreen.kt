@@ -20,6 +20,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import android.widget.Toast
@@ -1233,7 +1234,7 @@ fun SaintlyQuotesCard(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = GoldBright),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("Apply to Rule of Life", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
@@ -1380,7 +1381,7 @@ fun RegulaVitaeDashboardCard(
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Icon(Icons.Default.Send, contentDescription = null, tint = Color(0xFF25D366), modifier = Modifier.size(14.dp))
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = Color(0xFF25D366), modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("WhatsApp", fontSize = 11.sp, color = ParchmentLight)
                 }

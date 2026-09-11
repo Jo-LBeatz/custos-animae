@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -113,7 +114,7 @@ fun RegulaVitaeScreen(
             title = "WhatsApp Channel",
             handleOrSubtitle = "Official RegulaVitae Channel",
             url = "https://whatsapp.com/channel/0029Vb8WpzkFi8xWdG8IJf2F",
-            icon = Icons.Default.Send,
+            icon = Icons.AutoMirrored.Filled.Send,
             buttonLabel = "Join on WhatsApp 💬",
             badge = "WhatsApp",
             accentColor = Color(0xFF25D366),

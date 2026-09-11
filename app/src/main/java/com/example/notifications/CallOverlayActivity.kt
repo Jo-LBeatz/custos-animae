@@ -4,15 +4,8 @@ import android.app.KeyguardManager
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.MediaPlayer
-import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -59,8 +52,6 @@ import com.example.ui.theme.*
 
 open class CallOverlayActivity : ComponentActivity() {
 
-    private var mediaPlayer: MediaPlayer? = null
-    private var vibrator: Vibrator? = null
     private var ringingTimeoutJob: kotlinx.coroutines.Job? = null
 
     override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {

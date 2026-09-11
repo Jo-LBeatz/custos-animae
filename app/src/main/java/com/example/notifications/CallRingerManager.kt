@@ -130,7 +130,7 @@ object CallRingerManager {
             val pattern = longArrayOf(0, 1000, 500, 1000, 500)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val vibrationEffect = VibrationEffect.createWaveform(pattern, 0)
-                v?.vibrate(vibrationEffect, audioAttributes)
+                v?.vibrate(vibrationEffect)
             } else {
                 @Suppress("DEPRECATION")
                 v?.vibrate(pattern, 0)
